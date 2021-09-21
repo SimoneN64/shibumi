@@ -36,8 +36,8 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include
   ${CMAKE_SOURCE_DIR}/include/utils/
   ${CMAKE_SOURCE_DIR}/include/core/
-  ${CMAKE_SOURCE_DIR}/include/core/mmio/
   ${CMAKE_SOURCE_DIR}/include/core/mem/
+  ${CMAKE_SOURCE_DIR}/include/core/mem/mmio/
   ${CMAKE_SOURCE_DIR}/include/core/cpu/
   #${CMAKE_SOURCE_DIR}/include/core/scheduler/
   #${CMAKE_SOURCE_DIR}/include/external/

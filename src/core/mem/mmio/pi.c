@@ -35,7 +35,7 @@ void pi_write(mem_t* mem, u32 paddr, u32 val) {
         len -= dram_addr & 0x7;
       }
       pi->rd_len = len;
-      memcpy(mem->cart[cart_addr], mem->rdram[dram_addr], len);
+      memcpy(&mem->cart[cart_addr], &mem->rdram[dram_addr], len);
       pi->status.reset_controller = true;
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
@@ -48,7 +48,7 @@ void pi_write(mem_t* mem, u32 paddr, u32 val) {
         len -= dram_addr & 0x7;
       }
       pi->wr_len = len;
-      memcpy(mem->rdram[dram_addr], mem->cart[cart_addr], len);
+      memcpy(&mem->rdram[dram_addr], &mem->cart[cart_addr], len);
       pi->status.reset_controller = true;
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
