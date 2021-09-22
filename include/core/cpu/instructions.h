@@ -2,8 +2,6 @@
 #include <registers.h>
 #include <mem.h>
 
-s64 se_imm(u32 instr);
-s64 ze_imm(u32 instr);
 void mtcz(registers_t* regs, u32 instr, u8 index);
 void lui(registers_t* regs, u32 instr);
 void addiu(registers_t* regs, u32 instr);

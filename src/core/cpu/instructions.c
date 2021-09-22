@@ -1,13 +1,8 @@
 #include <instructions.h>
 #include <utils.h>
 
-s64 se_imm(u32 instr) {
-  return (s64)((s16)((u16)(instr & 0xffff)));
-}
-
-s64 ze_imm(u32 instr) {
-  return (s64)(instr & 0xffff);
-}
+#define se_imm(x) (((x) << 48) >> 48)
+#define ze_imm(x) ((x) & 0xffff)
 
 void mtcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
@@ -23,12 +18,12 @@ void mtcz(registers_t* regs, u32 instr, u8 index) {
 }
 
 void lui(registers_t* regs, u32 instr) {
-  regs->gpr[RT(instr)] = se_imm(instr) << 16;
+  regs->gpr[RT(instr)] = se_imm((s64)instr) << 16;
 }
 
 void addiu(registers_t* regs, u32 instr) {
   u32 reg = regs->gpr[RS(instr)];
-  u32 imm = se_imm(instr);
+  u32 imm = se_imm((s64)instr);
   regs->gpr[RT(instr)] = (s64)((s32)(reg + imm));
 }
 
@@ -47,20 +42,20 @@ void branch_likely(registers_t* regs, bool cond, s64 address) {
 }
 
 void b(registers_t* regs, u32 instr, bool cond) {
-  s64 offset = se_imm(instr) << 2;
+  s64 offset = se_imm((s64)instr) << 2;
   s64 address = regs->pc + offset;
   branch(regs, cond, address);
 }
 
 void bl(registers_t* regs, u32 instr, bool cond) {
-  s64 offset = se_imm(instr) << 2;
+  s64 offset = se_imm((s64)instr) << 2;
   s64 address = regs->pc + offset;
   branch_likely(regs, cond, address);
 }
 
 void sw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  s64 address = rs + se_imm(instr);
+  s64 address = rs + se_imm((s64)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
@@ -71,7 +66,7 @@ void sw(mem_t* mem, registers_t* regs, u32 instr) {
 
 void lw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + se_imm(instr);
+  u32 address = rs + se_imm((s64)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
@@ -81,13 +76,13 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
 
 void sb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address =  rs + se_imm(instr);
+  u32 address =  rs + se_imm((s64)instr);
   write8(mem, address, regs->gpr[RT(instr)]);
 }
 
 void lbu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address =  rs + se_imm(instr);
+  u32 address =  rs + se_imm((s64)instr);
   regs->gpr[RT(instr)] = read8(mem, address);
 }
 
@@ -107,7 +102,7 @@ void jal(registers_t* regs, u32 instr) {
 }
 
 void slti(registers_t* regs, u32 instr) {
-  if (regs->gpr[RS(instr)] < se_imm(instr)) {
+  if (regs->gpr[RS(instr)] < se_imm((s64)instr)) {
     regs->gpr[RT(instr)] = 1;
   } else {
     regs->gpr[RT(instr)] = 0;

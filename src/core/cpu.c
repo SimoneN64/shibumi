@@ -18,7 +18,7 @@ void step(cpu_t *cpu, mem_t *mem) {
 void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   u8 mask = (instr >> 26) & 0x3f;
   registers_t* regs = &cpu->regs;
-  switch(mask) {
+  switch(mask) { // TODO: named constants for clearer code
   case 0x00: special(cpu, mem, instr); break;
   case 0x01: regimm(cpu, mem, instr); break;
   case 0x03: jal(regs, instr); break;
@@ -47,7 +47,7 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
 void special(cpu_t *cpu, mem_t *mem, u32 instr) {
   u8 mask = (instr & 0x3F);
   registers_t* regs = &cpu->regs;
-  switch (mask) {
+  switch (mask) { // TODO: named constants for clearer code
     case 0:
     if (instr != 0) {
       sll(regs, instr);
@@ -76,7 +76,7 @@ void regimm(cpu_t *cpu, mem_t *mem, u32 instr) {
   u8 mask = ((instr >> 16) & 0x1F);
   registers_t* regs = &cpu->regs;
 
-  switch (mask) {
+  switch (mask) { // TODO: named constants for clearer code
   case 0x03: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
   case 0x11:
     regs->gpr[31] = regs->pc + 4;
