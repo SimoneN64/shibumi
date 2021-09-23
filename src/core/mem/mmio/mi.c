@@ -1,5 +1,6 @@
 #include <mi.h>
 #include <log.h>
+#include <assert.h>
 
 void init_mi(mi_t* mi) {
   mi->mi_intr_mask.raw = 0;
@@ -63,6 +64,9 @@ void mi_write(mi_t* mi, u32 paddr, u32 val) {
     if (val & (1 << setbit)) {
       mi->mi_intr_mask.raw |= 1 << bit;
     }
+  }
+  if(mi->mi_intr_mask.raw != 0) {
+    logfatal("Fire interrupts!\n");
   }
   // TODO: fire interrupts
   break;

@@ -13,6 +13,9 @@ void step(cpu_t *cpu, mem_t *mem) {
   cpu->regs.pc = cpu->regs.next_pc;
   cpu->regs.next_pc += 4;
   exec(cpu, mem, instruction);
+  if(((cpu->regs.cp0[12] >> 8) & 0xFF) != 0) {
+    logfatal("Fire interrupts!\n");
+  }
 }
 
 void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
