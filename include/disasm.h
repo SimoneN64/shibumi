@@ -10,4 +10,5 @@ typedef struct {
 } disasm_t;
 
 void init_disasm(disasm_t* disasm);
+void destroy_disasm(disasm_t* disasm);
 char* disasm_run(core_t* core, disasm_t* disasm);

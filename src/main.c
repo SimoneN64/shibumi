@@ -10,6 +10,7 @@ int main(int argc, const char* argv[]) {
   core_t core;
   init_core(&core, argv[1]);
   run_core(&core);
+  destroy_disasm(&core.disasm);
   
   return 0;
 }

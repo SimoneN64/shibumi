@@ -34,7 +34,7 @@ void load_rom(const char* path, mem_t* mem) {
 
   fclose(fp);
   u32 endianness = *(u32*)&mem->cart[0];
-  swap(endianness, mem->cart);
+  swap(endianness, rom_size, mem->cart);
   memcpy(mem->dmem, mem->cart, 0x1000);
 }
 

@@ -16,7 +16,7 @@ void step(cpu_t *cpu, mem_t *mem) {
 }
 
 void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
-  u8 mask = (instr >> 26) & 0x3f;
+  u8 mask = (instr >> 26) & 0x3F;
   registers_t* regs = &cpu->regs;
   switch(mask) { // TODO: named constants for clearer code
   case 0x00: special(cpu, mem, instr); break;
@@ -25,8 +25,8 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   case 0x04: b(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
   case 0x05: b(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
   case 0x08: 
-  case 0x09: addiu(regs, instr);
-  case 0x0A: slti(regs, instr);
+  case 0x09: addiu(regs, instr); break;
+  case 0x0A: slti(regs, instr); break;
   case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
   case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
   case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
@@ -34,13 +34,13 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   case 0x0D: ori(regs, instr); break;
   case 0x0E: xori(regs, instr); break;
   case 0x0F: lui(regs, instr); break;
-  case 0x10: mtcz(regs, instr, ((instr >> 26) & 3)); break;
+  case 0x10: mtcz(regs, instr, (instr >> 26) & 3); break;
   case 0x23: lw(mem, regs, instr); break;
   case 0x24: lbu(mem, regs, instr); break;
   case 0x28: sb(mem, regs, instr); break;
   case 0x2B: sw(mem, regs, instr); break;
   case 0x2F: break;
-  default: logfatal("[CPU ERR] Unimplemented instruction %02X, PC: %08X%08X\n", mask, (u32)(regs->old_pc >> 32), (u32)regs->old_pc);
+  default: logfatal("[CPU ERR] Unimplemented instruction %08X, PC: %08X%08X\n", bswap_32(instr), (u32)(regs->old_pc >> 32), (u32)regs->old_pc);
   }
 }
 
@@ -68,7 +68,7 @@ void special(cpu_t *cpu, mem_t *mem, u32 instr) {
     case 0x26: xor(regs, instr); break;
     case 0x2A: slt(regs, instr); break;
     case 0x2B: sltu(regs, instr); break;
-    default: logfatal("[CPU ERR] Unimplemented special instruction %02X, PC: %08X%08X\n", mask, (u32)(regs->old_pc >> 32), (u32)regs->old_pc);
+    default: logfatal("[CPU ERR] Unimplemented special instruction %08X, PC: %08X%08X\n", instr, (u32)(regs->old_pc >> 32), (u32)regs->old_pc);
   }
 }
 
@@ -82,6 +82,6 @@ void regimm(cpu_t *cpu, mem_t *mem, u32 instr) {
     regs->gpr[31] = regs->pc + 4;
     b(regs, instr, regs->gpr[RS(instr)] >= 0);
     break;
-  default: logfatal("[CPU ERR] Unimplemented regimm instruction %02X, PC: %08X%08X\n", mask, (u32)(regs->old_pc >> 32), (u32)regs->old_pc);
+  default: logfatal("[CPU ERR] Unimplemented regimm instruction %08X, PC: %08X%08X\n", instr, (u32)(regs->old_pc >> 32), (u32)regs->old_pc);
   }
 }
