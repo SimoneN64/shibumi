@@ -1,5 +1,4 @@
 #include <swap.h>
-#include <byteswap.h>
 #include <utils.h>
 
 void swap(u32 endianness, u8* rom) {

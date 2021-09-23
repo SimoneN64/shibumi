@@ -69,4 +69,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   #${GLAD_SRC}
 )
 
-#target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} ${CMAKE_DL_LIBS} nfd cimgui capstone)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} ${CMAKE_DL_LIBS} capstone)
