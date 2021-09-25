@@ -1,4 +1,4 @@
-#include <core.h>
+#include <gui.h>
 #include <stdio.h>
 #include <log.h>
 
@@ -8,8 +8,10 @@ int main(int argc, const char* argv[]) {
   }
 
   core_t core;
+  gui_t gui;
   init_core(&core, argv[1]);
-  run_core(&core);
+  init_gui(&gui);
+  run(&gui, &core);
   destroy_disasm(&core.disasm);
   
   return 0;

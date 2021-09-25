@@ -39,6 +39,7 @@ void pi_write(mem_t* mem, u32 paddr, u32 val) {
       pi->status.reset_controller = true;
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
+      printf("PI DMA from rdram to cart (size: %.2f MiB)\n", (float)len / 1048576);
     } break;
     case 0x0460000C: {
       u32 len = (val & 0x00FFFFFF) + 1;
@@ -52,6 +53,7 @@ void pi_write(mem_t* mem, u32 paddr, u32 val) {
       pi->status.reset_controller = true;
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
+      printf("PI DMA from cart to rdram (size: %.2f MiB)\n", (float)len / 1048576);
     } break;
     case 0x04600010:
     if(val & 0x10) {

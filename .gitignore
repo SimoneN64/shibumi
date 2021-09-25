@@ -5,7 +5,7 @@ roms/
 *.bin
 *.ini
 *.json
-*.log
+log.txt
 .cache/
 vgcore.*
 .vscode/

@@ -8,12 +8,15 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 #set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 #set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 #set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 #find_package(glfw3 3.3 REQUIRED)
 #find_package(OpenGL REQUIRED)
+find_package(SDL2 REQUIRED)
 #add_subdirectory(include/external/nativefiledialog-extended/)
 
 file(GLOB_RECURSE EMU_SRC "src/*.c")
@@ -50,11 +53,13 @@ include_directories(
   #${CMAKE_SOURCE_DIR}/include/external/cimgui/generator/output
 )
 
-#if(WIN32)
+if(WIN32)
 #  set(FLAGS -static glfw OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)
-#else()
+  set(FLAGS -static SDL2main SDL2 gcc stdc++ winpthread winmm version Imm32 Setupapi)
+else()
 #  set(FLAGS pthread glfw OpenGL::GL)
-#endif()
+  set(FLAGS SDL2)
+endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   add_compile_options(-g)
