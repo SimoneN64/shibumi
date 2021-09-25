@@ -12,11 +12,11 @@ typedef int32_t s32;
 typedef int64_t s64;
 
 typedef struct {
-    u64 low, high;
+  u64 low, high;
 } u128;
 
 typedef struct {
-    s64 low, high;
+  s64 low, high;
 } s128;
 
 #define RDRAM_SIZE 0x800000
