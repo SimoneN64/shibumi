@@ -11,13 +11,20 @@ void init_pi(pi_t* pi) {
   pi->wr_len = 0;
 }
 
-u32 pi_read(pi_t* pi, u32 paddr) {
+u32 pi_read(mi_t* mi, pi_t* pi, u32 paddr) {
   switch(paddr) {
     case 0x04600000: return pi->dram_addr;
     case 0x04600004: return pi->cart_addr;
     case 0x04600008: return pi->rd_len;
     case 0x0460000C: return pi->wr_len;
-    case 0x04600010: return pi->status & 7;
+    case 0x04600010: {
+      u32 value = 0;
+      value |= (pi->status & 1); // Is PI DMA active?
+      value |= (0 << 1); // Is PI IO busy?
+      value |= (0 << 2); // PI IO error?
+      value |= (mi->mi_intr.pi << 3); // PI interrupt?
+      return value;
+    }
     default: logfatal("Unhandled PI read (%08X)", paddr);
   }
 }
@@ -39,6 +46,8 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       memcpy(&mem->cart[cart_addr & mem->rom_size], &mem->rdram[dram_addr & RDRAM_DSIZE], len);
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
+      interrupt_raise(mi, regs, PI);
+      pi->status = pi->status & 0xFFFFFFFE;
       printf("PI DMA from rdram to cart (size: %.2f MiB)\n", (float)len / 1048576);
     } break;
     case 0x0460000C: {
@@ -52,6 +61,8 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       memcpy(&mem->rdram[dram_addr & RDRAM_DSIZE], &mem->cart[cart_addr & mem->rom_size], len);
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
+      interrupt_raise(mi, regs, PI);
+      pi->status = pi->status & 0xFFFFFFFE;
       printf("PI DMA from cart to rdram (size: %.2f MiB)\n", (float)len / 1048576);
     } break;
     case 0x04600010:

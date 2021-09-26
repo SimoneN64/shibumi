@@ -4,7 +4,7 @@
 #define ze_imm(x) ((x) & 0xffff)
 
 static inline s64 se_imm(u32 instr) {
-  return (s64)((s16)(instr & 0xffff));
+  return (s64)((s16)instr);
 }
 
 void mtcz(registers_t* regs, u32 instr, u8 index) {
@@ -183,13 +183,15 @@ void jr(registers_t* regs, u32 instr) {
 
 void subu(registers_t* regs, u32 instr) {
   u32 rt = regs->gpr[RT(instr)];
-  u32 result = rt - (u32)regs->gpr[RS(instr)];
+  u32 rs = regs->gpr[RS(instr)];
+  u32 result = rs - rt;
   regs->gpr[RD(instr)] = (s64)((s32)result);
 }
 
 void multu(registers_t* regs, u32 instr) {
-  u64 rt = regs->gpr[RT(instr)];
-  u64 result = rt * (u32)regs->gpr[RS(instr)];
+  u32 rt = regs->gpr[RT(instr)];
+  u32 rs = regs->gpr[RS(instr)];
+  u64 result = (u64)rt * (u64)rs;
   regs->lo = (s64)((s32)result);
   regs->hi = (s64)((s32)(result >> 32));
 }

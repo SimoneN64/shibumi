@@ -96,7 +96,7 @@ u32 read32(mem_t* mem, u32 vaddr) {
     case 0x04000000 ... 0x04000FFF: return *(u32*)&mem->dmem[paddr & DMEM_DSIZE];
     case 0x04001000 ... 0x04001FFF: return *(u32*)&mem->imem[paddr & IMEM_DSIZE];
     case 0x04300000 ... 0x043FFFFF: return mi_read(&mem->mmio.mi, paddr);
-    case 0x04600000 ... 0x046FFFFF: return pi_read(&mem->mmio.pi, paddr);
+    case 0x04600000 ... 0x046FFFFF: return pi_read(&mem->mmio.mi, &mem->mmio.pi, paddr);
     case 0x04700000 ... 0x047FFFFF: return ri_read(&mem->mmio.ri, paddr);
     case 0x04400000 ...	0x044FFFFF: return vi_read(&mem->mmio.vi, paddr);
     case 0x10000000 ... 0x1FBFFFFF: return *(u32*)&mem->cart[paddr & mem->rom_size];

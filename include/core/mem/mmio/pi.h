@@ -12,5 +12,5 @@ typedef struct {
 } pi_t;
 
 void init_pi(pi_t* pi);
-u32 pi_read(pi_t* pi, u32 paddr);
+u32 pi_read(mi_t* mi, pi_t* pi, u32 paddr);
 void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val);
