@@ -5,6 +5,7 @@ roms/
 *.bin
 *.ini
 *.json
+*.sh
 log.txt
 .cache/
 vgcore.*

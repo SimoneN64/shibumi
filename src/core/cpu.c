@@ -8,10 +8,6 @@ void init_cpu(cpu_t *cpu) {
 
 void step(cpu_t *cpu, mem_t *mem) {
   cpu->regs.gpr[0] = 0;
-  if(cpu->regs.pc == 0xFFFFFFFF800000D8) {
-    printf("We got out of that damn loop\n");
-    exit(1);
-  }
   u32 instruction = read32(mem, cpu->regs.pc);
   cpu->regs.old_pc = cpu->regs.pc;
   cpu->regs.pc = cpu->regs.next_pc;

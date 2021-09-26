@@ -139,7 +139,7 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x04300000 ... 0x043FFFFF: mi_write(&mem->mmio.mi, paddr, val); break;
     case 0x04600000 ... 0x046FFFFF: pi_write(mem, regs, paddr, val); break;
     case 0x04700000 ... 0x047FFFFF: ri_write(&mem->mmio.ri, paddr, val); break;
-    case 0x04400000 ...	0x044FFFFF: vi_write(&mem->mmio.vi, paddr, val); break;
+    case 0x04400000 ...	0x044FFFFF: vi_write(&mem->mmio.vi, paddr, val); logfatal("VI write\n"); break;
     case 0x10000000 ... 0x1FBFFFFF: *(u32*)&mem->cart[paddr & mem->rom_size] = val; break;
     case 0x1FC00000 ... 0x1FC007BF: *(u32*)&mem->pif_bootrom[paddr & PIF_BOOTROM_DSIZE] = val; break;
     case 0x1FC007C0 ... 0x1FC007FF: *(u32*)&mem->pif_ram[paddr & PIF_RAM_DSIZE] = val; break;
