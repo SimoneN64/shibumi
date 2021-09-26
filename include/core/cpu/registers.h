@@ -1,7 +1,7 @@
 #pragma once
 #include <common.h>
 
-typedef struct {
+typedef struct registers_t {
   s64 gpr[32];
   s64 cp0[32];
   s64 old_pc, pc, next_pc;

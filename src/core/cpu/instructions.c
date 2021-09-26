@@ -64,7 +64,7 @@ void sw(mem_t* mem, registers_t* regs, u32 instr) {
   }
 
   u32 reg = regs->gpr[RT(instr)];
-  write32(mem, address, reg);
+  write32(mem, regs, address, reg);
 }
 
 void lw(mem_t* mem, registers_t* regs, u32 instr) {

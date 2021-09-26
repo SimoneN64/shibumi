@@ -6,7 +6,7 @@ typedef struct {
   SDL_Window* window;
   SDL_Renderer* renderer;
   SDL_Texture* texture;
-  u32* framebuffer;
+  u32 framebuffer[320 * 240];
 } gui_t;
 
 void init_gui(gui_t* gui);

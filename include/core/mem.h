@@ -18,4 +18,4 @@ u16 read16(mem_t* mem, u32 vaddr);
 u32 read32(mem_t* mem, u32 vaddr);
 void write8(mem_t* mem, u32 vaddr, u8 val);
 void write16(mem_t* mem, u32 vaddr, u16 val);
-void write32(mem_t* mem, u32 vaddr, u32 val);
+void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val);
