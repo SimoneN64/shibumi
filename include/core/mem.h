@@ -2,6 +2,8 @@
 #include <common.h>
 #include <mmio.h>
 #include <stdlib.h>
+#define BYTE_ADDR(x) ((x) ^ 3)
+#define HALF_ADDR(x) ((x) ^ 2)
 
 typedef struct mem_t {
   u8 *cart, *rdram, *sram;

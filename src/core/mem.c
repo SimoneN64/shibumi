@@ -72,8 +72,8 @@ const char* regions_str(u32 paddr) {
 u8 read8(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: return mem->rdram[paddr];
-    case 0x04001000 ... 0x04001FFF: return mem->imem[paddr & IMEM_DSIZE];
+    case 0x00000000 ... 0x007FFFFF: return mem->rdram[BYTE_ADDR(paddr)];
+    case 0x04001000 ... 0x04001FFF: return mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE];
     default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)", regions_str(paddr), paddr);
   }
 }
@@ -82,15 +82,15 @@ u16 read16(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: return *(u16*)&mem->rdram[paddr];
-    case 0x04001000 ... 0x04001FFF: return *(u16*)&mem->imem[paddr & IMEM_DSIZE];
+    case 0x00000000 ... 0x007FFFFF: return *(u16*)&mem->rdram[HALF_ADDR(paddr)];
+    case 0x04001000 ... 0x04001FFF: return *(u16*)&mem->imem[HALF_ADDR(paddr) & IMEM_DSIZE];
     default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)", regions_str(paddr), paddr);
   }
 }
 
 u32 read32(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
-        
+  
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return *(u32*)&mem->rdram[paddr];
     case 0x04000000 ... 0x04000FFF: return *(u32*)&mem->dmem[paddr & DMEM_DSIZE];
@@ -113,8 +113,8 @@ u32 read32(mem_t* mem, u32 vaddr) {
 void write8(mem_t* mem, u32 vaddr, u8 val) {
   u32 paddr = vtp(vaddr);
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: mem->rdram[paddr] = val;
-    case 0x04001000 ... 0x04001FFF: mem->imem[paddr & IMEM_DSIZE] = val;
+    case 0x00000000 ... 0x007FFFFF: mem->rdram[BYTE_ADDR(paddr)] = val;
+    case 0x04001000 ... 0x04001FFF: mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val;
     default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)", regions_str(paddr), paddr);
   }
 }
@@ -123,8 +123,8 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   u32 paddr = vtp(vaddr);
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: *(u16*)&mem->rdram[paddr] = val;
-    case 0x04001000 ... 0x04001FFF: *(u16*)&mem->imem[paddr & IMEM_DSIZE] = val;
+    case 0x00000000 ... 0x007FFFFF: *(u16*)&mem->rdram[HALF_ADDR(paddr)] = val;
+    case 0x04001000 ... 0x04001FFF: *(u16*)&mem->imem[HALF_ADDR(paddr) & IMEM_DSIZE] = val;
     default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)", regions_str(paddr), paddr);
   }
 }
