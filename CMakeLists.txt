@@ -42,6 +42,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include/core/mem/
   ${CMAKE_SOURCE_DIR}/include/core/mem/mmio/
   ${CMAKE_SOURCE_DIR}/include/core/cpu/
+  ${CMAKE_SOURCE_DIR}/include/core/cpu/registers/
   #${CMAKE_SOURCE_DIR}/include/core/scheduler/
   #${CMAKE_SOURCE_DIR}/include/external/
   #${CMAKE_SOURCE_DIR}/include/external/glad/include/

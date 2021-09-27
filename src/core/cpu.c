@@ -13,8 +13,18 @@ void step(cpu_t *cpu, mem_t *mem) {
   cpu->regs.pc = cpu->regs.next_pc;
   cpu->regs.next_pc += 4;
   exec(cpu, mem, instruction);
-  if(((cpu->regs.cp0[12] >> 8) & 0xFF) != 0) {
-    logfatal("Fire interrupts!\n");
+  bool interrupts_pending = (cpu->regs.cp0.Status.im & cpu->regs.cp0.Cause.ip.raw) != 0;
+  bool interrupts_enabled = cpu->regs.cp0.Status.ie == 1;
+  bool currently_handling_exception = cpu->regs.cp0.Status.exl == 1;
+  bool currently_handling_error = cpu->regs.cp0.Status.erl == 1;
+
+  bool should_service_interrupt = interrupts_pending
+                                      && interrupts_enabled
+                                      && !currently_handling_exception
+                                      && !currently_handling_error;
+
+  if(should_service_interrupt) {
+    logfatal("Should service interrupt!\n");
   }
 }
 
@@ -66,9 +76,9 @@ void special(cpu_t *cpu, mem_t *mem, u32 instr) {
     case 0x20: add(regs, instr); break;
     case 0x21: addu(regs, instr); break;
     case 0x23: subu(regs, instr); break;
-    case 0x24: and(regs, instr); break;
-    case 0x25: or(regs, instr); break;
-    case 0x26: xor(regs, instr); break;
+    case 0x24: and_(regs, instr); break;
+    case 0x25: or_(regs, instr); break;
+    case 0x26: xor_(regs, instr); break;
     case 0x2A: slt(regs, instr); break;
     case 0x2B: sltu(regs, instr); break;
     default: logfatal("[CPU ERR] Unimplemented special instruction %08X, PC: %08X%08X\n", instr, (u32)(regs->old_pc >> 32), (u32)regs->old_pc);

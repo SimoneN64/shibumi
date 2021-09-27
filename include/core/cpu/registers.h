@@ -1,9 +1,9 @@
 #pragma once
-#include <common.h>
+#include <cop0.h>
 
 typedef struct registers_t {
   s64 gpr[32];
-  s64 cp0[32];
+  cop0_t cp0;
   s64 old_pc, pc, next_pc;
   s64 hi, lo;
 } registers_t;

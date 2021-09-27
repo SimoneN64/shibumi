@@ -10,7 +10,7 @@ static inline s64 se_imm(u32 instr) {
 void mtcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
   case 0:
-    regs->cp0[RD(instr)] = regs->gpr[RT(instr)];
+    ((s64*)&regs->cp0)[RD(instr)] = regs->gpr[RT(instr)];
     break;
   case 1:
     logfatal("Unimplemented MTC1");
@@ -22,6 +22,20 @@ void mtcz(registers_t* regs, u32 instr, u8 index) {
 
 void lui(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = se_imm(instr) << 16;
+}
+
+void add(registers_t* regs, u32 instr) {
+  u32 rs = regs->gpr[RS(instr)];
+  u32 rt = regs->gpr[RT(instr)];
+  u32 result = rs + rt;
+  regs->gpr[RD(instr)] = (s64)((s32)result);
+}
+
+void addu(registers_t* regs, u32 instr) {
+  u32 rs = regs->gpr[RS(instr)];
+  u32 rt = regs->gpr[RT(instr)];
+  u32 result = rs + rt;
+  regs->gpr[RD(instr)] = (s64)((s32)result);
 }
 
 void addiu(registers_t* regs, u32 instr) {
@@ -58,18 +72,18 @@ void bl(registers_t* regs, u32 instr, bool cond) {
 
 void sw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  s64 address = rs + se_imm(instr);
+  u32 address = rs + (s32)((s16)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
-
+  
   u32 reg = regs->gpr[RT(instr)];
   write32(mem, regs, address, reg);
 }
 
 void lw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + se_imm(instr);
+  u32 address = rs + (s32)((s16)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
@@ -79,13 +93,13 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
 
 void sb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address =  rs + se_imm(instr);
+  u32 address = rs + (s32)((s16)instr);
   write8(mem, address, regs->gpr[RT(instr)]);
 }
 
 void lbu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address =  rs + se_imm(instr);
+  u32 address = rs + (s32)((s16)instr);
   regs->gpr[RT(instr)] = read8(mem, address);
 }
 
@@ -93,39 +107,27 @@ void ori(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] | ze_imm(instr);
 }
 
-void or(registers_t* regs, u32 instr) {
+void or_(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = regs->gpr[RS(instr)] | regs->gpr[RT(instr)];
 }
 
 void jal(registers_t* regs, u32 instr) {
   regs->gpr[31] = regs->pc + 4;
-  u32 target = (instr & 0x3ffffff) << 2;
-  u32 combined = ((regs->old_pc) & 0xF0000000) | target;
+  s64 target = (instr & 0x3ffffff) << 2;
+  s64 combined = (regs->old_pc & ~0xfffffff) | target;
   branch(regs, true, combined);
 }
 
 void slti(registers_t* regs, u32 instr) {
-  if (regs->gpr[RS(instr)] < se_imm(instr)) {
-    regs->gpr[RT(instr)] = 1;
-  } else {
-    regs->gpr[RT(instr)] = 0;
-  }
+  regs->gpr[RT(instr)] = regs->gpr[RS(instr)] < se_imm(instr);
 }
 
 void slt(registers_t* regs, u32 instr) {
-  if (regs->gpr[RS(instr)] < regs->gpr[RT(instr)]) {
-    regs->gpr[RD(instr)] = 1;
-  } else {
-    regs->gpr[RD(instr)] = 0;
-  }
+  regs->gpr[RD(instr)] = regs->gpr[RS(instr)] < regs->gpr[RT(instr)];
 }
 
 void sltu(registers_t* regs, u32 instr) {
-  if ((u64)regs->gpr[RS(instr)] < (u64)regs->gpr[RT(instr)]) {
-    regs->gpr[RD(instr)] = 1;
-  } else {
-    regs->gpr[RD(instr)] = 0;
-  }
+  regs->gpr[RD(instr)] = (u64)regs->gpr[RS(instr)] < (u64)regs->gpr[RT(instr)];
 }
 
 void srlv(registers_t* regs, u32 instr) {
@@ -147,7 +149,7 @@ void xori(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] ^ imm;
 }
 
-void xor(registers_t* regs, u32 instr) {
+void xor_(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = regs->gpr[RT(instr)] ^ regs->gpr[RS(instr)];
 }
 
@@ -156,7 +158,7 @@ void andi(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] & imm;
 }
 
-void and(registers_t* regs, u32 instr) {
+void and_(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = regs->gpr[RS(instr)] & regs->gpr[RT(instr)];
 }
 
@@ -202,16 +204,4 @@ void mflo(registers_t* regs, u32 instr) {
 
 void mfhi(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = regs->hi;
-}
-
-void addu(registers_t* regs, u32 instr) {
-  u32 rt = regs->gpr[RT(instr)];
-  u32 result = rt + regs->gpr[RS(instr)];
-  regs->gpr[RD(instr)] = (s64)((s32)result);
-}
-
-void add(registers_t* regs, u32 instr) {
-  u32 rs = regs->gpr[RS(instr)];
-  u32 sum = rs + regs->gpr[RT(instr)];
-  regs->gpr[RD(instr)] = (s64)((s32)sum);
 }
