@@ -43,7 +43,7 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
         len -= dram_addr & 0x7;
       }
       pi->rd_len = len;
-      memcpy(&mem->cart[cart_addr & mem->rom_size], &mem->rdram[dram_addr & RDRAM_DSIZE], len);
+      memcpy(&mem->cart[cart_addr & mem->rom_mask], &mem->rdram[dram_addr & RDRAM_DSIZE], len);
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
       interrupt_raise(mi, regs, PI);
@@ -58,7 +58,7 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
         len -= dram_addr & 0x7;
       }
       pi->wr_len = len;
-      memcpy(&mem->rdram[dram_addr & RDRAM_DSIZE], &mem->cart[cart_addr & mem->rom_size], len);
+      memcpy(&mem->rdram[dram_addr & RDRAM_DSIZE], &mem->cart[cart_addr & mem->rom_mask], len);
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
       interrupt_raise(mi, regs, PI);

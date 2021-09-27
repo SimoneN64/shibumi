@@ -4,12 +4,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <utils/swap.h>
+#include <utils/bit.h>
 
 void init_mem(mem_t* mem) {
-  mem->rdram = malloc(0x800000);
-  mem->sram = malloc(0x8000000);
-  memset(mem->rdram, 0, RDRAM_SIZE);
-  memset(mem->sram, 0, SRAM_SIZE);
+  mem->rdram = calloc(RDRAM_SIZE, 1);
+  mem->sram = calloc(SRAM_SIZE, 1);
   memset(mem->dmem, 0, DMEM_SIZE);
   memset(mem->imem, 0, IMEM_SIZE);
   memset(mem->pif_ram, 0, PIF_RAM_SIZE);
@@ -24,11 +23,14 @@ void load_rom(const char* path, mem_t* mem) {
   }
 
   fseek(fp, 0, SEEK_END);
-  size_t rom_size = ftell(fp);
-  mem->rom_size = rom_size; 
+  size_t rom_file_size = ftell(fp);
+  size_t rom_size = next_pow_2(rom_file_size);
+  mem->rom_mask = rom_size - 1; 
   fseek(fp, 0, SEEK_SET);
-  mem->cart = malloc(rom_size);
-  if(fread(mem->cart, 1, rom_size, fp) != rom_size) {
+  
+  mem->cart = calloc(rom_size, 1);
+  
+  if(fread(mem->cart, 1, rom_file_size, fp) != rom_file_size) {
     logfatal("Failed to load rom\n");
   }
 
@@ -74,7 +76,7 @@ u8 read8(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return mem->rdram[BYTE_ADDR(paddr)];
     case 0x04001000 ... 0x04001FFF: return mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE];
-    default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
@@ -84,7 +86,7 @@ u16 read16(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return *(u16*)&mem->rdram[HALF_ADDR(paddr)];
     case 0x04001000 ... 0x04001FFF: return *(u16*)&mem->imem[HALF_ADDR(paddr) & IMEM_DSIZE];
-    default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
@@ -99,14 +101,14 @@ u32 read32(mem_t* mem, u32 vaddr) {
     case 0x04400000 ...	0x044FFFFF: return vi_read(&mem->mmio.vi, paddr);
     case 0x04600000 ... 0x046FFFFF: return pi_read(&mem->mmio.mi, &mem->mmio.pi, paddr);
     case 0x04700000 ... 0x047FFFFF: return ri_read(&mem->mmio.ri, paddr);
-    case 0x10000000 ... 0x1FBFFFFF: return *(u32*)&mem->cart[paddr & mem->rom_size];
+    case 0x10000000 ... 0x1FBFFFFF: return *(u32*)&mem->cart[paddr & mem->rom_mask];
     case 0x1FC00000 ... 0x1FC007BF: return *(u32*)&mem->pif_bootrom[paddr & PIF_BOOTROM_DSIZE];
     case 0x1FC007C0 ... 0x1FC007FF: return *(u32*)&mem->pif_ram[paddr & PIF_RAM_DSIZE];
-    // case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
-    // case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
-    // case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
-    // case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logfatal("[ERR] Unimplemented %s 32-bit read (%08X)", regions_str(paddr), paddr);
+    case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
+    case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
+    case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
+    case 0x1FC00800 ... 0x7FFFFFFF: return 0;
+    default: logfatal("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
@@ -115,7 +117,7 @@ void write8(mem_t* mem, u32 vaddr, u8 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: mem->rdram[BYTE_ADDR(paddr)] = val;
     case 0x04001000 ... 0x04001FFF: mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val;
-    default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
@@ -125,13 +127,13 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: *(u16*)&mem->rdram[HALF_ADDR(paddr)] = val;
     case 0x04001000 ... 0x04001FFF: *(u16*)&mem->imem[HALF_ADDR(paddr) & IMEM_DSIZE] = val;
-    default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
 void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
   u32 paddr = vtp(vaddr);
-        
+  
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: *(u32*)&mem->rdram[paddr] = val; break;
     case 0x04000000 ... 0x04000FFF: *(u32*)&mem->dmem[paddr & DMEM_DSIZE] = val; break;
@@ -140,13 +142,11 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x04400000 ...	0x044FFFFF: vi_write(&mem->mmio.vi, paddr, val); logfatal("VI write\n"); break;
     case 0x04600000 ... 0x046FFFFF: pi_write(mem, regs, paddr, val); break;
     case 0x04700000 ... 0x047FFFFF: ri_write(&mem->mmio.ri, paddr, val); break;
-    case 0x10000000 ... 0x1FBFFFFF: *(u32*)&mem->cart[paddr & mem->rom_size] = val; break;
-    case 0x1FC00000 ... 0x1FC007BF: *(u32*)&mem->pif_bootrom[paddr & PIF_BOOTROM_DSIZE] = val; break;
     case 0x1FC007C0 ... 0x1FC007FF: *(u32*)&mem->pif_ram[paddr & PIF_RAM_DSIZE] = val; break;
-    // case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
-    // case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
-    // case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
-    // case 0x1FC00800 ... 0x7FFFFFFF: break;
-    default: logfatal("[ERR] Unimplemented %s 32-bit read (%08X)", regions_str(paddr), paddr);
+    case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
+    case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
+    case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
+    case 0x1FC00800 ... 0x7FFFFFFF: break;
+    default: logfatal("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
