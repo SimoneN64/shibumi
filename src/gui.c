@@ -19,9 +19,8 @@ void run(gui_t* gui, core_t* core) {
     run_core(core);
 
     u32 origin = core->mem.mmio.vi.origin & 0xFFFFFF;
-    u32 len = 320 * 240 * 4 - origin;
     
-    memcpy(gui->framebuffer, &core->mem.rdram[origin], len);
+    memcpy(gui->framebuffer, &core->mem.rdram[origin & RDRAM_DSIZE], 320 * 240 * 4);
     SDL_UpdateTexture(gui->texture, NULL, gui->framebuffer, 320 * 4);
     SDL_RenderCopy(gui->renderer, gui->texture, NULL, NULL);
     SDL_RenderPresent(gui->renderer);

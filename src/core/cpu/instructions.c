@@ -44,6 +44,12 @@ void addiu(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = (s64)((s32)(reg + imm));
 }
 
+void daddiu(registers_t* regs, u32 instr) {
+  s64 reg = regs->gpr[RS(instr)];
+  s64 imm = se_imm(instr);
+  regs->gpr[RT(instr)] = reg + imm;
+}
+
 void branch(registers_t* regs, bool cond, s64 address) {
   if (cond) {
     regs->next_pc = address;
@@ -91,6 +97,16 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = (s64)((s32)read32(mem, address));
 }
 
+void lwu(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 rs = regs->gpr[RS(instr)];
+  u32 address = rs + (s32)((s16)instr);
+  if ((address & 3) != 0) {
+    logfatal("Unaligned access that shouldn't have happened");
+  }
+
+  regs->gpr[RT(instr)] = read32(mem, address);
+}
+
 void sb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
   u32 address = rs + (s32)((s16)instr);
@@ -116,6 +132,11 @@ void jal(registers_t* regs, u32 instr) {
   s64 target = (instr & 0x3ffffff) << 2;
   s64 combined = (regs->old_pc & ~0xfffffff) | target;
   branch(regs, true, combined);
+}
+
+void jalr(registers_t* regs, u32 instr) {
+  regs->gpr[RD(instr)] = regs->pc + 4;
+  branch(regs, true, regs->gpr[RS(instr)]);
 }
 
 void slti(registers_t* regs, u32 instr) {
@@ -174,10 +195,20 @@ void srl(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = (s64)((s32)(low >> sa));
 }
 
+void j(registers_t* regs, u32 instr) {
+  u32 target = (instr & 0x3ffffff) << 2;
+  u32 address = (regs->old_pc & ~0xfffffff) | target;
+  if ((address & 3) != 0) {
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %08X)\n", instr, address);
+  }
+  
+  branch(regs, true, address);
+}
+
 void jr(registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)];
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %08X)\n", instr, address);
   }
   
   branch(regs, true, address);

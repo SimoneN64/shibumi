@@ -8,6 +8,7 @@ typedef struct {
 
 void init_cpu(cpu_t* cpu);
 void step(cpu_t* cpu, mem_t* mem);
-void exec(cpu_t* cpu, mem_t* mem, u32 instr);
-void special(cpu_t* cpu, mem_t* mem, u32 instr);
-void regimm(cpu_t* cpu, mem_t* mem, u32 instr);
+void handle_interrupt(cpu_t* cpu, mem_t* mem);
+void exec(registers_t* regs, mem_t* mem, u32 instr);
+void special(registers_t* regs, mem_t* mem, u32 instr);
+void regimm(registers_t* regs, mem_t* mem, u32 instr);
