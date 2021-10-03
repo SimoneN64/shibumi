@@ -56,6 +56,7 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
       sll(regs, instr);
     }
     break;
+    case 0x0F: break;
     case 0x02: srl(regs, instr); break;
     case 0x04: sllv(regs, instr); break;
     case 0x06: srlv(regs, instr); break;

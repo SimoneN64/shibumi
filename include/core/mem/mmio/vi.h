@@ -1,8 +1,25 @@
 #pragma once
 #include <common.h>
 
+enum VI_FORMAT {
+  blank = 0,
+  reserved = 1,
+  f5553 = 2,
+  f8888 = 3
+};
+
+typedef union {
+  struct {
+    unsigned format:2;
+    unsigned remaining:30; // TODO: This is a stub
+  };
+
+  u32 raw;
+} status_t;
+
 typedef struct {
-  u32 status, origin, width, current;
+  status_t status;
+  u32 origin, width, current;
   u32 vsync, hsync;
 } vi_t;
 

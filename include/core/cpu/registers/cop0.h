@@ -49,13 +49,13 @@ typedef union {
   };
 
   u32 raw;
-} status_t;
+} cop0_status_t;
 
 typedef struct {
   s64 Index, Random, EntryLo0, EntryLo1, Context;
   s64 PageMask, Wired, r7, BadVaddr, Count, EntryHi;
   s64 Compare;
-  status_t Status;
+  cop0_status_t Status;
   cause_t Cause;
   s64 EPC, PRId, Config, LLAddr, WatchLo, WatchHi, XContext;
   s64 r21, r22, r23, r24, r25, ParityError, CacheError, TagLo, TagHi;

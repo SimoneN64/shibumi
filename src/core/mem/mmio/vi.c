@@ -2,7 +2,7 @@
 #include <log.h>
 
 void init_vi(vi_t* vi) {
-  vi->status = 0xF;
+  vi->status.raw = 0xF;
   vi->origin = 0;
   vi->width = 320;
   vi->current = 0;
@@ -12,7 +12,7 @@ void init_vi(vi_t* vi) {
 
 u32 vi_read(vi_t* vi, u32 paddr) {
   switch(paddr) {
-    case 0x04400000: return vi->status;
+    case 0x04400000: return vi->status.raw;
     case 0x04400004: return vi->origin;
     case 0x04400008: return vi->width;
     case 0x04400010: return vi->current;
@@ -24,7 +24,7 @@ u32 vi_read(vi_t* vi, u32 paddr) {
 
 void vi_write(vi_t* vi, u32 paddr, u32 val) {
   switch(paddr) {
-    case 0x04400000: vi->status = val; break;
+    case 0x04400000: vi->status.raw = val; break;
     case 0x04400004: vi->origin = val; break;
     case 0x04400008: vi->width = val; break;
     case 0x04400010: vi->current = val; break;
