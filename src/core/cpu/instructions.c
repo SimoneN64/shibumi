@@ -20,6 +20,19 @@ void mtcz(registers_t* regs, u32 instr, u8 index) {
   }
 }
 
+void mfcz(registers_t* regs, u32 instr, u8 index) {
+  switch(index) {
+  case 0:
+    regs->gpr[RT(instr)] = ((s64*)&regs->cp0)[RD(instr)];
+    break;
+  case 1:
+    logfatal("Unimplemented MTC1");
+    break;
+  default:
+    logfatal("Invalid MTC%d", index);
+  }
+}
+
 void lui(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = se_imm(instr) << 16;
 }

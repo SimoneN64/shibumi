@@ -33,7 +33,16 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x0D: ori(regs, instr); break;
   case 0x0E: xori(regs, instr); break;
   case 0x0F: lui(regs, instr); break;
-  case 0x10: mtcz(regs, instr, (instr >> 26) & 3); break;
+  case 0x10: {
+    if(((instr >> 21) & 0x1F) == 4) {
+      mtcz(regs, instr, (instr >> 26) & 3);
+    } else if (((instr >> 21) & 0x1F) == 0) {
+      mfcz(regs, instr, (instr >> 26) & 3);
+    } else {
+      logfatal("Unimplemented control registers transfer %d\n", (instr >> 21) & 0x1F);
+    }
+  } break;
+  case 0x11: logfatal("Unimplemented FPU instructions!\n"); // 0100'0100'0100'0010'1111'1000'0000'0000 // 0001'0001
   case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
   case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
   case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;

@@ -3,6 +3,7 @@
 #include <mem.h>
 
 void mtcz(registers_t* regs, u32 instr, u8 index);
+void mfcz(registers_t* regs, u32 instr, u8 index);
 void lui(registers_t* regs, u32 instr);
 void addiu(registers_t* regs, u32 instr);
 void daddiu(registers_t* regs, u32 instr);
