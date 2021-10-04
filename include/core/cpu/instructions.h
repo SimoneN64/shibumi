@@ -4,6 +4,8 @@
 
 void mtcz(registers_t* regs, u32 instr, u8 index);
 void mfcz(registers_t* regs, u32 instr, u8 index);
+void cfcz(registers_t* regs, u32 instr, u8 index);
+void ctcz(registers_t* regs, u32 instr, u8 index);
 void lui(registers_t* regs, u32 instr);
 void addiu(registers_t* regs, u32 instr);
 void daddiu(registers_t* regs, u32 instr);
@@ -11,11 +13,13 @@ void branch(registers_t* regs, bool cond, s64 address);
 void branch_likely(registers_t* regs, bool cond, s64 address);
 void b(registers_t* regs, u32 instr, bool cond);
 void bl(registers_t* regs, u32 instr, bool cond);
-void sw(mem_t* mem, registers_t* regs, u32 instr);
+void lbu(mem_t* mem, registers_t* regs, u32 instr);
+void lh(mem_t* mem, registers_t* regs, u32 instr);
 void lw(mem_t* mem, registers_t* regs, u32 instr);
 void lwu(mem_t* mem, registers_t* regs, u32 instr);
 void sb(mem_t* mem, registers_t* regs, u32 instr);
-void lbu(mem_t* mem, registers_t* regs, u32 instr);
+void sh(mem_t* mem, registers_t* regs, u32 instr);
+void sw(mem_t* mem, registers_t* regs, u32 instr);
 void ori(registers_t* regs, u32 instr);
 void or_(registers_t* regs, u32 instr);
 void jal(registers_t* regs, u32 instr);

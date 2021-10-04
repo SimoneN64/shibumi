@@ -25,7 +25,15 @@ u32 pi_read(mi_t* mi, pi_t* pi, u32 paddr) {
       value |= (mi->mi_intr.pi << 3); // PI interrupt?
       return value;
     }
-    default: logfatal("Unhandled PI read (%08X)", paddr);
+    case 0x04600014: return pi->stub[0];
+    case 0x04600018: return pi->stub[1];
+    case 0x0460001C: return pi->stub[2];
+    case 0x04600020: return pi->stub[3];
+    case 0x04600024: return pi->stub[4];
+    case 0x04600028: return pi->stub[5];
+    case 0x0460002C: return pi->stub[6];
+    case 0x04600030: return pi->stub[7];
+    default: logfatal("Unhandled PI read (%08X)\n", paddr);
   }
 }
 
@@ -68,8 +76,15 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
     case 0x04600010:
     if(val & 2) {
       interrupt_lower(mi, regs, PI);
-    }
-    break;
-    default: logfatal("Unhandled PI write (%08X)(%08X)", val, paddr);
+    } break;
+    case 0x04600014: pi->stub[0] = val & 0xff; break;
+    case 0x04600018: pi->stub[1] = val & 0xff; break;
+    case 0x0460001C: pi->stub[2] = val & 0xff; break;
+    case 0x04600020: pi->stub[3] = val & 0xff; break;
+    case 0x04600024: pi->stub[4] = val & 0xff; break;
+    case 0x04600028: pi->stub[5] = val & 0xff; break;
+    case 0x0460002C: pi->stub[6] = val & 0xff; break;
+    case 0x04600030: pi->stub[7] = val & 0xff; break;
+    default: logfatal("Unhandled PI write (%08X)(%08X)\n", val, paddr);
   }
 }

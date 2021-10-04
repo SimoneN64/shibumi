@@ -1,5 +1,6 @@
 #include <instructions.h>
 #include <utils.h>
+#include <assert.h>
 
 #define ze_imm(x) ((x) & 0xffff)
 
@@ -13,7 +14,7 @@ void mtcz(registers_t* regs, u32 instr, u8 index) {
     ((s64*)&regs->cp0)[RD(instr)] = regs->gpr[RT(instr)];
     break;
   case 1:
-    logfatal("Unimplemented MTC1");
+    ((s64*)&regs->cp1)[RD(instr)] = regs->gpr[RT(instr)];
     break;
   default:
     logfatal("Invalid MTC%d", index);
@@ -26,10 +27,34 @@ void mfcz(registers_t* regs, u32 instr, u8 index) {
     regs->gpr[RT(instr)] = ((s64*)&regs->cp0)[RD(instr)];
     break;
   case 1:
-    logfatal("Unimplemented MTC1");
+    regs->gpr[RT(instr)] = ((s64*)&regs->cp1)[RD(instr)];
     break;
   default:
-    logfatal("Invalid MTC%d", index);
+    logfatal("Invalid MFC%d", index);
+  }
+}
+
+void cfcz(registers_t* regs, u32 instr, u8 index) {
+  switch(index) {
+  case 1: {
+    u8 rd = RD(instr);
+    assert(rd == 0 || rd == 31);
+    regs->gpr[RT(instr)] = ((s64*)&regs->cp1.fcr)[rd];
+  } break;
+  default:
+    logfatal("Invalid CFC%d", index);
+  }
+}
+
+void ctcz(registers_t* regs, u32 instr, u8 index) {
+  switch(index) {
+  case 1: {
+    u8 rd = RD(instr);
+    assert(rd == 0 || rd == 31);
+    ((s64*)&regs->cp1.fcr)[rd] = regs->gpr[RT(instr)];
+  } break;
+  default:
+    logfatal("Invalid CTC%d", index);
   }
 }
 
@@ -89,9 +114,20 @@ void bl(registers_t* regs, u32 instr, bool cond) {
   branch_likely(regs, cond, address);
 }
 
+void sh(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 rs = regs->gpr[RS(instr)];
+  u32 address = rs + (s64)((s16)instr);
+  if ((address & 1) != 0) {
+    logfatal("Unaligned access that shouldn't have happened");
+  }
+
+  u16 reg = regs->gpr[RT(instr)];
+  write16(mem, address, reg);
+}
+
 void sw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + (s32)((s16)instr);
+  u32 address = rs + (s64)((s16)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
@@ -100,9 +136,19 @@ void sw(mem_t* mem, registers_t* regs, u32 instr) {
   write32(mem, regs, address, reg);
 }
 
+void lh(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 rs = regs->gpr[RS(instr)];
+  u32 address = rs + (s64)((s16)instr);
+  if ((address & 1) != 0) {
+    logfatal("Unaligned access that shouldn't have happened");
+  }
+
+  regs->gpr[RT(instr)] = (s64)((s16)read16(mem, address));
+}
+
 void lw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + (s32)((s16)instr);
+  u32 address = rs + (s64)((s16)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
@@ -112,7 +158,7 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
 
 void lwu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + (s32)((s16)instr);
+  u32 address = rs + (s64)((s16)instr);
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
@@ -122,13 +168,13 @@ void lwu(mem_t* mem, registers_t* regs, u32 instr) {
 
 void sb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + (s32)((s16)instr);
+  u32 address = rs + (s64)((s16)instr);
   write8(mem, address, regs->gpr[RT(instr)]);
 }
 
 void lbu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 rs = regs->gpr[RS(instr)];
-  u32 address = rs + (s32)((s16)instr);
+  u32 address = rs + (s64)((s16)instr);
   regs->gpr[RT(instr)] = read8(mem, address);
 }
 

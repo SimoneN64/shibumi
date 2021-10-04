@@ -26,6 +26,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x03: jal(regs, instr); break;
   case 0x04: b(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
   case 0x05: b(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
+  case 0x06: b(regs, instr, regs->gpr[RS(instr)] <= 0); break;
   case 0x08: addiu(regs, instr); break;
   case 0x09: addiu(regs, instr); break;
   case 0x0A: slti(regs, instr); break;
@@ -34,22 +35,27 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x0E: xori(regs, instr); break;
   case 0x0F: lui(regs, instr); break;
   case 0x10 ... 0x13: {
-    if(((instr >> 21) & 0x1F) == 4) {
-      mtcz(regs, instr, (instr >> 26) & 3);
-    } else if (((instr >> 21) & 0x1F) == 0) {
-      mfcz(regs, instr, (instr >> 26) & 3);
-    } else {
-      logfatal("Unimplemented control registers transfer %d\n", (instr >> 21) & 0x1F);
+    u8 cop_number = (instr >> 26) & 3;
+    u8 op_type = (instr >> 21) & 0x1F;
+    switch(op_type) {
+      case 0: mfcz(regs, instr, cop_number); break;
+      case 2: cfcz(regs, instr, cop_number); break;
+      case 4: mtcz(regs, instr, cop_number); break;
+      case 6: ctcz(regs, instr, cop_number); break;
+      default: logfatal("Unimplemented control registers transfer %02X (%08X) (%08X%08X)\n", 
+                        (instr >> 21) & 0x1F, instr, (u32)(regs->pc >> 32), (u32)regs->pc);
     }
   } break;
   case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
   case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
   case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
   case 0x18: daddiu(regs, instr); break;
+  case 0x21: lh(mem, regs, instr); break;
   case 0x23: lw(mem, regs, instr); break;
   case 0x24: lbu(mem, regs, instr); break;
   case 0x27: lwu(mem, regs, instr); break;
   case 0x28: sb(mem, regs, instr); break;
+  case 0x29: sh(mem, regs, instr); break;
   case 0x2B: sw(mem, regs, instr); break;
   case 0x2F: break;
   default: logfatal("[CPU ERR] Unimplemented instruction %08X, PC: %08X%08X\n", bswap_32(instr), (u32)(regs->old_pc >> 32), (u32)regs->old_pc);

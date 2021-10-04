@@ -30,26 +30,28 @@ void run(gui_t* gui, core_t* core) {
 void update_framebuffer(gui_t* gui, core_t* core, u32* old_w, u32* old_h, u8* old_format) {
   u32 w = core->mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = core->mem.mmio.vi.origin & 0xFFFFFF;
-  bool res_changed = *old_w != w || *old_h != h;
-  bool format_changed = core->mem.mmio.vi.status.format != *old_format;
+  bool res_changed = (*old_w) != w || (*old_h) != h;
+  bool format_changed = core->mem.mmio.vi.status.format != (*old_format);
   SDL_PixelFormatEnum format = SDL_PIXELFORMAT_RGBA8888;
   u8 depth = 4;
+
+  if(res_changed) {
+    (*old_w) = w;
+    (*old_h) = h;
+    SDL_RenderSetLogicalSize(gui->renderer, w, h);
+  }
+
   if(format_changed) {
-    *old_format = core->mem.mmio.vi.status.format;
-    if(*old_format == f5553) {
+    (*old_format) = core->mem.mmio.vi.status.format;
+    if((*old_format) == f5553) {
       format = SDL_PIXELFORMAT_RGBA5551; // Treat as 5551
       depth = 2;
       SDL_DestroyTexture(gui->texture);
       gui->texture = SDL_CreateTexture(gui->renderer, format, SDL_TEXTUREACCESS_STREAMING, w, h);
     }
   }
-
-  if(res_changed) {
-    *old_w = w;
-    *old_h = h;
-    SDL_RenderSetLogicalSize(gui->renderer, w, h);
-    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
-  }
+  
+  gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
 
   memcpy(gui->framebuffer, &core->mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
   SDL_UpdateTexture(gui->texture, NULL, gui->framebuffer, w * depth);

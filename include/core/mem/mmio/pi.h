@@ -9,6 +9,7 @@ typedef struct {
   u32 dram_addr, cart_addr;
   u32 rd_len, wr_len;
   u32 status;
+  u32 stub[8];
 } pi_t;
 
 void init_pi(pi_t* pi);

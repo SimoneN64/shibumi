@@ -108,15 +108,15 @@ u32 read32(mem_t* mem, u32 vaddr) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logdebug("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr);
+    default: logdebug("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr); return 0;
   }
 }
 
 void write8(mem_t* mem, u32 vaddr, u8 val) {
   u32 paddr = vtp(vaddr);
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: mem->rdram[BYTE_ADDR(paddr)] = val;
-    case 0x04001000 ... 0x04001FFF: mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val;
+    case 0x00000000 ... 0x007FFFFF: mem->rdram[BYTE_ADDR(paddr)] = val; break;
+    case 0x04001000 ... 0x04001FFF: mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val; break;
     default: logfatal("[ERR] Unimplemented %s 8-bit write (%08X)\n", regions_str(paddr), paddr);
   }
 }
@@ -125,8 +125,8 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   u32 paddr = vtp(vaddr);
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: *(u16*)&mem->rdram[HALF_ADDR(paddr)] = val;
-    case 0x04001000 ... 0x04001FFF: *(u16*)&mem->imem[HALF_ADDR(paddr) & IMEM_DSIZE] = val;
+    case 0x00000000 ... 0x007FFFFF: *(u16*)&mem->rdram[HALF_ADDR(paddr)] = val; break;
+    case 0x04001000 ... 0x04001FFF: *(u16*)&mem->imem[HALF_ADDR(paddr) & IMEM_DSIZE] = val; break;
     default: logfatal("[ERR] Unimplemented %s 16-bit write (%08X)\n", regions_str(paddr), paddr);
   }
 }
