@@ -16,7 +16,7 @@ void init_mem(mem_t* mem) {
   init_mmio(&mem->mmio);
 }
 
-void load_rom(const char* path, mem_t* mem) {
+void load_rom(mem_t* mem, const char* path) {
   FILE* fp = fopen(path, "rb");
   if(fp == NULL) {
     logfatal("Failed to open rom %s\n", path);

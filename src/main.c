@@ -2,17 +2,12 @@
 #include <stdio.h>
 #include <log.h>
 
-int main(int argc, const char* argv[]) {
-  if(argc < 2) {
-    logfatal("Please pass a valid Nintendo 64 rom as an argument.\nUsage: ./shibumi [rom]\n");
-  }
-
-  core_t core;
+int main() {
   gui_t gui;
-  init_core(&core, argv[1]);
-  init_gui(&gui);
-  run(&gui, &core);
-  destroy_disasm(&core.disasm);
+  init_gui(&gui, "渋味");
+
+  main_loop(&gui);
   
+  destroy_gui(&gui);
   return 0;
 }
