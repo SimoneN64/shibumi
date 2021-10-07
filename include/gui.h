@@ -41,7 +41,7 @@ typedef struct {
   atomic_bool emu_quit;
   core_t core;
   disasm_t debugger;
-  u8* framebuffer;
+  u32* framebuffer;
 } gui_t;
 
 void init_gui(gui_t* gui, const char* title);
@@ -52,4 +52,4 @@ void main_menubar(gui_t* gui);
 void debugger_window(gui_t* gui);
 void disassembly(gui_t* gui);
 void registers_view(gui_t* gui);
-void update_texture(gui_t* gui);
+void update_texture(gui_t* gui, u32* old_w, u32* old_h);

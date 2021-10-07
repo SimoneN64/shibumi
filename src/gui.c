@@ -62,15 +62,15 @@ void init_gui(gui_t* gui, const char* title) {
   init_core(&gui->core);
   init_disasm(&gui->debugger);
 
-  gui->framebuffer = malloc(320 * 240 * 4);
+  gui->framebuffer = calloc(320 * 240, 4);
 
-  //glGenTextures(1, &gui->id);
-  //glBindTexture(GL_TEXTURE_2D, gui->id);
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  glGenTextures(1, &gui->id);
+  glBindTexture(GL_TEXTURE_2D, gui->id);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	NFD_Init();
 
@@ -95,31 +95,49 @@ static void resize_callback(ImGuiSizeCallbackData* data) {
   image_size.y = y;
 }
 
-void update_texture(gui_t* gui) {
+void update_texture(gui_t* gui, u32* old_w, u32* old_h) {
   u32 w = gui->core.mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = gui->core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = gui->core.mem.mmio.vi.status.format;
+  bool res_changed = *old_w != w || *old_h != h;
 
-  //gui->framebuffer = realloc(gui->framebuffer, w * h * 4);
+  if(res_changed) {
+    *old_w = w;
+    *old_h = h;
+    gui->framebuffer = realloc(gui->framebuffer, w * h * 4);
 
-  if(format == f5553) {
-    //for(int i = 0; i < w * h; i++) {
-    //  u8 first = gui->core.mem.rdram[i + origin & RDRAM_DSIZE];
-    //  u8 second = gui->core.mem.rdram[i + 1 + origin & RDRAM_DSIZE];
-    //  gui->framebuffer[i] = (f5_to_8(first >> 3) << 24) |
-    //                        (f5_to_8(((first & 7) << 2) | (second >> 6)) << 16) |
-    //                        (f5_to_8((second >> 1) & 0x1f) << 8) |
-    //                        f1_to_8(second & 1);
-    //}
-  } else {
-    //memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * 4);
+    glDeleteTextures(1, &gui->id);
+    glGenTextures(1, &gui->id);
+    glBindTexture(GL_TEXTURE_2D, gui->id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   }
 
-  //glDeleteTextures(1, &gui->id);
-  //glGenTextures(1, &gui->id);
-  //glBindTexture(GL_TEXTURE_2D, gui->id);
-  //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
-  //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+  if(format == f5553) { // Treat as 5551
+    for(int i = 0, j = 0; i < w * h; i++, j += 2) {
+      u8 first = gui->core.mem.rdram[j + origin & RDRAM_DSIZE];
+      u8 second = gui->core.mem.rdram[j + 1 + origin & RDRAM_DSIZE];
+      u8 r = first >> 3;
+      u8 g = ((first & 7) << 2) | (second >> 6);
+      u8 b = (second >> 1) & 0x1f;
+      u8 a = (second & 1) ? 0xff : 0;
+      gui->framebuffer[i] = ((u32)f5_to_8(r) << 24) | ((u32)f5_to_8(g) << 16) 
+                          | ((u32)f5_to_8(b) << 8) | a;
+    }
+  } else {
+    memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * 4);
+    for(int i = 0; i < w * h; i++) {
+      if((gui->framebuffer[i] & 0xff) == 0) {
+        gui->framebuffer[i] |= 0xff;
+      }
+    }
+  }
+
+  glBindTexture(GL_TEXTURE_2D, gui->id);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
 }
 
 void main_menubar(gui_t *gui) {
@@ -201,9 +219,9 @@ const char* regs_str[32] = {
 void registers_view(gui_t *gui) {
   registers_t* regs = &gui->core.cpu.regs;
   igBegin("Registers view", NULL, 0);
-  for(int i = 0; i < 32; i+=4) {
-    igText("%s: %08X %s: %08X %s: %08X %s: %08X", regs_str[i], regs[i], regs_str[i + 1], regs[i + 1], regs_str[i + 2], regs[i + 2], regs_str[i + 3], regs[i + 3]);
-  }
+  //for(int i = 0; i < 32; i+=4) {
+  //  igText("%s: %08X %s: %08X %s: %08X %s: %08X", regs_str[i], regs[i], regs_str[i + 1], regs[i + 1], regs_str[i + 2], regs[i + 2], regs_str[i + 3], regs[i + 3]);
+  //}
   igEnd();
 }
 
@@ -213,10 +231,10 @@ void debugger_window(gui_t* gui) {
 }
 
 void main_loop(gui_t* gui) {
-  u32 old_w = 0, old_h = 0;
-  u8 old_format = 0;
+  u32 old_w = 320, old_h = 240;
+  
   while(!glfwWindowShouldClose(gui->window)) {    
-    update_texture(gui);
+    update_texture(gui, &old_w, &old_w);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -239,7 +257,7 @@ void main_loop(gui_t* gui) {
     igGetWindowSize(&window_size);
     ImVec2 result = {.x = (window_size.x - image_size.x) * 0.5, .y = (window_size.y - image_size.y) * 0.5};
     igSetCursorPos(result);
-    //igImage((ImTextureID)((intptr_t)gui->id), image_size, ZERO, ONE, FULL4, ZERO4);
+    igImage((ImTextureID)((intptr_t)gui->id), image_size, ZERO, ONE, FULL4, ZERO4);
     igEnd();
     
     glClear(GL_COLOR_BUFFER_BIT);
@@ -266,7 +284,7 @@ void destroy_gui(gui_t* gui) {
 
 void open_file(gui_t* gui) {
   gui->rom_file = "";
-	nfdfilteritem_t filter = { "GameBoy Advance roms", "gba" };
+	nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
 	nfdresult_t result = NFD_OpenDialog(&gui->rom_file, &filter, 1, "roms/");
 	if(result == NFD_OKAY) {
     init_core(&gui->core);
