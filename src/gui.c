@@ -95,49 +95,51 @@ static void resize_callback(ImGuiSizeCallbackData* data) {
   image_size.y = y;
 }
 
-void update_texture(gui_t* gui, u32* old_w, u32* old_h) {
+void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
   u32 w = gui->core.mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = gui->core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = gui->core.mem.mmio.vi.status.format;
   bool res_changed = *old_w != w || *old_h != h;
+  bool format_changed = *old_format != format;
+  int glFormat = GL_UNSIGNED_INT_8_8_8_8;
+  u8 depth = 4;
 
   if(res_changed) {
     *old_w = w;
     *old_h = h;
-    gui->framebuffer = realloc(gui->framebuffer, w * h * 4);
 
     glDeleteTextures(1, &gui->id);
     glGenTextures(1, &gui->id);
     glBindTexture(GL_TEXTURE_2D, gui->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, glFormat, gui->framebuffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   }
 
-  if(format == f5553) { // Treat as 5551
-    for(int i = 0, j = 0; i < w * h; i++, j += 2) {
-      u8 first = gui->core.mem.rdram[j + origin & RDRAM_DSIZE];
-      u8 second = gui->core.mem.rdram[j + 1 + origin & RDRAM_DSIZE];
-      u8 r = first >> 3;
-      u8 g = ((first & 7) << 2) | (second >> 6);
-      u8 b = (second >> 1) & 0x1f;
-      u8 a = (second & 1) ? 0xff : 0;
-      gui->framebuffer[i] = ((u32)f5_to_8(r) << 24) | ((u32)f5_to_8(g) << 16) 
-                          | ((u32)f5_to_8(b) << 8) | a;
+  if(format_changed) {
+    *old_format = format;
+    if(format == f5553) {
+      glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+      depth = 2;
     }
-  } else {
-    memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * 4);
-    for(int i = 0; i < w * h; i++) {
-      if((gui->framebuffer[i] & 0xff) == 0) {
-        gui->framebuffer[i] |= 0xff;
-      }
-    }
+
+    glDeleteTextures(1, &gui->id);
+    glGenTextures(1, &gui->id);
+    glBindTexture(GL_TEXTURE_2D, gui->id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, glFormat, gui->framebuffer);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
   }
 
+  gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
+  memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
+
   glBindTexture(GL_TEXTURE_2D, gui->id);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, glFormat, gui->framebuffer);
 }
 
 void main_menubar(gui_t *gui) {
@@ -232,9 +234,10 @@ void debugger_window(gui_t* gui) {
 
 void main_loop(gui_t* gui) {
   u32 old_w = 320, old_h = 240;
+  u8 old_format = gui->core.mem.mmio.vi.status.format;
   
   while(!glfwWindowShouldClose(gui->window)) {    
-    update_texture(gui, &old_w, &old_w);
+    update_texture(gui, &old_w, &old_w, &old_format);
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();

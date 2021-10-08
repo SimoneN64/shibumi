@@ -17,9 +17,6 @@
 
 #define N64_ASPECT_RATIO (float)4 / 3
 
-#define f5_to_8(x) (((x) << 3) | ((x) >> 2))
-#define f1_to_8(x) (((x) << 7) | ((x) >> 7))
-
 static const ImVec2 ZERO = {.x = 0, .y = 0};
 static const ImVec2 ONE = {.x = 1, .y = 1};
 static const ImVec2 MAX = {.x = __FLT_MAX__, .y = __FLT_MAX__};
@@ -52,4 +49,4 @@ void main_menubar(gui_t* gui);
 void debugger_window(gui_t* gui);
 void disassembly(gui_t* gui);
 void registers_view(gui_t* gui);
-void update_texture(gui_t* gui, u32* old_w, u32* old_h);
+void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format);
