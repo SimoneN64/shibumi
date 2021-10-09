@@ -108,27 +108,18 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
     *old_w = w;
     *old_h = h;
 
-    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
-
-    glDeleteTextures(1, &gui->id);
-    glGenTextures(1, &gui->id);
-    glBindTexture(GL_TEXTURE_2D, gui->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, glFormat, gui->framebuffer);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  }
-
-  if(format_changed) {
-    *old_format = format;
-    if(format == f5553) {
-      glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
-      depth = 2;
+    if(format_changed) {
+      *old_format = format;
+      if(format == f5553) {
+        glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+        depth = 2;
+      } else if (format == f8888) {
+        glFormat = GL_UNSIGNED_INT_8_8_8_8;
+        depth = 4;
+      }
     }
-
-    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
     
+    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
     glDeleteTextures(1, &gui->id);
     glGenTextures(1, &gui->id);
     glBindTexture(GL_TEXTURE_2D, gui->id);
@@ -140,7 +131,6 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
   }
 
   memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
-
   glBindTexture(GL_TEXTURE_2D, gui->id);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, glFormat, gui->framebuffer);
 }
