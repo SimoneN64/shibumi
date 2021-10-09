@@ -50,7 +50,7 @@ include_directories(
 )
 
 if(WIN32)
-  set(FLAGS -static glfw OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static glfw3 OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
   set(FLAGS pthread glfw OpenGL::GL)
 endif()

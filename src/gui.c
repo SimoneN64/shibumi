@@ -116,6 +116,7 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
   }
 
   if(format_changed) {
@@ -133,9 +134,9 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
   }
 
-  gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
   memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
 
   glBindTexture(GL_TEXTURE_2D, gui->id);
