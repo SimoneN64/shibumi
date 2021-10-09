@@ -32,7 +32,7 @@ void init_gui(gui_t* gui, const char* title) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwSetErrorCallback(glfw_error_callback);
-
+  
   const GLFWvidmode *details = glfwGetVideoMode(glfwGetPrimaryMonitor());
   int w = details->width - (details->width / 4), h = details->height - (details->height / 4);
   gui->window = glfwCreateWindow(w, h, title, NULL, NULL);
@@ -99,6 +99,7 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
   u32 w = gui->core.mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = gui->core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = gui->core.mem.mmio.vi.status.format;
+  bool reconstruct_texture = false;
   bool res_changed = *old_w != w || *old_h != h;
   bool format_changed = *old_format != format;
   int glFormat = GL_UNSIGNED_INT_8_8_8_8;
@@ -107,18 +108,23 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
   if(res_changed) {
     *old_w = w;
     *old_h = h;
+    reconstruct_texture = true;
+  }
 
-    if(format_changed) {
-      *old_format = format;
-      if(format == f5553) {
-        glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
-        depth = 2;
-      } else if (format == f8888) {
-        glFormat = GL_UNSIGNED_INT_8_8_8_8;
-        depth = 4;
-      }
+  if(format_changed) {
+    *old_format = format;
+    if(format == f5553) {
+      glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+      depth = 2;
+    } else if (format == f8888) {
+      glFormat = GL_UNSIGNED_INT_8_8_8_8;
+      depth = 4;
     }
-    
+
+    reconstruct_texture = true;
+  }
+
+  if(reconstruct_texture) {
     gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
     glDeleteTextures(1, &gui->id);
     glGenTextures(1, &gui->id);
@@ -217,6 +223,9 @@ void registers_view(gui_t *gui) {
   for(int i = 0; i < 32; i+=4) {
     igText("%4s: %08X %4s: %08X %4s: %08X %4s: %08X", regs_str[i], regs->gpr[i], regs_str[i + 1], regs->gpr[i + 1], regs_str[i + 2], regs->gpr[i + 2], regs_str[i + 3], regs->gpr[i + 3]);
   }
+  igSeparator();
+  igText(const char *fmt, ...)
+  igText("pipe[0]: %08X pipe[1]: %08X pipe[2]: %08X", regs->old_pc, regs->pc, regs->next_pc);
   igEnd();
 }
 
