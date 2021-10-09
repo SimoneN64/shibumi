@@ -108,6 +108,8 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
     *old_w = w;
     *old_h = h;
 
+    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
+
     glDeleteTextures(1, &gui->id);
     glGenTextures(1, &gui->id);
     glBindTexture(GL_TEXTURE_2D, gui->id);
@@ -116,7 +118,6 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
   }
 
   if(format_changed) {
@@ -126,6 +127,8 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
       depth = 2;
     }
 
+    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
+    
     glDeleteTextures(1, &gui->id);
     glGenTextures(1, &gui->id);
     glBindTexture(GL_TEXTURE_2D, gui->id);
@@ -134,7 +137,6 @@ void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
   }
 
   memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
@@ -222,9 +224,9 @@ const char* regs_str[32] = {
 void registers_view(gui_t *gui) {
   registers_t* regs = &gui->core.cpu.regs;
   igBegin("Registers view", NULL, 0);
-  //for(int i = 0; i < 32; i+=4) {
-  //  igText("%s: %08X %s: %08X %s: %08X %s: %08X", regs_str[i], regs[i], regs_str[i + 1], regs[i + 1], regs_str[i + 2], regs[i + 2], regs_str[i + 3], regs[i + 3]);
-  //}
+  for(int i = 0; i < 32; i+=4) {
+    igText("%4s: %08X %4s: %08X %4s: %08X %4s: %08X", regs_str[i], regs->gpr[i], regs_str[i + 1], regs->gpr[i + 1], regs_str[i + 2], regs->gpr[i + 2], regs_str[i + 3], regs->gpr[i + 3]);
+  }
   igEnd();
 }
 
