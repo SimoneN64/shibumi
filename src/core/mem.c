@@ -112,6 +112,16 @@ u32 read32(mem_t* mem, u32 vaddr) {
   }
 }
 
+u64 read64(mem_t* mem, u32 vaddr) {
+  u32 paddr = vtp(vaddr);
+        
+  switch(paddr) {
+    case 0x00000000 ... 0x007FFFFF: return *(u64*)&mem->rdram[paddr];
+    case 0x04001000 ... 0x04001FFF: return *(u64*)&mem->imem[paddr & IMEM_DSIZE];
+    default: logfatal("[ERR] Unimplemented %s 64-bit read (%08X)\n", regions_str(paddr), paddr);
+  }
+}
+
 void write8(mem_t* mem, u32 vaddr, u8 val) {
   u32 paddr = vtp(vaddr);
   switch(paddr) {
@@ -148,5 +158,15 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: break;
     default: logdebug("[ERR] Unimplemented %s 32-bit write (%08X)\n", regions_str(paddr), paddr);
+  }
+}
+
+void write64(mem_t* mem, u32 vaddr, u64 val) {
+  u32 paddr = vtp(vaddr);
+        
+  switch(paddr) {
+    case 0x00000000 ... 0x007FFFFF: *(u64*)&mem->rdram[paddr] = val; break;
+    case 0x04001000 ... 0x04001FFF: *(u64*)&mem->imem[paddr & IMEM_DSIZE] = val; break;
+    default: logfatal("[ERR] Unimplemented %s 16-bit write (%08X)\n", regions_str(paddr), paddr);
   }
 }
