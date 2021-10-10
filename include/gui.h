@@ -28,6 +28,13 @@ static const ImVec4 colors_disasm[3] = {{.x = 1, .y = 0.000, .z = 0, .w = 1},  /
                                         {.x = 1, .y = 0.988, .z = 0, .w = 1}}; // YELLOW
 
 typedef struct {
+  u32 old_w, old_h;
+  u8 old_format;
+  int glFormat;
+  u8 depth;
+} gl_data_t;
+
+typedef struct {
   ImGuiContext* ctx;
   ImGuiIO* io;
 	GLFWwindow* window;
@@ -37,8 +44,9 @@ typedef struct {
   pthread_t emu_thread_id;
   atomic_bool emu_quit;
   core_t core;
+  gl_data_t gl_data;
   disasm_t debugger;
-  u32* framebuffer;
+  u8* framebuffer;
 } gui_t;
 
 void init_gui(gui_t* gui, const char* title);
@@ -49,4 +57,4 @@ void main_menubar(gui_t* gui);
 void debugger_window(gui_t* gui);
 void disassembly(gui_t* gui);
 void registers_view(gui_t* gui);
-void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format);
+void update_texture(gui_t* gui);

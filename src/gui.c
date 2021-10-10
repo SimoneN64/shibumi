@@ -75,6 +75,10 @@ void init_gui(gui_t* gui, const char* title) {
 	NFD_Init();
 
   pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
+
+  gui->gl_data.depth = 2;
+  gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+  gui->gl_data.old_format = 0xE;
 }
 
 ImVec2 image_size;
@@ -95,50 +99,89 @@ static void resize_callback(ImGuiSizeCallbackData* data) {
   image_size.y = y;
 }
 
-void update_texture(gui_t* gui, u32* old_w, u32* old_h, u8* old_format) {
+void main_loop(gui_t* gui) {;
+  while(!glfwWindowShouldClose(gui->window)) {    
+    update_texture(gui);
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    igNewFrame();
+
+    if (glfwGetKey(gui->window, GLFW_KEY_O) == GLFW_PRESS) {
+      open_file(gui);
+    } else if (glfwGetKey(gui->window, GLFW_KEY_P) == GLFW_PRESS && gui->rom_loaded) {
+      gui->core.running = !gui->core.running;
+    } else if (glfwGetKey(gui->window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+      glfwSetWindowShouldClose(gui->window, GLFW_TRUE);
+    }
+    
+    main_menubar(gui);
+    debugger_window(gui);
+    
+    igSetNextWindowSizeConstraints(ZERO, MAX, resize_callback, NULL);
+    igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar);
+    ImVec2 window_size;
+    igGetWindowSize(&window_size);
+    ImVec2 result = {.x = (window_size.x - image_size.x) * 0.5, .y = (window_size.y - image_size.y) * 0.5};
+    igSetCursorPos(result);
+    igImage((ImTextureID)((intptr_t)gui->id), image_size, ZERO, ONE, FULL4, ZERO4);
+    igEnd();
+    
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.227, 0.345, 0.454, 1.00);
+    
+    igRender();
+    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+
+    glfwSwapBuffers(gui->window);
+    glfwPollEvents();
+  }
+}
+
+void update_texture(gui_t* gui) {
   u32 w = gui->core.mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = gui->core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = gui->core.mem.mmio.vi.status.format;
   bool reconstruct_texture = false;
-  bool res_changed = *old_w != w || *old_h != h;
-  bool format_changed = *old_format != format;
-  int glFormat = GL_UNSIGNED_INT_8_8_8_8;
-  u8 depth = 4;
+  bool res_changed = gui->gl_data.old_w != w || gui->gl_data.old_h != h;
+  bool format_changed = gui->gl_data.old_format != format;
 
   if(res_changed) {
-    *old_w = w;
-    *old_h = h;
+    gui->gl_data.old_w = w;
+    gui->gl_data.old_h = h;
+
     reconstruct_texture = true;
   }
 
   if(format_changed) {
-    *old_format = format;
+    gui->gl_data.old_format = format;
     if(format == f5553) {
-      glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
-      depth = 2;
+      gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+      gui->gl_data.depth = 2;
     } else if (format == f8888) {
-      glFormat = GL_UNSIGNED_INT_8_8_8_8;
-      depth = 4;
+      gui->gl_data.glFormat = GL_UNSIGNED_INT_8_8_8_8;
+      gui->gl_data.depth = 4;
     }
 
     reconstruct_texture = true;
   }
 
   if(reconstruct_texture) {
-    gui->framebuffer = realloc(gui->framebuffer, w * h * depth);
-    glDeleteTextures(1, &gui->id);
-    glGenTextures(1, &gui->id);
-    glBindTexture(GL_TEXTURE_2D, gui->id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, glFormat, gui->framebuffer);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    gui->framebuffer = realloc(gui->framebuffer, w * h * gui->gl_data.depth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, gui->gl_data.glFormat, gui->framebuffer);
   }
 
-  memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
+  if(format == f8888) {
+    memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * gui->gl_data.depth);
+  } else {
+    for(int i = 0; i < w * h * gui->gl_data.depth; i += gui->gl_data.depth) {
+      gui->framebuffer[i] = gui->core.mem.rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
+      gui->framebuffer[i + 1] = gui->core.mem.rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)];
+    }
+  }
+
   glBindTexture(GL_TEXTURE_2D, gui->id);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, glFormat, gui->framebuffer);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, gui->gl_data.glFormat, gui->framebuffer);
 }
 
 void main_menubar(gui_t *gui) {
@@ -224,56 +267,16 @@ void registers_view(gui_t *gui) {
     igText("%4s: %08X %4s: %08X %4s: %08X %4s: %08X", regs_str[i], regs->gpr[i], regs_str[i + 1], regs->gpr[i + 1], regs_str[i + 2], regs->gpr[i + 2], regs_str[i + 3], regs->gpr[i + 3]);
   }
   igSeparator();
-  igText(const char *fmt, ...)
-  igText("pipe[0]: %08X pipe[1]: %08X pipe[2]: %08X", regs->old_pc, regs->pc, regs->next_pc);
+  s64 pipe[3] = {regs->old_pc, regs->pc, regs->next_pc};
+  for(int i = 0; i < 3; i++) {
+    igText("pipe[%d]: %08X", i, pipe[i]);
+  }
   igEnd();
 }
 
 void debugger_window(gui_t* gui) {
   disassembly(gui);
   registers_view(gui);
-}
-
-void main_loop(gui_t* gui) {
-  u32 old_w = 320, old_h = 240;
-  u8 old_format = gui->core.mem.mmio.vi.status.format;
-  
-  while(!glfwWindowShouldClose(gui->window)) {    
-    update_texture(gui, &old_w, &old_w, &old_format);
-
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    igNewFrame();
-
-    if (glfwGetKey(gui->window, GLFW_KEY_O) == GLFW_PRESS) {
-      open_file(gui);
-    } else if (glfwGetKey(gui->window, GLFW_KEY_P) == GLFW_PRESS && gui->rom_loaded) {
-      gui->core.running = !gui->core.running;
-    } else if (glfwGetKey(gui->window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-      glfwSetWindowShouldClose(gui->window, GLFW_TRUE);
-    }
-    
-    main_menubar(gui);
-    debugger_window(gui);
-    
-    igSetNextWindowSizeConstraints(ZERO, MAX, resize_callback, NULL);
-    igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar);
-    ImVec2 window_size;
-    igGetWindowSize(&window_size);
-    ImVec2 result = {.x = (window_size.x - image_size.x) * 0.5, .y = (window_size.y - image_size.y) * 0.5};
-    igSetCursorPos(result);
-    igImage((ImTextureID)((intptr_t)gui->id), image_size, ZERO, ONE, FULL4, ZERO4);
-    igEnd();
-    
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.227, 0.345, 0.454, 1.00);
-    
-    igRender();
-    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
-
-    glfwSwapBuffers(gui->window);
-    glfwPollEvents();
-  }
 }
 
 void destroy_gui(gui_t* gui) {
