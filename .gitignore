@@ -1,6 +1,5 @@
 *build*/
 .idea/
-roms/
 *.dll
 *.bin
 *.ini
