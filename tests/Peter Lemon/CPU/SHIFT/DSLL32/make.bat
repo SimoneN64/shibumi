@@ -1,2 +1,0 @@
-bass CPUDSLL32.asm
-chksum64 CPUDSLL32.N64

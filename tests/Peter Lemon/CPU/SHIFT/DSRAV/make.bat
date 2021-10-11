@@ -1,2 +1,0 @@
-bass CPUDSRAV.asm
-chksum64 CPUDSRAV.N64

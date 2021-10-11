@@ -1,2 +1,0 @@
-bass CPUDDIVU.asm
-chksum64 CPUDDIVU.N64

@@ -1,2 +1,0 @@
-bass CPUDSUBU.asm
-chksum64 CPUDSUBU.N64
