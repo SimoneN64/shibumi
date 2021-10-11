@@ -1,0 +1,2 @@
+bass CPUDSRL32.asm
+chksum64 CPUDSRL32.N64

@@ -1,0 +1,2 @@
+bass CPUDADDU.asm
+chksum64 CPUDADDU.N64

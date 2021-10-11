@@ -1,0 +1,2 @@
+bass CPUDMULT.asm
+chksum64 CPUDMULT.N64

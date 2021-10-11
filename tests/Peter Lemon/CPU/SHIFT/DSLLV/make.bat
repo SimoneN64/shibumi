@@ -1,0 +1,2 @@
+bass CPUDSLLV.asm
+chksum64 CPUDSLLV.N64
