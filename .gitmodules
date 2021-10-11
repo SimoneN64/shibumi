@@ -4,3 +4,6 @@
 [submodule "external/nativefiledialog-extended"]
 	path = external/nativefiledialog-extended
 	url = https://github.com/btzy/nativefiledialog-extended
+[submodule "tests/Dillon"]
+	path = tests/Dillon
+	url = https://github.com/Dillonb/n64-tests
