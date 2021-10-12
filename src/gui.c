@@ -200,9 +200,14 @@ void main_menubar(gui_t *gui) {
         gui->core.running = !gui->core.running;
       }
       if(igMenuItem_Bool("Stop", NULL, false, gui->rom_loaded)) {
+        gui->emu_quit = true;
+        pthread_join(gui->emu_thread_id, NULL);
         init_core(&gui->core);
         gui->rom_loaded = false;
         gui->rom_file = "";
+      }
+      if(igMenuItem_Bool("Reset", NULL, false, gui->rom_loaded)) {
+        reset(gui);
       }
       igEndMenu();
     }
@@ -295,10 +300,18 @@ void open_file(gui_t* gui) {
 	nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
 	nfdresult_t result = NFD_OpenDialog(&gui->rom_file, &filter, 1, "roms/");
 	if(result == NFD_OKAY) {
-    init_core(&gui->core);
-    gui->rom_loaded = false;
-		load_rom(&gui->core.mem, gui->rom_file);
-    gui->core.running = true;
-    gui->rom_loaded = true;
+    reset(gui);
 	}
+}
+
+void reset(gui_t* gui) {
+  gui->emu_quit = true;
+  pthread_join(gui->emu_thread_id, NULL);
+  init_core(&gui->core);
+  gui->rom_loaded = false;
+  load_rom(&gui->core.mem, gui->rom_file);
+  gui->core.running = true;
+  gui->rom_loaded = true;
+  gui->emu_quit = false;
+  pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
 }

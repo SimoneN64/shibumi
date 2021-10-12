@@ -58,3 +58,4 @@ void debugger_window(gui_t* gui);
 void disassembly(gui_t* gui);
 void registers_view(gui_t* gui);
 void update_texture(gui_t* gui);
+void reset(gui_t* gui);

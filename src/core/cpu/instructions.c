@@ -263,20 +263,6 @@ void sltu(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = (u64)regs->gpr[RS(instr)] < (u64)regs->gpr[RT(instr)];
 }
 
-void srlv(registers_t* regs, u32 instr) {
-  u8 amount = (regs->gpr[RS(instr)] & 0x1F);
-  u32 rt = regs->gpr[RT(instr)];
-  u32 result = rt >> amount;
-  regs->gpr[RD(instr)] = (s64)((s32)result);
-}
-
-void sllv(registers_t* regs, u32 instr) {
-  u8 amount = (regs->gpr[RS(instr)]) & 0x1F;
-  u32 rt = regs->gpr[RT(instr)];
-  u32 result = rt << amount;
-  regs->gpr[RD(instr)] = (s64)((s32)result);
-}
-
 void xori(registers_t* regs, u32 instr) {
   s64 imm = ze_imm(instr);
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] ^ imm;
@@ -296,23 +282,38 @@ void and_(registers_t* regs, u32 instr) {
 }
 
 void sll(registers_t* regs, u32 instr) {
-  u32 rt = regs->gpr[RT(instr)];
+  s64 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  u32 result = rt << sa;
-  regs->gpr[RD(instr)] = (s64)((s32)result);
-}
-
-void sra(registers_t* regs, u32 instr) {
-  u32 rt = regs->gpr[RT(instr)];
-  u8 sa = ((instr >> 6) & 0x1f);
-  u32 result = rt >> sa;
-  regs->gpr[RD(instr)] = (s64)((s32)result);
+  s32 result = rt << sa;
+  regs->gpr[RD(instr)] = (s64)result;
 }
 
 void srl(registers_t* regs, u32 instr) {
   u32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  regs->gpr[RD(instr)] = rt >> sa;
+  s32 result = rt >> sa;
+  regs->gpr[RD(instr)] = (s64)result;
+}
+
+void sra(registers_t* regs, u32 instr) {
+  s32 rt = regs->gpr[RT(instr)];
+  u8 sa = ((instr >> 6) & 0x1f);
+  s32 result = rt >> sa;
+  regs->gpr[RD(instr)] = (s64)result;
+}
+
+void sllv(registers_t* regs, u32 instr) {
+  u8 amount = (regs->gpr[RS(instr)]) & 0x1F;
+  u32 rt = regs->gpr[RT(instr)];
+  s32 result = rt << amount;
+  regs->gpr[RD(instr)] = (s64)result;
+}
+
+void srlv(registers_t* regs, u32 instr) {
+  u8 amount = (regs->gpr[RS(instr)] & 0x1F);
+  u32 rt = regs->gpr[RT(instr)];
+  s32 result = rt >> amount;
+  regs->gpr[RD(instr)] = (s64)result;
 }
 
 void j(registers_t* regs, u32 instr) {
