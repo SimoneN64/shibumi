@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #define ze_imm(x) ((x) & 0xffff)
-#define se_imm(x) ((s64)((s16)(x)))
+#define se_imm(x) (sx(x & 0xffff, 48))
 
 void mtcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
@@ -71,13 +71,13 @@ void addu(registers_t* regs, u32 instr) {
 
 void addiu(registers_t* regs, u32 instr) {
   u32 reg = regs->gpr[RS(instr)];
-  u32 imm = se_imm(instr);
+  u32 imm = se_imm((s64)instr);
   regs->gpr[RT(instr)] = (s64)((s32)(reg + imm));
 }
 
 void daddiu(registers_t* regs, u32 instr) {
   s64 reg = regs->gpr[RS(instr)];
-  s64 imm = se_imm(instr);
+  s64 imm = se_imm((s64)instr);
   regs->gpr[RT(instr)] = reg + imm;
 }
 
@@ -109,19 +109,19 @@ void branch_likely(registers_t* regs, bool cond, s64 address) {
 }
 
 void b(registers_t* regs, u32 instr, bool cond) {
-  s64 offset = se_imm(instr) << 2;
+  s64 offset = se_imm((s64)instr) << 2;
   s64 address = regs->pc + offset;
   branch(regs, cond, address);
 }
 
 void bl(registers_t* regs, u32 instr, bool cond) {
-  s64 offset = se_imm(instr) << 2;
+  s64 offset = se_imm((s64)instr) << 2;
   s64 address = regs->pc + offset;
   branch_likely(regs, cond, address);
 }
 
 void lui(registers_t* regs, u32 instr) {
-  regs->gpr[RT(instr)] = se_imm(instr) << 16;
+  regs->gpr[RT(instr)] = se_imm((s64)instr) << 16;
 }
 
 void lb(mem_t* mem, registers_t* regs, u32 instr) {
@@ -226,7 +226,9 @@ void sd(mem_t* mem, registers_t* regs, u32 instr) {
 }
 
 void ori(registers_t* regs, u32 instr) {
-  regs->gpr[RT(instr)] = regs->gpr[RS(instr)] | ze_imm(instr);
+  s64 rs = regs->gpr[RS(instr)];
+  s64 imm = ze_imm(instr);
+  regs->gpr[RT(instr)] = (rs & ~0xffff) | (imm | (rs & 0xffff));
 }
 
 void or_(registers_t* regs, u32 instr) {
@@ -246,11 +248,11 @@ void jalr(registers_t* regs, u32 instr) {
 }
 
 void slti(registers_t* regs, u32 instr) {
-  regs->gpr[RT(instr)] = regs->gpr[RS(instr)] < se_imm(instr);
+  regs->gpr[RT(instr)] = regs->gpr[RS(instr)] < se_imm((s64)instr);
 }
 
 void sltiu(registers_t* regs, u32 instr) {
-  regs->gpr[RT(instr)] = (u64)regs->gpr[RS(instr)] < se_imm(instr);
+  regs->gpr[RT(instr)] = (u64)regs->gpr[RS(instr)] < se_imm((s64)instr);
 }
 
 void slt(registers_t* regs, u32 instr) {
@@ -294,21 +296,23 @@ void and_(registers_t* regs, u32 instr) {
 }
 
 void sll(registers_t* regs, u32 instr) {
-  u32 low = regs->gpr[RT(instr)];
+  u32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  regs->gpr[RD(instr)] = (s64)((s32)(low << sa));
+  u32 result = rt << sa;
+  regs->gpr[RD(instr)] = (s64)((s32)result);
 }
 
 void sra(registers_t* regs, u32 instr) {
-  s64 rt = regs->gpr[RT(instr)];
+  u32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  regs->gpr[RD(instr)] = rt >> sa;
+  u32 result = rt >> sa;
+  regs->gpr[RD(instr)] = (s64)((s32)result);
 }
 
 void srl(registers_t* regs, u32 instr) {
-  u32 low = regs->gpr[RT(instr)];
+  u32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  regs->gpr[RD(instr)] = (s64)((s32)(low >> sa));
+  regs->gpr[RD(instr)] = rt >> sa;
 }
 
 void j(registers_t* regs, u32 instr) {
