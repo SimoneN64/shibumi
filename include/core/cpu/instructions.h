@@ -39,6 +39,7 @@ void sb(mem_t* mem, registers_t* regs, u32 instr);
 void sh(mem_t* mem, registers_t* regs, u32 instr);
 void sw(mem_t* mem, registers_t* regs, u32 instr);
 void sd(mem_t* mem, registers_t* regs, u32 instr);
+void sdl(mem_t* mem, registers_t* regs, u32 instr);
 void slti(registers_t* regs, u32 instr);
 void sltiu(registers_t* regs, u32 instr);
 void slt(registers_t* regs, u32 instr);
