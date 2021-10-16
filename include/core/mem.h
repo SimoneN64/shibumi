@@ -14,7 +14,7 @@ typedef struct mem_t {
 } mem_t;
 
 void init_mem(mem_t* mem);
-void load_rom(mem_t* mem, const char* path);
+bool load_rom(mem_t* mem, const char* path);
 u8 read8(mem_t* mem, u32 vaddr);
 u16 read16(mem_t* mem, u32 vaddr);
 u32 read32(mem_t* mem, u32 vaddr);

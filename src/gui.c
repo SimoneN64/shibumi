@@ -200,11 +200,7 @@ void main_menubar(gui_t *gui) {
         gui->core.running = !gui->core.running;
       }
       if(igMenuItem_Bool("Stop", NULL, false, gui->rom_loaded)) {
-        gui->emu_quit = true;
-        pthread_join(gui->emu_thread_id, NULL);
-        init_core(&gui->core);
-        gui->rom_loaded = false;
-        gui->rom_file = "";
+        stop(gui);
       }
       if(igMenuItem_Bool("Reset", NULL, false, gui->rom_loaded)) {
         reset(gui);
@@ -304,14 +300,24 @@ void open_file(gui_t* gui) {
 	}
 }
 
+void start(gui_t* gui) {
+  gui->rom_loaded = load_rom(&gui->core.mem, gui->rom_file);
+  gui->core.running = gui->rom_loaded;
+  gui->emu_quit = !gui->rom_loaded;
+  if(gui->rom_loaded) {
+    pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
+  }
+}
+
 void reset(gui_t* gui) {
+  stop(gui);
+  start(gui);
+}
+
+void stop(gui_t* gui) {
   gui->emu_quit = true;
   pthread_join(gui->emu_thread_id, NULL);
   init_core(&gui->core);
   gui->rom_loaded = false;
-  load_rom(&gui->core.mem, gui->rom_file);
-  gui->core.running = true;
-  gui->rom_loaded = true;
-  gui->emu_quit = false;
-  pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
+  gui->core.running = false;
 }

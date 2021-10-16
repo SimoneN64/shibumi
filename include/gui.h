@@ -59,3 +59,5 @@ void disassembly(gui_t* gui);
 void registers_view(gui_t* gui);
 void update_texture(gui_t* gui);
 void reset(gui_t* gui);
+void stop(gui_t* gui);
+void start(gui_t* gui);

@@ -16,10 +16,11 @@ void init_mem(mem_t* mem) {
   init_mmio(&mem->mmio);
 }
 
-void load_rom(mem_t* mem, const char* path) {
+bool load_rom(mem_t* mem, const char* path) {
   FILE* fp = fopen(path, "rb");
   if(fp == NULL) {
-    logfatal("Failed to open rom %s\n", path);
+    printf("Failed to open rom %s\n", path);
+    return false;
   }
 
   fseek(fp, 0, SEEK_END);
@@ -31,13 +32,15 @@ void load_rom(mem_t* mem, const char* path) {
   mem->cart = calloc(rom_size, 1);
   
   if(fread(mem->cart, 1, rom_file_size, fp) != rom_file_size) {
-    logfatal("Failed to load rom\n");
+    printf("Failed to load rom\n");
+    return false;
   }
 
   fclose(fp);
   u32 endianness = *(u32*)&mem->cart[0];
   swap(endianness, rom_size, mem->cart);
   memcpy(mem->dmem, mem->cart, 0x1000);
+  return true;
 }
 
 const char* regions_str(u32 paddr) {
