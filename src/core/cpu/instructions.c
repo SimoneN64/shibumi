@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #define ze_imm(x) ((x) & 0xffff)
-#define se_imm(x) (sx(x & 0xffff, 48))
+#define se_imm(x) ((s16)((x) & 0xFFFF))
 
 void mtcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
@@ -226,6 +226,7 @@ void sd(mem_t* mem, registers_t* regs, u32 instr) {
   }
   
   write64(mem, address, regs->gpr[RT(instr)]);
+  printf("SD\n");
 }
 
 void sdl(mem_t* mem, registers_t* regs, u32 instr) {
