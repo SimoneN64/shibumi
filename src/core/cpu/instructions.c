@@ -226,7 +226,6 @@ void sd(mem_t* mem, registers_t* regs, u32 instr) {
   }
   
   write64(mem, address, regs->gpr[RT(instr)]);
-  printf("SD\n");
 }
 
 void sdl(mem_t* mem, registers_t* regs, u32 instr) {
