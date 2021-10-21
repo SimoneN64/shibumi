@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #define ze_imm(x) ((x) & 0xffff)
-#define se_imm(x) ((s16)((x) & 0xFFFF))
+#define se_imm(x) ((s16)((x) & 0xffff))
 
 void mtcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
