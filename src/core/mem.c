@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <utils/swap.h>
 #include <utils/bit.h>
+#include <utils/access.h>
 
 void init_mem(mem_t* mem) {
   mem->rdram = calloc(RDRAM_SIZE, 1);
