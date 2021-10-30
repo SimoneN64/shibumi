@@ -4,14 +4,6 @@
 #include <utils/log.h>
 #include <string.h>
 
-static void glfw_error_callback(int error, const char* description) {
-  logfatal("Glfw Error %d: %s\n", error, description);
-}
-
-static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-  glViewport(0, 0, width, height);
-}
-
 void* core_cb(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
@@ -22,9 +14,7 @@ void* core_cb(void* vpargs) {
 }
 
 void init_gui(gui_t* gui, const char* title) {
-  if(glfwInit() == GLFW_FALSE) {
-    logfatal("Couldn't initialize GLFW\n");
-  }
+  SDL_Init(SDL_INIT_VIDEO);
 
   gui->rom_loaded = false;
 
