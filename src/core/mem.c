@@ -108,11 +108,12 @@ u32 read32(mem_t* mem, u32 vaddr) {
     case 0x10000000 ... 0x1FBFFFFF: return raccess(32, mem->cart, paddr & mem->rom_mask);
     case 0x1FC00000 ... 0x1FC007BF: return raccess(32, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
     case 0x1FC007C0 ... 0x1FC007FF: return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
-    case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
+    case 0x04800000 ... 0x048FFFFF: case 0x00800000 ... 0x03FFFFFF:
+    case 0x04002000 ... 0x0403FFFF: case 0x04040000 ...	0x040FFFFF:
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logdebug("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr); return 0;
+    default: logfatal("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
@@ -157,11 +158,12 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x04600000 ... 0x046FFFFF: pi_write(mem, regs, paddr, val); break;
     case 0x04700000 ... 0x047FFFFF: ri_write(&mem->mmio.ri, paddr, val); break;
     case 0x1FC007C0 ... 0x1FC007FF: waccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE, val); break;
-    case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
+    case 0x04800000 ... 0x048FFFFF: case 0x00800000 ... 0x03FFFFFF:
+    case 0x04002000 ... 0x0403FFFF: case 0x04040000 ...	0x040FFFFF:
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: break;
-    default: logdebug("[ERR] Unimplemented %s 32-bit write (%08X)\n", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s 32-bit write (%08X)\n", regions_str(paddr), paddr);
   }
 }
 
