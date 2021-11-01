@@ -63,8 +63,8 @@ void add(registers_t* regs, u32 instr) {
 }
 
 void addu(registers_t* regs, u32 instr) {
-  u32 rs = regs->gpr[RS(instr)];
-  u32 rt = regs->gpr[RT(instr)];
+  s32 rs = regs->gpr[RS(instr)];
+  s32 rt = regs->gpr[RT(instr)];
   s32 result = rs + rt;
   regs->gpr[RD(instr)] = (s64)result;
 }
