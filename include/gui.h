@@ -1,5 +1,11 @@
 #pragma once
-#include <SDL.h>
+#pragma once
+#include <glad.h>
+#ifdef _WIN32
+#include <glfw/glfw3.h>
+#else
+#include <GLFW/glfw3.h>
+#endif
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 #include <cimgui_impl.h>
@@ -31,7 +37,7 @@ typedef struct {
 typedef struct {
   ImGuiContext* ctx;
   ImGuiIO* io;
-	SDL_Window* window;
+	GLFWwindow* window;
   unsigned int id; // OpenGL framebuffer texture ID
 	nfdchar_t* rom_file;
   bool rom_loaded;
