@@ -78,13 +78,14 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
       sll(regs, instr);
     }
     break;
-    case 0x0F: break;
     case 0x02: srl(regs, instr); break;
     case 0x03: sra(regs, instr); break;
     case 0x04: sllv(regs, instr); break;
     case 0x06: srlv(regs, instr); break;
+    case 0x07: srav(regs, instr); break;
     case 0x08: jr(regs, instr); break;
     case 0x09: jalr(regs, instr); break;
+    case 0x0F: break;
     case 0x10: mfhi(regs, instr); break;
     case 0x11: mthi(regs, instr); break;
     case 0x12: mflo(regs, instr); break;

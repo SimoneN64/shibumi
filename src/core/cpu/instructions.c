@@ -162,7 +162,7 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
 
 void ld(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
-  if ((address & 3) != 0) {
+  if ((address & 7) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
 
@@ -221,7 +221,7 @@ void sw(mem_t* mem, registers_t* regs, u32 instr) {
 
 void sd(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
-  if ((address & 3) != 0) {
+  if ((address & 7) != 0) {
     logfatal("Unaligned access that shouldn't have happened");
   }
   
@@ -292,9 +292,9 @@ void sll(registers_t* regs, u32 instr) {
 }
 
 void srl(registers_t* regs, u32 instr) {
-  s32 rt = regs->gpr[RT(instr)];
+  u32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  s32 result = (u32)rt >> sa;
+  u32 result = rt >> sa;
   regs->gpr[RD(instr)] = result;
 }
 
@@ -302,7 +302,15 @@ void sra(registers_t* regs, u32 instr) {
   s32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
   s32 result = rt >> sa;
-  regs->gpr[RD(instr)] = (s64)result;
+  regs->gpr[RD(instr)] = result;
+}
+
+void srav(registers_t* regs, u32 instr) {
+  s32 rt = regs->gpr[RT(instr)];
+  s32 rs = regs->gpr[RS(instr)];
+  u8 sa = rs & 0x1f;
+  s32 result = rt >> sa;
+  regs->gpr[RD(instr)] = result;
 }
 
 void sllv(registers_t* regs, u32 instr) {

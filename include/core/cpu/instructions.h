@@ -47,6 +47,7 @@ void sll(registers_t* regs, u32 instr);
 void sllv(registers_t* regs, u32 instr);
 void subu(registers_t* regs, u32 instr);
 void sra(registers_t* regs, u32 instr);
+void srav(registers_t* regs, u32 instr);
 void srl(registers_t* regs, u32 instr);
 void srlv(registers_t* regs, u32 instr);
 void or_(registers_t* regs, u32 instr);
