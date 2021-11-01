@@ -228,20 +228,6 @@ void sd(mem_t* mem, registers_t* regs, u32 instr) {
   write64(mem, address, regs->gpr[RT(instr)]);
 }
 
-void sdl(mem_t* mem, registers_t* regs, u32 instr) {
-  u32 addr = (s16)instr + regs->gpr[RS(instr)];
-  if((addr & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened");
-  }
-
-  int shift = 8 * ((addr ^ 0) & 7);
-  s64 mask = 0xffffffffffffffff;
-  mask >>= shift;
-  s64 data = read64(mem, addr & ~7);
-  s64 old = regs->gpr[RT(instr)];
-  write64(mem, addr & ~7, (data & ~mask) | (old >> shift));
-}
-
 void ori(registers_t* regs, u32 instr) {
   s64 rs = regs->gpr[RS(instr)];
   u16 imm = instr;
