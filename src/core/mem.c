@@ -80,7 +80,7 @@ u8 read8(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return mem->rdram[BYTE_ADDR(paddr)];
     case 0x04001000 ... 0x04001FFF: return mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE];
-    default: logfatal("[ERR] Unimplemented %s 8-bit read (%08X)\n", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr);
   }
 }
 
@@ -90,7 +90,7 @@ u16 read16(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(16, mem->rdram, HALF_ADDR(paddr));
     case 0x04001000 ... 0x04001FFF: return raccess(16, mem->imem, HALF_ADDR(paddr) & IMEM_DSIZE);
-    default: logfatal("[ERR] Unimplemented %s 16-bit read (%08X)\n", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr);
   }
 }
 
@@ -112,18 +112,23 @@ u32 read32(mem_t* mem, u32 vaddr) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logdebug("[ERR] Unimplemented %s 32-bit read (%08X)\n", regions_str(paddr), paddr); return 0;
+    default: logdebug("[ERR] Unimplemented %s[%08X] 32-bit read\n", regions_str(paddr), paddr); return 0;
   }
 }
 
 u64 read64(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
+  u64 result = 0;
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: return raccess(64, mem->rdram, paddr);
-    case 0x04001000 ... 0x04001FFF: return raccess(64, mem->imem, paddr & IMEM_DSIZE);
-    default: logfatal("[ERR] Unimplemented %s 64-bit read (%08X)\n", regions_str(paddr), paddr);
+    case 0x00000000 ... 0x007FFFFF: result = raccess(64, mem->rdram, paddr); break;
+    case 0x04001000 ... 0x04001FFF: result = raccess(64, mem->imem, paddr & IMEM_DSIZE); break;
+    default: logfatal("[ERR] Unimplemented %s[%08X] 64-bit read\n", regions_str(paddr), paddr);
   }
+
+  logdebug("64-bit read  %016lX from %s[%08X]\n", result, regions_str(paddr), paddr);
+
+  return result;
 }
 
 void write8(mem_t* mem, u32 vaddr, u8 val) {
@@ -131,7 +136,7 @@ void write8(mem_t* mem, u32 vaddr, u8 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: mem->rdram[BYTE_ADDR(paddr)] = val; break;
     case 0x04001000 ... 0x04001FFF: mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val; break;
-    default: logfatal("[ERR] Unimplemented %s 8-bit write (%08X)\n", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s[%08X] 8-bit write (%02X)\n", regions_str(paddr), paddr, val);
   }
 }
 
@@ -141,7 +146,7 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(16, mem->rdram, HALF_ADDR(paddr), val); break;
     case 0x04001000 ... 0x04001FFF: waccess(16, mem->imem, HALF_ADDR(paddr) & IMEM_DSIZE, val); break;
-    default: logfatal("[ERR] Unimplemented %s 16-bit write (%08X)\n", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s[%08X] 16-bit write (%04X)\n", regions_str(paddr), paddr, val);
   }
 }
 
@@ -161,16 +166,18 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: break;
-    default: logdebug("[ERR] Unimplemented %s 32-bit write (%08X)\n", regions_str(paddr), paddr);
+    default: logdebug("[ERR] Unimplemented %s[%08X] 32-bit write (%08X)\n", regions_str(paddr), paddr, val);
   }
 }
 
 void write64(mem_t* mem, u32 vaddr, u64 val) {
   u32 paddr = vtp(vaddr);
-        
+  
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(64, mem->rdram, paddr, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(64, mem->imem, paddr & IMEM_DSIZE, val); break;
-    default: logfatal("[ERR] Unimplemented %s 16-bit write (%08X)\n", regions_str(paddr), paddr);
+    default: logfatal("[ERR] Unimplemented %s[%08X] 64-bit write (%16lX)\n", regions_str(paddr), paddr, val);
   }
+
+  logdebug("64-bit write %016lX to   %s[%08X]\n", val, regions_str(paddr), paddr);
 }

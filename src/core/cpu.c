@@ -95,6 +95,7 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     case 0x1B: divu(regs, instr); break;
     case 0x20: add(regs, instr); break;
     case 0x21: addu(regs, instr); break;
+    case 0x22: subu(regs, instr); break;
     case 0x23: subu(regs, instr); break;
     case 0x24: and_(regs, instr); break;
     case 0x25: or_(regs, instr); break;

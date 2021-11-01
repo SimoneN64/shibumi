@@ -295,7 +295,7 @@ void srl(registers_t* regs, u32 instr) {
   u32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
   u32 result = rt >> sa;
-  regs->gpr[RD(instr)] = result;
+  regs->gpr[RD(instr)] = (s32)result;
 }
 
 void sra(registers_t* regs, u32 instr) {
