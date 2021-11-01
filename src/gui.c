@@ -12,7 +12,7 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
   glViewport(0, 0, width, height);
 }
 
-void* core_cb(void* vpargs) {
+void* core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
     run_frame(&gui->core);
@@ -72,13 +72,13 @@ void init_gui(gui_t* gui, const char* title) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	NFD_Init();
-
-  pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
-
   gui->gl_data.depth = 2;
   gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
   gui->gl_data.old_format = 0xE;
+  
+	NFD_Init();
+
+  pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
 }
 
 ImVec2 image_size;
@@ -118,13 +118,13 @@ void main_loop(gui_t* gui) {;
     main_menubar(gui);
     debugger_window(gui);
     
-    igSetNextWindowSizeConstraints(ZERO, MAX, resize_callback, NULL);
+    igSetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
     igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar);
     ImVec2 window_size;
     igGetWindowSize(&window_size);
     ImVec2 result = {.x = (window_size.x - image_size.x) * 0.5, .y = (window_size.y - image_size.y) * 0.5};
     igSetCursorPos(result);
-    igImage((ImTextureID)((intptr_t)gui->id), image_size, ZERO, ONE, FULL4, ZERO4);
+    igImage((ImTextureID)((intptr_t)gui->id), image_size, (ImVec2){0, 0}, (ImVec2){1, 1}, (ImVec4){1, 1, 1, 1}, (ImVec4){0, 0, 0, 0});
     igEnd();
     
     glClear(GL_COLOR_BUFFER_BIT);
@@ -255,12 +255,6 @@ void disassembly(gui_t *gui) {
   igEnd();
 }
 
-const char* regs_str[32] = {
-  "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3",
-  "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-  "t8", "t9", "k0", "k1", "gp", "sp", "s8", "ra"
-};
-
 void registers_view(gui_t *gui) {
   registers_t* regs = &gui->core.cpu.regs;
   igBegin("Registers view", NULL, 0);
@@ -305,7 +299,7 @@ void start(gui_t* gui) {
   gui->core.running = gui->rom_loaded;
   gui->emu_quit = !gui->rom_loaded;
   if(gui->rom_loaded) {
-    pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
+    pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
   }
 }
 

@@ -17,12 +17,6 @@
 
 #define N64_ASPECT_RATIO (float)4 / 3
 
-static const ImVec2 ZERO = {.x = 0, .y = 0};
-static const ImVec2 ONE = {.x = 1, .y = 1};
-static const ImVec2 MAX = {.x = __FLT_MAX__, .y = __FLT_MAX__};
-static const ImVec4 ZERO4 = {.x = 0, .y = 0, .z = 0, .w = 0};
-static const ImVec4 FULL4 = {.x = 1, .y = 1, .z = 1, .w = 1};
-
 static const ImVec4 colors_disasm[3] = {{.x = 1, .y = 0.000, .z = 0, .w = 1},  // RED
                                         {.x = 1, .y = 0.619, .z = 0, .w = 1},  // ORANGE
                                         {.x = 1, .y = 0.988, .z = 0, .w = 1}}; // YELLOW

@@ -229,9 +229,10 @@ void sd(mem_t* mem, registers_t* regs, u32 instr) {
 }
 
 void ori(registers_t* regs, u32 instr) {
-  s64 rs = regs->gpr[RS(instr)];
-  u16 imm = instr;
-  regs->gpr[RT(instr)] = rs | imm;
+  u64 rs = regs->gpr[RS(instr)];
+  u64 imm = instr & 0xffff;
+  s64 result = imm | rs;
+  regs->gpr[RT(instr)] = result;
 }
 
 void or_(registers_t* regs, u32 instr) {
@@ -293,8 +294,8 @@ void sll(registers_t* regs, u32 instr) {
 void srl(registers_t* regs, u32 instr) {
   s32 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
-  s32 result = rt >> sa;
-  regs->gpr[RD(instr)] = (s64)result;
+  s32 result = (u32)rt >> sa;
+  regs->gpr[RD(instr)] = result;
 }
 
 void sra(registers_t* regs, u32 instr) {
