@@ -18,15 +18,23 @@ void init_gui(gui_t* gui, const char* title) {
 
   gui->rom_loaded = false;
 
-  SDL_DisplayMode vidmode;
+  const char* glsl_version = "#version 330";
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwSetErrorCallback(glfw_error_callback);
   
-  SDL_GetCurrentDisplayMode(0, &vidmode);
-  int w = vidmode.w - (vidmode.w / 4), h = vidmode.h - (vidmode.h / 4);
-  gui->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_RESIZABLE);
-  SDL_SetWindowPosition(gui->window, vidmode.w / 2 - w / 2, vidmode.h / 2 - h / 2);
-  gui->renderer = SDL_CreateRenderer(gui->window, -1, SDL_RENDERER_ACCELERATED);
-  gui->texture = SDL_CreateTexture(gui->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, 320, 240);
-  SDL_SetRenderDrawColor(gui->renderer, clear_colorR, clear_colorG, clear_colorG, 0xff);
+  const GLFWvidmode *details = glfwGetVideoMode(glfwGetPrimaryMonitor());
+  int w = details->width - (details->width / 4), h = details->height - (details->height / 4);
+  gui->window = glfwCreateWindow(w, h, title, NULL, NULL);
+  glfwSetWindowPos(gui->window, details->width / 2 - w / 2, details->height / 2 - h / 2);
+  glfwSetFramebufferSizeCallback(gui->window, framebuffer_size_callback);
+
+  glfwMakeContextCurrent(gui->window);
+  glfwSwapInterval(0);
+
+  if(!gladLoadGL()) {
+    logfatal("Failed to initialize OpenGL loader!\n");
+  }
 
   ImFontAtlas* firacode_font_atlas = ImFontAtlas_ImFontAtlas();
   ImFont* firacode_font = ImFontAtlas_AddFontFromFileTTF(firacode_font_atlas, "resources/FiraCode-VariableFont_wght.ttf", 16, NULL, NULL);
@@ -34,8 +42,8 @@ void init_gui(gui_t* gui, const char* title) {
   gui->ctx = igCreateContext(firacode_font_atlas);
   gui->io = igGetIO();
 
-  ImGui_ImplSDL2_InitForSDLRenderer(gui->window);
-  ImGui_ImplSDLRenderer_Init(gui->renderer);
+  ImGui_ImplGlfw_InitForOpenGL(gui->window, true);
+  ImGui_ImplOpenGL3_Init(glsl_version);
 
   ImGuiStyle* style = igGetStyle();
   style->WindowRounding = 10.0;
@@ -46,9 +54,21 @@ void init_gui(gui_t* gui, const char* title) {
 
   gui->framebuffer = calloc(320 * 240, 4);
 
+  glGenTextures(1, &gui->id);
+  glBindTexture(GL_TEXTURE_2D, gui->id);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
 	NFD_Init();
 
   pthread_create(&gui->emu_thread_id, NULL, core_cb, (void*)gui);
+
+  gui->gl_data.depth = 2;
+  gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+  gui->gl_data.old_format = 0xE;
 }
 
 ImVec2 image_size;
@@ -69,49 +89,42 @@ static void resize_callback(ImGuiSizeCallbackData* data) {
   image_size.y = y;
 }
 
-void main_loop(gui_t* gui) {
-  bool running = true;
-  while(running) {    
+void main_loop(gui_t* gui) {;
+  while(!glfwWindowShouldClose(gui->window)) {    
     update_texture(gui);
 
-    ImGui_ImplSDLRenderer_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
     igNewFrame();
 
-    SDL_Event e;
-    SDL_PollEvent(&e);
-
-    switch(e.type) {
-      case SDL_QUIT: running = false; break;
-      case SDL_KEYDOWN:
-      switch(e.key.keysym.sym) {
-        case SDLK_o: case SDLK_ESCAPE:
-          open_file(gui);
-          break;
-        case SDLK_p:
-          if(gui->rom_loaded){
-            gui->core.running = !gui->core.running;
-          }
-          break;
-      }
+    if (glfwGetKey(gui->window, GLFW_KEY_O) == GLFW_PRESS) {
+      open_file(gui);
+    } else if (glfwGetKey(gui->window, GLFW_KEY_P) == GLFW_PRESS && gui->rom_loaded) {
+      gui->core.running = !gui->core.running;
+    } else if (glfwGetKey(gui->window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+      glfwSetWindowShouldClose(gui->window, GLFW_TRUE);
     }
     
-    main_menubar(gui, &running);
+    main_menubar(gui);
     debugger_window(gui);
     
-    igSetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
+    igSetNextWindowSizeConstraints(ZERO, MAX, resize_callback, NULL);
     igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar);
     ImVec2 window_size;
     igGetWindowSize(&window_size);
     ImVec2 result = {.x = (window_size.x - image_size.x) * 0.5, .y = (window_size.y - image_size.y) * 0.5};
     igSetCursorPos(result);
-    igImage((ImTextureID)((intptr_t)gui->texture), image_size, (ImVec2){0, 0}, (ImVec2){1, 1}, (ImVec4){1, 1, 1, 1}, (ImVec4){0, 0, 0, 0});
+    igImage((ImTextureID)((intptr_t)gui->id), image_size, ZERO, ONE, FULL4, ZERO4);
     igEnd();
     
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.227, 0.345, 0.454, 1.00);
+    
     igRender();
-    SDL_RenderClear(gui->renderer);
-    ImGui_ImplSDLRenderer_RenderDrawData(igGetDrawData());
-    SDL_RenderPresent(gui->renderer);
+    ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+
+    glfwSwapBuffers(gui->window);
+    glfwPollEvents();
   }
 }
 
@@ -120,55 +133,55 @@ void update_texture(gui_t* gui) {
   u32 origin = gui->core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = gui->core.mem.mmio.vi.status.format;
   bool reconstruct_texture = false;
-  bool res_changed = gui->fb_data.old_w != w || gui->fb_data.old_h != h;
-  bool format_changed = gui->fb_data.old_format != format;
+  bool res_changed = gui->gl_data.old_w != w || gui->gl_data.old_h != h;
+  bool format_changed = gui->gl_data.old_format != format;
 
   if(res_changed) {
-    gui->fb_data.old_w = w;
-    gui->fb_data.old_h = h;
+    gui->gl_data.old_w = w;
+    gui->gl_data.old_h = h;
 
     reconstruct_texture = true;
   }
 
   if(format_changed) {
-    gui->fb_data.old_format = format;
+    gui->gl_data.old_format = format;
     if(format == f5553) {
-      gui->fb_data.texFormat = SDL_PIXELFORMAT_RGBA5551;
-      gui->fb_data.depth = 2;
+      gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+      gui->gl_data.depth = 2;
     } else if (format == f8888) {
-      gui->fb_data.texFormat = SDL_PIXELFORMAT_RGBA8888;
-      gui->fb_data.depth = 4;
+      gui->gl_data.glFormat = GL_UNSIGNED_INT_8_8_8_8;
+      gui->gl_data.depth = 4;
     }
 
     reconstruct_texture = true;
   }
 
   if(reconstruct_texture) {
-    gui->framebuffer = realloc(gui->framebuffer, w * h * gui->fb_data.depth);
-    SDL_DestroyTexture(gui->texture);
-    gui->texture = SDL_CreateTexture(gui->renderer, gui->fb_data.texFormat, SDL_TEXTUREACCESS_STREAMING, w, h);
+    gui->framebuffer = realloc(gui->framebuffer, w * h * gui->gl_data.depth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, gui->gl_data.glFormat, gui->framebuffer);
   }
 
   if(format == f8888) {
-    memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * gui->fb_data.depth);
+    memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * gui->gl_data.depth);
   } else {
-    for(int i = 0; i < w * h * gui->fb_data.depth; i += gui->fb_data.depth) {
+    for(int i = 0; i < w * h * gui->gl_data.depth; i += gui->gl_data.depth) {
       gui->framebuffer[i] = gui->core.mem.rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
       gui->framebuffer[i + 1] = gui->core.mem.rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)];
     }
   }
 
-  SDL_UpdateTexture(gui->texture, NULL, gui->framebuffer, w * gui->fb_data.depth);
+  glBindTexture(GL_TEXTURE_2D, gui->id);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, gui->gl_data.glFormat, gui->framebuffer);
 }
 
-void main_menubar(gui_t *gui, bool* running) {
+void main_menubar(gui_t *gui) {
   if(igBeginMainMenuBar()) {
     if(igBeginMenu("File", true)) {
       if(igMenuItem_Bool("Open", "O", false, true)) {
         open_file(gui);
       }
       if(igMenuItem_Bool("Exit", "Esc", false, true)) {
-        *running = false;
+        glfwSetWindowShouldClose(gui->window, GLFW_TRUE);
       }
       igEndMenu();
     }
@@ -262,13 +275,10 @@ void destroy_gui(gui_t* gui) {
   pthread_join(gui->emu_thread_id, NULL);
   destroy_disasm(&gui->debugger);
   NFD_Quit();
-  ImGui_ImplSDLRenderer_Shutdown();
-  ImGui_ImplSDL2_Shutdown();
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
   igDestroyContext(gui->ctx);
-  SDL_DestroyRenderer(gui->renderer);
-  SDL_DestroyTexture(gui->texture);
-  SDL_DestroyWindow(gui->window);
-  SDL_Quit();
+  glfwDestroyWindow(gui->window);
 }
 
 void open_file(gui_t* gui) {

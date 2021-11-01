@@ -1,8 +1,8 @@
 #pragma once
+#include <SDL.h>
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 #include <cimgui_impl.h>
-#include <SDL2/SDL.h>
 #include <pthread.h>
 #include <core.h>
 #include <stdatomic.h>
@@ -11,34 +11,34 @@
 
 #define N64_ASPECT_RATIO (float)4 / 3
 
+static const ImVec2 ZERO = {.x = 0, .y = 0};
+static const ImVec2 ONE = {.x = 1, .y = 1};
+static const ImVec2 MAX = {.x = __FLT_MAX__, .y = __FLT_MAX__};
+static const ImVec4 ZERO4 = {.x = 0, .y = 0, .z = 0, .w = 0};
+static const ImVec4 FULL4 = {.x = 1, .y = 1, .z = 1, .w = 1};
+
 static const ImVec4 colors_disasm[3] = {{.x = 1, .y = 0.000, .z = 0, .w = 1},  // RED
                                         {.x = 1, .y = 0.619, .z = 0, .w = 1},  // ORANGE
                                         {.x = 1, .y = 0.988, .z = 0, .w = 1}}; // YELLOW
 
-static const u8 clear_colorR = 0x73;
-static const u8 clear_colorG = 0x8C;
-static const u8 clear_colorB = 0x99;
-
 typedef struct {
   u32 old_w, old_h;
   u8 old_format;
-  int texFormat;
+  int glFormat;
   u8 depth;
-} fb_data_t;
+} gl_data_t;
 
 typedef struct {
   ImGuiContext* ctx;
   ImGuiIO* io;
 	SDL_Window* window;
-	SDL_Renderer* renderer;
-	SDL_Texture* texture;
   unsigned int id; // OpenGL framebuffer texture ID
 	nfdchar_t* rom_file;
   bool rom_loaded;
   pthread_t emu_thread_id;
   atomic_bool emu_quit;
   core_t core;
-  fb_data_t fb_data;
+  gl_data_t gl_data;
   disasm_t debugger;
   u8* framebuffer;
 } gui_t;
@@ -47,7 +47,7 @@ void init_gui(gui_t* gui, const char* title);
 void main_loop(gui_t* gui);
 void destroy_gui(gui_t* gui);
 void open_file(gui_t* gui);
-void main_menubar(gui_t* gui, bool* running);
+void main_menubar(gui_t* gui);
 void debugger_window(gui_t* gui);
 void disassembly(gui_t* gui);
 void registers_view(gui_t* gui);

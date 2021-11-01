@@ -18,7 +18,6 @@ file(GLOB_RECURSE EMU_SRC "src/*.c")
 file(GLOB CIMGUI_SRC
   "external/cimgui/*.cpp"
   "external/cimgui/imgui/*.cpp"
-  "external/cimgui/imgui/backends/imgui_impl_sdl.cpp"
   "external/cimgui/imgui/backends/imgui_impl_sdlrenderer.cpp"
 )
 
@@ -45,9 +44,9 @@ include_directories(
 )
 
 if(WIN32)
-  set(FLAGS -static -Dmain=SDLmain SDL2main SDL2 m gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static SDL2main SDL2 m gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
-  set(FLAGS pthread -Dmain=SDLmain SDL2 m)
+  set(FLAGS pthread SDL2 m)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
