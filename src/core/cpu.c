@@ -63,6 +63,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x28: sb(mem, regs, instr); break;
   case 0x29: sh(mem, regs, instr); break;
   case 0x2B: sw(mem, regs, instr); break;
+  case 0x2C: sdl(mem, regs, instr); break;
   case 0x2F: break;
   case 0x37: ld(mem, regs, instr); break;
   case 0x3F: sd(mem, regs, instr); break;
