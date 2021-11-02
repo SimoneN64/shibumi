@@ -1,0 +1,93 @@
+name: Build
+
+on: push
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: msys2/setup-msys2@v2
+        with:
+          install: make mingw-w64-x86_64-clang mingw-w64-x86_64-cmake mingw-w64-x86_64-SDL2 mingw-w64-x86_64-capstone
+      - name: Build shibumi
+        run: |
+          cmake \
+            -B build \
+            -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_FLAGS="-s" \
+            -DSDL2_STATIC=ON \
+          cd build
+          make -j$NUMBER_OF_PROCESSORS
+      - name: Collect artifacts
+        run: |
+          mkdir upload
+          cp -r build/shibumi.exe upload
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: shibumi-windows
+          path: upload
+          if-no-files-found: error
+
+  build-linux:
+    runs-on: arch-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Setup dependencies
+        run: |
+          sudo pacman -Syyuu
+          sudo pacman -S sdl2 capstone
+      - name: Build shibumi
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cd build
+          make -j$(nproc)
+      - name: Collect artifacts
+        run: |
+          mkdir upload
+          cp -r build/shibumi upload
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: shibumi-linux
+          path: upload
+          if-no-files-found: error
+
+  build-macOS:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Setup dependencies
+        env:
+          HOMEBREW_NO_ANALYTICS: 1
+        run: brew install sdl2 capstone
+      - name: Build shibumi
+        run: |
+          export CPPFLAGS="$CPPFLAGS"
+          cmake -B build \
+                -DCMAKE_CXX_FLAGS="-s" \
+                -DSDL2_STATIC=ON \
+                -DCMAKE_BUILD_TYPE=Release
+          cd build
+          make -j$(sysctl -n hw.availcpu)
+      - name: Collect artifacts
+        run: |
+          mkdir upload
+          cp -r build/shibumi upload
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: shibumi-${{ runner.os }}
+          path: upload
+          if-no-files-found: error
