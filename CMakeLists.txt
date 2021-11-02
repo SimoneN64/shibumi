@@ -30,6 +30,7 @@ target_compile_definitions(cimgui PRIVATE
 
 include_directories(
   ${SDL2_INCLUDE_DIRS}
+  ${CAPSTONE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/include
   ${CMAKE_SOURCE_DIR}/include/utils/
   ${CMAKE_SOURCE_DIR}/include/core/

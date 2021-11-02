@@ -20,9 +20,7 @@ jobs:
           cmake \
             -B build \
             -G "Unix Makefiles" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_FLAGS="-s" \
-            -DSDL2_STATIC=ON \
+            -DCMAKE_BUILD_TYPE=Release
           cd build
           make -j$NUMBER_OF_PROCESSORS
       - name: Collect artifacts
@@ -37,15 +35,15 @@ jobs:
           if-no-files-found: error
 
   build-linux:
-    runs-on: arch-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
       - name: Setup dependencies
         run: |
-          sudo pacman -Syyuu
-          sudo pacman -S sdl2 capstone
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libcapstone-dev
       - name: Build shibumi
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
