@@ -50,9 +50,9 @@ include_directories(
 )
 
 if(WIN32)
-  set(FLAGS -static SDL2main SDL2 OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static SDL2main SDL2 OpenGL::GL dl gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
-  set(FLAGS pthread SDL2 OpenGL::GL)
+  set(FLAGS pthread SDL2 OpenGL::GL dl)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
