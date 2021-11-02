@@ -198,6 +198,7 @@ void main_menubar(gui_t *gui) {
     if(igBeginMenu("Emulation", true)) {
       if(igMenuItem_Bool(gui->core.running ? "Pause" : "Resume", "P", false, gui->rom_loaded)) {
         gui->core.running = !gui->core.running;
+        gui->core.paused = !gui->core.paused;
       }
       if(igMenuItem_Bool("Stop", NULL, false, gui->rom_loaded)) {
         stop(gui);
@@ -230,9 +231,39 @@ void disassembly(gui_t *gui) {
   
   gui->debugger.count = cs_disasm(gui->debugger.handle, code, sizeof(code), pointer, 25, &gui->debugger.insn);
   igBegin("Disassembly", NULL, 0);
+  ImVec2 window_size;
+  igGetWindowSize(&window_size);
+
+  if(igButton("Step", (ImVec2){ (window_size.x / 2) - 10, 20 })) {
+    gui->core.stepping = true;
+    step(&gui->core.cpu, &gui->core.mem);
+  }
+
+  igSameLine(window_size.x / 2, 5);
+  if(igButton("Run frame", (ImVec2){ (window_size.x / 2) - 10, 20 })) {
+    gui->core.stepping = true;
+    for(int i = 0; i < 100000; i++) {
+      step(&gui->core.cpu, &gui->core.mem);
+    }
+  }
+
+  s64 addr = -1;
+
+  if(igButton("Set breakpoint", (ImVec2){(window_size.x / 4) - 10, 20})) {
+    if(addr != -1) {
+      gui->core.breakpoint = true;
+      gui->core.break_addr = addr;
+    }
+  }
+
+  igSameLine(window_size.x / 4, 5);
+
+  char buf[9];
+  igInputText("Address", buf, 9, ImGuiInputTextFlags_CharsHexadecimal, NULL, NULL);
+
+  igSpacing();
+
   if(gui->debugger.count > 0) {
-    ImVec2 window_size;
-    igGetWindowSize(&window_size);
     for(size_t j = 0; j < gui->debugger.count; j++) {
       const float font_size = igGetFontSize() * strlen(gui->debugger.insn[j].op_str) / 2;
       switch(j) {
