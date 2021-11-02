@@ -69,8 +69,8 @@ void init_gui(gui_t* gui, const char* title) {
   gui->gl_data.depth = 2;
   gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
   gui->gl_data.old_format = 0xE;
-  
-	NFD_Init();
+
+  NFD_Init();
 
   thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
 }
@@ -111,15 +111,16 @@ void main_loop(gui_t* gui) {
           }
           break;  
         case SDL_KEYDOWN:
-        switch(event.key.keysym.sym) {
-          case SDLK_o: open_file(gui); break;
-          case SDLK_p:
-            if(gui->rom_loaded) {
-              gui->core.running = !gui->core.running;
-            }
-            break;
-          case SDLK_ESCAPE: gui->running = false; break;
-        }
+          switch(event.key.keysym.sym) {
+            case SDLK_o: open_file(gui); break;
+            case SDLK_p:
+              if(gui->rom_loaded) {
+                gui->core.running = !gui->core.running;
+              }
+              break;
+            case SDLK_ESCAPE: gui->running = false; break;
+          }
+          break;
       }
     }
 
@@ -336,11 +337,11 @@ void destroy_gui(gui_t* gui) {
 
 void open_file(gui_t* gui) {
   gui->rom_file = "";
-	nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
-	nfdresult_t result = NFD_OpenDialog(&gui->rom_file, &filter, 1, "roms/");
-	if(result == NFD_OKAY) {
+  nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
+  nfdresult_t result = NFD_OpenDialog(&gui->rom_file, &filter, 1, "roms/");
+  if(result == NFD_OKAY) {
     reset(gui);
-	}
+  }
 }
 
 void start(gui_t* gui) {
