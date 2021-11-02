@@ -211,6 +211,7 @@ void main_menubar(gui_t *gui) {
     if(igBeginMenu("Emulation", true)) {
       if(igMenuItem_Bool(gui->core.running ? "Pause" : "Resume", "P", false, gui->rom_loaded)) {
         gui->core.running = !gui->core.running;
+        gui->core.paused = !gui->core.paused;
       }
       if(igMenuItem_Bool("Stop", NULL, false, gui->rom_loaded)) {
         stop(gui);
