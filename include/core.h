@@ -8,7 +8,7 @@ typedef struct {
   cpu_t cpu;
   mem_t mem;
   s64 break_addr;
-	bool running, stepping, breakpoint, paused;
+	bool running, stepping, breakpoint;
 } core_t;
 
 void init_core(core_t* core);

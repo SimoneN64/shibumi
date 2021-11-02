@@ -4,13 +4,13 @@
 #include <utils/log.h>
 #include <string.h>
 
-void* core_callback(void* vpargs) {
+int core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
     run_frame(&gui->core);
   }
 
-  return NULL;
+  return 0;
 }
 
 void init_gui(gui_t* gui, const char* title) {
@@ -72,7 +72,7 @@ void init_gui(gui_t* gui, const char* title) {
   
 	NFD_Init();
 
-  pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
+  thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
 }
 
 ImVec2 image_size;
@@ -211,7 +211,9 @@ void main_menubar(gui_t *gui) {
     if(igBeginMenu("Emulation", true)) {
       if(igMenuItem_Bool(gui->core.running ? "Pause" : "Resume", "P", false, gui->rom_loaded)) {
         gui->core.running = !gui->core.running;
-        gui->core.paused = !gui->core.paused;
+        if(gui->core.running) {
+          gui->core.stepping = false;
+        }
       }
       if(igMenuItem_Bool("Stop", NULL, false, gui->rom_loaded)) {
         stop(gui);
@@ -244,6 +246,7 @@ void disassembly(gui_t *gui) {
   
   gui->debugger.count = cs_disasm(gui->debugger.handle, code, sizeof(code), pointer, 25, &gui->debugger.insn);
   igBegin("Disassembly", NULL, 0);
+
   ImVec2 window_size;
   igGetWindowSize(&window_size);
 
@@ -260,7 +263,12 @@ void disassembly(gui_t *gui) {
     }
   }
 
-  s64 addr = -1;
+  static s32 addr = -1;
+
+  igSetNextItemWidth(window_size.x - (window_size.x / 4) - 10);
+  igInputInt("", &addr, 0, 0, ImGuiInputTextFlags_CharsHexadecimal);
+
+  igSameLine(window_size.x - (window_size.x / 4), 5);
 
   if(igButton("Set breakpoint", (ImVec2){(window_size.x / 4) - 10, 20})) {
     if(addr != -1) {
@@ -268,11 +276,6 @@ void disassembly(gui_t *gui) {
       gui->core.break_addr = addr;
     }
   }
-
-  igSameLine(window_size.x / 4, 5);
-
-  char buf[9];
-  igInputText("Address", buf, 9, ImGuiInputTextFlags_CharsHexadecimal, NULL, NULL);
 
   igSpacing();
 
@@ -320,7 +323,7 @@ void debugger_window(gui_t* gui) {
 
 void destroy_gui(gui_t* gui) {
   gui->emu_quit = true;
-  pthread_join(gui->emu_thread_id, NULL);
+  thrd_join(gui->emu_thread_id, NULL);
   destroy_disasm(&gui->debugger);
   NFD_Quit();
   ImGui_ImplOpenGL3_Shutdown();
@@ -342,10 +345,9 @@ void open_file(gui_t* gui) {
 
 void start(gui_t* gui) {
   gui->rom_loaded = load_rom(&gui->core.mem, gui->rom_file);
-  gui->core.running = gui->rom_loaded;
   gui->emu_quit = !gui->rom_loaded;
   if(gui->rom_loaded) {
-    pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
+    thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
   }
 }
 
@@ -356,7 +358,7 @@ void reset(gui_t* gui) {
 
 void stop(gui_t* gui) {
   gui->emu_quit = true;
-  pthread_join(gui->emu_thread_id, NULL);
+  thrd_join(gui->emu_thread_id, NULL);
   init_core(&gui->core);
   gui->rom_loaded = false;
   gui->core.running = false;

@@ -6,7 +6,7 @@
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 #include <cimgui_impl.h>
-#include <pthread.h>
+#include <threads.h>
 #include <core.h>
 #include <stdatomic.h>
 #include <capstone/capstone.h>
@@ -33,7 +33,7 @@ typedef struct {
 	nfdchar_t* rom_file;
   bool rom_loaded, running;
   SDL_GLContext gl_context;
-  pthread_t emu_thread_id;
+  thrd_t emu_thread_id;
   atomic_bool emu_quit;
   core_t core;
   gl_data_t gl_data;
