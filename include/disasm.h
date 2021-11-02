@@ -1,5 +1,5 @@
 #pragma once
-#include <capstone/capstone.h>
+#include <capstone.h>
 
 typedef struct {
 	csh handle;
