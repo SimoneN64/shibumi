@@ -28,6 +28,9 @@ add_library(cimgui ${CIMGUI_SRC})
 target_compile_definitions(cimgui PRIVATE 
 	IMGUI_IMPL_API=extern\ \"C\")
 
+include(FindPkgConfig)
+pkg_check_modules (CAPSTONE REQUIRED capstone)
+
 include_directories(
   ${SDL2_INCLUDE_DIRS}
   ${CAPSTONE_INCLUDE_DIRS}
@@ -64,4 +67,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} ${CMAKE_DL_LIBS} nfd cimgui capstone)
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} ${CMAKE_DL_LIBS} nfd cimgui ${CAPSTONE_LIBRARIES})
