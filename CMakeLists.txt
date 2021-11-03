@@ -50,9 +50,9 @@ include_directories(
 )
 
 if(WIN32)
-  set(FLAGS -static ${SDL2_LIBRARIES} OpenGL::GL dl gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static ${SDL2_LIBRARIES} OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
-  set(FLAGS pthread ${SDL2_LIBRARIES} OpenGL::GL dl)
+  set(FLAGS dl pthread ${SDL2_LIBRARIES} OpenGL::GL)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -67,4 +67,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} ${CMAKE_DL_LIBS} nfd cimgui ${CAPSTONE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd cimgui ${CAPSTONE_LIBRARIES})
