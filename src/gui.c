@@ -210,7 +210,12 @@ void main_menubar(gui_t *gui) {
       igEndMenu();
     }
     if(igBeginMenu("Emulation", true)) {
-      if(igMenuItem_Bool(gui->core.running ? "Pause" : "Resume", "P", false, gui->rom_loaded)) {
+      char* pause_text = "Pause";
+      if(!gui->core.running && gui->rom_loaded) {
+        pause_text = "Resume";
+      }
+      
+      if(igMenuItem_Bool(pause_text, "P", false, gui->rom_loaded)) {
         gui->core.running = !gui->core.running;
         if(gui->core.running) {
           gui->core.stepping = false;
@@ -347,6 +352,7 @@ void open_file(gui_t* gui) {
 void start(gui_t* gui) {
   gui->rom_loaded = load_rom(&gui->core.mem, gui->rom_file);
   gui->emu_quit = !gui->rom_loaded;
+  gui->core.running = gui->rom_loaded;
   if(gui->rom_loaded) {
     pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
   }

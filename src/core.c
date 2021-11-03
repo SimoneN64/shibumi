@@ -7,7 +7,7 @@ void init_core(core_t* core) {
   init_mem(&core->mem);
   core->running = false;
   core->breakpoint = false;
-  core->stepping = true;
+  core->stepping = false;
 }
 
 void run_frame(core_t* core) {
