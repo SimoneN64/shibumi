@@ -1,4 +1,4 @@
-#include <capstone/capstone.h>
+#include <capstone.h>
 #include <core.h>
 #include <gui.h>
 #include <utils/log.h>

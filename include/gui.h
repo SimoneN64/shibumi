@@ -9,7 +9,6 @@
 #include <pthread.h>
 #include <core.h>
 #include <stdatomic.h>
-#include <capstone.h>
 #include <nfd.h>
 
 #define N64_ASPECT_RATIO (float)4 / 3
