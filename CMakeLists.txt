@@ -10,7 +10,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
-find_package(SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
 
@@ -30,6 +29,7 @@ target_compile_definitions(cimgui PRIVATE
 
 include(FindPkgConfig)
 pkg_check_modules (CAPSTONE REQUIRED capstone)
+pkg_check_modules (SDL2 REQUIRED sdl2)
 
 include_directories(
   ${SDL2_INCLUDE_DIRS}
@@ -50,9 +50,9 @@ include_directories(
 )
 
 if(WIN32)
-  set(FLAGS -static SDL2main SDL2 OpenGL::GL dl gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static ${SDL2_LIBRARIES} OpenGL::GL dl gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
-  set(FLAGS pthread SDL2 OpenGL::GL dl)
+  set(FLAGS pthread ${SDL2_LIBRARIES} OpenGL::GL dl)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
