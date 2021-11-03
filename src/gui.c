@@ -4,13 +4,13 @@
 #include <utils/log.h>
 #include <string.h>
 
-void* core_callback(void* vpargs) {
+int core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
     run_frame(&gui->core);
   }
 
-  return NULL;
+  return 0;
 }
 
 void init_gui(gui_t* gui, const char* title) {
@@ -21,11 +21,11 @@ void init_gui(gui_t* gui, const char* title) {
   gui->rom_loaded = false;
   gui->running = true;
 
-  const char* glsl_version = "#version 330";
+  const char* glsl_version = "#version 130";
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -39,19 +39,23 @@ void init_gui(gui_t* gui, const char* title) {
   gui->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
   gui->gl_context = SDL_GL_CreateContext(gui->window);
   SDL_GL_MakeCurrent(gui->window, gui->gl_context);
+  SDL_GL_SetSwapInterval(1); // Enable vsync
 
   ImFontAtlas* firacode_font_atlas = ImFontAtlas_ImFontAtlas();
   ImFont* firacode_font = ImFontAtlas_AddFontFromFileTTF(firacode_font_atlas, "resources/FiraCode-VariableFont_wght.ttf", 16, NULL, NULL);
 
   gui->ctx = igCreateContext(firacode_font_atlas);
   gui->io = igGetIO();
+  gui->io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+  gui->io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   ImGui_ImplSDL2_InitForOpenGL(gui->window, gui->gl_context);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
   ImGuiStyle* style = igGetStyle();
-  style->WindowRounding = 10.0;
-  igStyleColorsDark(NULL);
+  igStyleColorsDark(style);
+  
+  style->WindowRounding = 10;
   
   init_core(&gui->core);
   init_disasm(&gui->debugger);
@@ -72,7 +76,7 @@ void init_gui(gui_t* gui, const char* title) {
 
   NFD_Init();
 
-  pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
+  thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
 }
 
 ImVec2 image_size;
@@ -148,6 +152,13 @@ void main_loop(gui_t* gui) {
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+    
+    SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+    SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+    igUpdatePlatformWindows();
+    igRenderPlatformWindowsDefault(NULL, NULL);
+    SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+
     SDL_GL_SwapWindow(gui->window);
   }
 }
@@ -269,18 +280,31 @@ void disassembly(gui_t *gui) {
     }
   }
 
-  static s32 addr = -1;
+  static int num_instr = 0;
 
-  igSetNextItemWidth(window_size.x - (window_size.x / 4) - 10);
-  igInputInt("", &addr, 0, 0, ImGuiInputTextFlags_CharsHexadecimal);
+  char run_n_instr_str[20];
+  sprintf(run_n_instr_str, "Run %d instr", num_instr);
+  run_n_instr_str[19] = '\0';
+
+  if(igButton(run_n_instr_str, (ImVec2){ (window_size.x / 3) - 10, 20 })) {
+    gui->core.stepping = true;
+    for(int i = 0; i < num_instr; i++) {
+      step(&gui->core.cpu, &gui->core.mem);
+    }
+  }
+  
+  igSameLine(window_size.x / 3, 5);
+  igSetNextItemWidth(window_size.x / 10);
+  igInputInt("Instruction count to run", &num_instr, 0, 0, ImGuiInputTextFlags_CharsNoBlank);
+  
+  static int addr = 0xFFFFFFFF;
+
+  igInputInt("Address", &addr, 0, 0, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsNoBlank);
 
   igSameLine(window_size.x - (window_size.x / 4), 5);
 
   if(igButton("Set breakpoint", (ImVec2){(window_size.x / 4) - 10, 20})) {
-    if(addr != -1) {
-      gui->core.breakpoint = true;
-      gui->core.break_addr = addr;
-    }
+    gui->core.break_addr = addr;
   }
 
   igSpacing();
@@ -329,7 +353,7 @@ void debugger_window(gui_t* gui) {
 
 void destroy_gui(gui_t* gui) {
   gui->emu_quit = true;
-  pthread_join(gui->emu_thread_id, NULL);
+  thrd_join(gui->emu_thread_id, NULL);
   destroy_disasm(&gui->debugger);
   NFD_Quit();
   ImGui_ImplOpenGL3_Shutdown();
@@ -354,7 +378,7 @@ void start(gui_t* gui) {
   gui->emu_quit = !gui->rom_loaded;
   gui->core.running = gui->rom_loaded;
   if(gui->rom_loaded) {
-    pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
+    thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
   }
 }
 
@@ -365,7 +389,7 @@ void reset(gui_t* gui) {
 
 void stop(gui_t* gui) {
   gui->emu_quit = true;
-  pthread_join(gui->emu_thread_id, NULL);
+  thrd_join(gui->emu_thread_id, NULL);
   init_core(&gui->core);
   gui->rom_loaded = false;
   gui->core.running = false;
