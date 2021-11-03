@@ -17,10 +17,10 @@ add_subdirectory(external/nativefiledialog-extended/)
 file(GLOB_RECURSE EMU_SRC "src/*.c")
 
 file(GLOB CIMGUI_SRC
-  "external/cimgui/*.cpp"
-  "external/cimgui/imgui/*.cpp"
-  "external/cimgui/imgui/backends/imgui_impl_sdl.cpp"
-  "external/cimgui/imgui/backends/imgui_impl_opengl3.cpp"
+  "${CMAKE_SOURCE_DIR}/external/cimgui/*.cpp"
+  "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/*.cpp"
+  "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/backends/imgui_impl_sdl.cpp"
+  "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/backends/imgui_impl_opengl3.cpp"
 )
 
 add_library(cimgui ${CIMGUI_SRC})
