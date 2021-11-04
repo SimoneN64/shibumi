@@ -20,6 +20,7 @@ void init_gui(gui_t* gui, const char* title) {
 
   gui->rom_loaded = false;
   gui->running = true;
+  gui->show_debug_windows = true;
 
   const char* glsl_version = "#version 130";
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -30,13 +31,8 @@ void init_gui(gui_t* gui, const char* title) {
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-  SDL_DisplayMode details;
-  SDL_GetCurrentDisplayMode(0, &details);
   
-  int w = details.w - (details.w / 4), h = details.h - (details.h / 4);
-  
-  gui->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+  gui->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
   gui->gl_context = SDL_GL_CreateContext(gui->window);
   SDL_GL_MakeCurrent(gui->window, gui->gl_context);
   SDL_GL_SetSwapInterval(1); // Enable vsync
@@ -94,7 +90,7 @@ static void resize_callback(ImGuiSizeCallbackData* data) {
   }
 
   image_size.x = x;
-  image_size.y = y;
+  image_size.y = y - 30;
 }
 
 void main_loop(gui_t* gui) {
@@ -132,20 +128,20 @@ void main_loop(gui_t* gui) {
     ImGui_ImplSDL2_NewFrame();
     igNewFrame();
     
-    main_menubar(gui);
     debugger_window(gui);
     
     igSetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
-    igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar);
+    igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
+    main_menubar(gui);
     ImVec2 window_size;
     igGetWindowSize(&window_size);
-    ImVec2 result = {.x = (window_size.x - image_size.x) * 0.5, .y = (window_size.y - image_size.y) * 0.5};
+    ImVec2 result = {(window_size.x - image_size.x) * 0.5, (window_size.y - image_size.y + 15) * 0.5};
     igSetCursorPos(result);
     igImage((ImTextureID)((intptr_t)gui->id), image_size, (ImVec2){0, 0}, (ImVec2){1, 1}, (ImVec4){1, 1, 1, 1}, (ImVec4){0, 0, 0, 0});
     igEnd();
     
     glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.227, 0.345, 0.454, 1.00);
+    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     
     igRender();
     glViewport(0, 0, (int)io->DisplaySize.x, (int)io->DisplaySize.y);
@@ -210,37 +206,56 @@ void update_texture(gui_t* gui) {
 }
 
 void main_menubar(gui_t *gui) {
-  if(igBeginMainMenuBar()) {
+  ImVec2 window_size;
+  igGetWindowSize(&window_size);
+  if(igBeginMenuBar()) {
     if(igBeginMenu("File", true)) {
       if(igMenuItem_Bool("Open", "O", false, true)) {
         open_file(gui);
       }
+
       if(igMenuItem_Bool("Exit", "Esc", false, true)) {
         gui->running = false;
       }
       igEndMenu();
     }
+
     if(igBeginMenu("Emulation", true)) {
       char* pause_text = "Pause";
       if(!gui->core.running && gui->rom_loaded) {
         pause_text = "Resume";
       }
-      
+
       if(igMenuItem_Bool(pause_text, "P", false, gui->rom_loaded)) {
         gui->core.running = !gui->core.running;
         if(gui->core.running) {
           gui->core.stepping = false;
         }
       }
+
       if(igMenuItem_Bool("Stop", NULL, false, gui->rom_loaded)) {
         stop(gui);
       }
+
       if(igMenuItem_Bool("Reset", NULL, false, gui->rom_loaded)) {
         reset(gui);
       }
+
       igEndMenu();
     }
-    igEndMainMenuBar();
+
+    if(igBeginMenu("Settings", true)) {
+      igMenuItem_BoolPtr("Show debug windows", "", &gui->show_debug_windows, true);
+      igEndMenu();
+    }
+
+    igSameLine(window_size.x - 30, -1);
+    if(igBeginMenu("X", true)) {
+      gui->running = false;
+      igEndMenu();
+    }
+
+    igEndMenuBar();
   }
 }
 
@@ -262,7 +277,7 @@ void disassembly(gui_t *gui) {
   memcpy(code, instructions, 100);
   
   gui->debugger.count = cs_disasm(gui->debugger.handle, code, sizeof(code), pointer, 25, &gui->debugger.insn);
-  igBegin("Disassembly", NULL, 0);
+  igBegin("Disassembly", NULL, ImGuiWindowFlags_NoScrollbar);
 
   ImVec2 window_size;
   igGetWindowSize(&window_size);
@@ -309,18 +324,19 @@ void disassembly(gui_t *gui) {
 
   igSpacing();
 
+  igBeginChild_ID(igGetID_Str("frame"), window_size, false, 0);
   if(gui->debugger.count > 0) {
     for(size_t j = 0; j < gui->debugger.count; j++) {
       const float font_size = igGetFontSize() * strlen(gui->debugger.insn[j].op_str) / 2;
       switch(j) {
       case 12 ... 14:
         igTextColored(colors_disasm[j & 3], "0x%"PRIx64":\t%s", gui->debugger.insn[j].address, gui->debugger.insn[j].mnemonic);
-        igSameLine(window_size.x - font_size, -1);
+        igSameLine(window_size.x - font_size - 10, -1);
         igTextColored(colors_disasm[j & 3], "%s", gui->debugger.insn[j].op_str);
         break;
       default:
         igText("0x%"PRIx64":\t%s", gui->debugger.insn[j].address, gui->debugger.insn[j].mnemonic);
-        igSameLine(window_size.x - font_size, -1);
+        igSameLine(window_size.x - font_size - 10, -1);
         igText("%s", gui->debugger.insn[j].op_str);
       }
     }
@@ -329,6 +345,7 @@ void disassembly(gui_t *gui) {
   } else {
     igText(gui->rom_loaded ? "Could not disassemble instruction!" : "No game loaded!");
   }
+  igEndChild();
   igEnd();
 }
 
@@ -347,8 +364,10 @@ void registers_view(gui_t *gui) {
 }
 
 void debugger_window(gui_t* gui) {
-  disassembly(gui);
-  registers_view(gui);
+  if(gui->show_debug_windows) {
+    disassembly(gui);
+    registers_view(gui);
+  }
 }
 
 void destroy_gui(gui_t* gui) {

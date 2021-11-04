@@ -27,6 +27,7 @@ typedef struct {
 typedef struct {
   ImGuiContext* ctx;
   ImGuiIO* io;
+  bool show_debug_windows;
 	SDL_Window* window;
   unsigned int id; // OpenGL framebuffer texture ID
 	nfdchar_t* rom_file;
