@@ -94,8 +94,8 @@ u16 read16(mem_t* mem, u32 vaddr) {
   }
 }
 
-u32 read32(mem_t* mem, u32 vaddr) {
-  u32 paddr = vtp(vaddr);
+u32 read32(mem_t* mem, u32 vaddr, bool tlb) {
+  u32 paddr = tlb ? vtp(vaddr) : vaddr;
   
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(32, mem->rdram, paddr);

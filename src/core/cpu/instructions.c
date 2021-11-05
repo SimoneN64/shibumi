@@ -156,7 +156,7 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened");
   }
 
-  s32 value = read32(mem, address);
+  s32 value = read32(mem, address, true);
   regs->gpr[RT(instr)] = (s64)value;
 }
 
@@ -192,7 +192,7 @@ void lwu(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened");
   }
 
-  u32 value = read32(mem, address);
+  u32 value = read32(mem, address, true);
   regs->gpr[RT(instr)] = value;
 }
 

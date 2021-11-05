@@ -3,6 +3,7 @@
 #include <gui.h>
 #include <utils/log.h>
 #include <string.h>
+#include <memoryview.h>
 
 int core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
@@ -140,11 +141,7 @@ void main_loop(gui_t* gui) {
     igImage((ImTextureID)((intptr_t)gui->id), image_size, (ImVec2){0, 0}, (ImVec2){1, 1}, (ImVec4){1, 1, 1, 1}, (ImVec4){0, 0, 0, 0});
     igEnd();
     
-    glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    
     igRender();
-    glViewport(0, 0, (int)io->DisplaySize.x, (int)io->DisplaySize.y);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
@@ -267,7 +264,7 @@ void disassembly(gui_t *gui) {
 
   if(gui->rom_loaded) {
     for(int i = 0; i < 25; i++) {
-      instructions[i] = read32(&gui->core.mem, pointer + i * 4);
+      instructions[i] = read32(&gui->core.mem, pointer + i * 4, true);
     }
   } else {
     memset(instructions, 0xFFFFFFFF, 100);
@@ -324,7 +321,7 @@ void disassembly(gui_t *gui) {
 
   igSpacing();
 
-  igBeginChild_ID(igGetID_Str("frame"), window_size, false, 0);
+  igBeginChild_Str("frame", window_size, false, 0);
   if(gui->debugger.count > 0) {
     for(size_t j = 0; j < gui->debugger.count; j++) {
       const float font_size = igGetFontSize() * strlen(gui->debugger.insn[j].op_str) / 2;
@@ -366,6 +363,7 @@ void registers_view(gui_t *gui) {
 void debugger_window(gui_t* gui) {
   if(gui->show_debug_windows) {
     disassembly(gui);
+    igMemoryView(read32, write32, &gui->core.mem);
     registers_view(gui);
   }
 }

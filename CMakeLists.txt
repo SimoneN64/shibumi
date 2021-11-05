@@ -16,6 +16,7 @@ add_subdirectory(external/nativefiledialog-extended/)
 file(GLOB_RECURSE EMU_SRC "src/*.c")
 
 file(GLOB CIMGUI_SRC
+  "${CMAKE_SOURCE_DIR}/external/memoryview/*.c"
   "${CMAKE_SOURCE_DIR}/external/cimgui/*.cpp"
   "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/*.cpp"
   "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/backends/imgui_impl_sdl.cpp"
@@ -43,6 +44,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include/core/cpu/registers/
   ${CMAKE_SOURCE_DIR}/include/core/scheduler/
   ${CMAKE_SOURCE_DIR}/external/
+  ${CMAKE_SOURCE_DIR}/external/memoryview/
   ${CMAKE_SOURCE_DIR}/external/nativefiledialog-extended/src/include/
   ${CMAKE_SOURCE_DIR}/external/cimgui/
   ${CMAKE_SOURCE_DIR}/external/cimgui/imgui/
