@@ -363,7 +363,7 @@ void registers_view(gui_t *gui) {
 void debugger_window(gui_t* gui) {
   if(gui->show_debug_windows) {
     disassembly(gui);
-    igMemoryView(read32, write32, &gui->core.mem);
+    igMemoryView(&gui->core.mem);
     registers_view(gui);
   }
 }

@@ -1,4 +1,5 @@
 #include <memoryview.h>
+#include <mem.h>
 
 #define BYTES_PER_LINE 16
 #define SPACE_HEX_ASCII 10
@@ -11,8 +12,8 @@ char ascii(u8 byte) {
   }
 }
 
-void igMemoryView(memory_read funcr, memory_write funcw, void* usr_data) {
-  static u64 temp;
+void igMemoryView(mem_t* mem) {
+  static u32 addr = 0;
   ImVec2 glyph_size, window_size, child_size, input_size;
   igCalcTextSize(&glyph_size, "0", NULL, false, -1);
   ImGuiStyle* style = igGetStyle();
@@ -31,7 +32,8 @@ void igMemoryView(memory_read funcr, memory_write funcw, void* usr_data) {
   igSetNextWindowSizeConstraints(constraint_min, constraint_max, NULL, NULL);
   igBegin("Memory viewer", NULL, 0);
   igGetWindowSize(&window_size);
-  igInputInt("Address", &temp, 0, 0, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsNoBlank);
+  igInputInt("Address", &addr, 0, 0, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_CharsNoBlank);
+  addr &= 0xFFFFFFFF;
   
   igBeginChild_Str("addresses", (ImVec2){window_size.x, window_size.y - input_size.y - 65}, true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
   float line_height = glyph_size.y + style->ItemSpacing.y;
@@ -40,17 +42,17 @@ void igMemoryView(memory_read funcr, memory_write funcw, void* usr_data) {
   
   igSetScrollY_Float(scroll);
   
-  u64 start_addr = scroll / line_height * BYTES_PER_LINE;
-  u64 end_addr = (scroll + child_size.y - style->ItemSpacing.y) / line_height * BYTES_PER_LINE;
+  u64 start_addr = (addr & 4) + scroll / line_height * BYTES_PER_LINE;
+  u64 end_addr = (addr & 4) + (scroll + child_size.y - style->ItemSpacing.y) / line_height * BYTES_PER_LINE;
 
   for(u64 i = start_addr; i < end_addr; i += BYTES_PER_LINE) {
     igText("%08X", i);
     igSameLine(0, 10);
 
-    u32 byte_1_4 = funcr(usr_data, i, false);
-    u32 byte_5_8 = funcr(usr_data, i + 4, false);
-    u32 byte_9_12 = funcr(usr_data, i + 8, false);
-    u32 byte_12_15 = funcr(usr_data, i + 12, false);
+    u32 byte_1_4 = read32(mem, i, false);
+    u32 byte_5_8 = read32(mem, i + 4, false);
+    u32 byte_9_12 = read32(mem, i + 8, false);
+    u32 byte_12_15 = read32(mem, i + 12, false);
     u32 bytes[4] = {byte_1_4, byte_5_8, byte_9_12, byte_12_15};
 
     for(int j = 0; j < 4; j++) {
