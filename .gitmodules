@@ -1,6 +1,7 @@
 [submodule "external/cimgui"]
 	path = external/cimgui
-	url = https://github.com/cimgui/cimgui
+	url = https://github.com/cimgui/cimgui/
+	branch = docking_inter
 [submodule "external/nativefiledialog-extended"]
 	path = external/nativefiledialog-extended
 	url = https://github.com/btzy/nativefiledialog-extended
