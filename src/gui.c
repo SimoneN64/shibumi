@@ -24,7 +24,7 @@ void init_gui(gui_t* gui, const char* title) {
 
   gui->rom_loaded = false;
   gui->running = true;
-  gui->show_debug_windows = true;
+  gui->show_debug_windows = false;
 
   const char* glsl_version = "#version 130";
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -289,7 +289,7 @@ void disassembly(gui_t *gui) {
   memcpy(code, instructions, 100);
   
   gui->debugger.count = cs_disasm(gui->debugger.handle, code, sizeof(code), pointer, 25, &gui->debugger.insn);
-  igBegin("Disassembly", NULL, ImGuiWindowFlags_NoScrollbar);
+  igBegin("Disassembly", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
   ImVec2 window_size;
   igGetWindowSize(&window_size);

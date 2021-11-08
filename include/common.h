@@ -11,14 +11,6 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-typedef struct {
-  u64 low, high;
-} u128;
-
-typedef struct {
-  s64 low, high;
-} s128;
-
 #define RDRAM_SIZE 0x800000
 #define RDRAM_DSIZE (RDRAM_SIZE - 1)
 #define SRAM_SIZE 0x8000000
@@ -31,3 +23,6 @@ typedef struct {
 #define PIF_RAM_DSIZE (PIF_RAM_SIZE - 1)
 #define PIF_BOOTROM_SIZE 0x7C0
 #define PIF_BOOTROM_DSIZE (PIF_BOOTROM_SIZE - 1)
+#ifndef EMU_DIR
+#define EMU_DIR ""
+#endif

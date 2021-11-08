@@ -58,7 +58,7 @@ else()
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-  add_compile_options(-g)
+  add_compile_options(-O3 -g)
   add_compile_definitions(DEBUG)
   #add_link_options(-fsanitize=address)
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
