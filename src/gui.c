@@ -1,3 +1,4 @@
+#include "utils.h"
 #include <capstone.h>
 #include <core.h>
 #include <gui.h>
@@ -8,7 +9,10 @@
 void* core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
+    clock_t begin = clock();
     run_frame(&gui->core);
+    clock_t end = clock();
+    gui->delta += end - begin;
   }
 
   return NULL;
@@ -36,7 +40,7 @@ void init_gui(gui_t* gui, const char* title) {
   gui->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
   gui->gl_context = SDL_GL_CreateContext(gui->window);
   SDL_GL_MakeCurrent(gui->window, gui->gl_context);
-  SDL_GL_SetSwapInterval(1); // Enable vsync
+  SDL_GL_SetSwapInterval(0); // Enable vsync
 
   ImFontAtlas* firacode_font_atlas = ImFontAtlas_ImFontAtlas();
   ImFont* firacode_font = ImFontAtlas_AddFontFromFileTTF(firacode_font_atlas, "resources/FiraCode-VariableFont_wght.ttf", 16, NULL, NULL);
@@ -97,6 +101,7 @@ static void resize_callback(ImGuiSizeCallbackData* data) {
 void main_loop(gui_t* gui) {
   ImGuiIO* io = igGetIO();
   ImVec4 clear_color = {0.45f, 0.55f, 0.60f, 1.00f};
+  unsigned int frames = 0;
   while(gui->running) {
     update_texture(gui);
     
@@ -140,7 +145,16 @@ void main_loop(gui_t* gui) {
     igSetCursorPos(result);
     igImage((ImTextureID)((intptr_t)gui->id), image_size, (ImVec2){0, 0}, (ImVec2){1, 1}, (ImVec4){1, 1, 1, 1}, (ImVec4){0, 0, 0, 0});
     igEnd();
-    
+
+    frames++;
+
+    if(clock_to_ms(gui->delta)>1000.0) {
+      gui->fps = (double)frames * 0.5 + gui->fps *0.5;
+      frames = 0;
+      gui->delta -= CLOCKS_PER_SEC;
+      gui->frametime = 1000.0/((gui->fps == 0) ? 0.001 : gui->fps);
+    }
+
     igRender();
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -246,6 +260,8 @@ void main_menubar(gui_t *gui) {
       igEndMenu();
     }
 
+    igSameLine(window_size.x - 220, -1);
+    igText(gui->rom_loaded ? "[ %.2f fps ][ %.2f ms ]" : "[ NaN fps ][ NaN ms ]", gui->fps, gui->frametime);
     igSameLine(window_size.x - 30, -1);
     if(igBeginMenu("X", true)) {
       gui->running = false;

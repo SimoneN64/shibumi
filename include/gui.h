@@ -34,6 +34,8 @@ typedef struct {
   bool rom_loaded, running;
   SDL_GLContext gl_context;
   pthread_t emu_thread_id;
+  clock_t delta;
+  double fps, frametime;
   atomic_bool emu_quit;
   core_t core;
   gl_data_t gl_data;
