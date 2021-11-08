@@ -1,3 +1,4 @@
+#include "log.h"
 #include <instructions.h>
 #include <utils.h>
 #include <assert.h>
@@ -88,15 +89,58 @@ void daddu(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = addend1 + addend2;
 }
 
+void div_(registers_t* regs, u32 instr) {
+  s32 dividend = regs->gpr[RS(instr)];
+  s32 divisor = regs->gpr[RT(instr)];
+  logdebug("Dividend %08X, divisor %08X\n", dividend, divisor);
+  if(divisor == 0) {
+    regs->lo = -1;
+    regs->hi = dividend;
+  } else {
+    s32 quotient = dividend / divisor;
+    s32 remainder = dividend % divisor;
+    regs->lo = quotient;
+    regs->hi = remainder;
+  }
+}
+
 void divu(registers_t* regs, u32 instr) {
   u32 dividend = regs->gpr[RS(instr)];
   u32 divisor = regs->gpr[RT(instr)];
   if(divisor == 0) {
-    regs->lo = 0xffffffffffffffff;
+    regs->lo = -1;
     regs->hi = (s32)dividend;
   } else {
     s32 quotient = dividend / divisor;
     s32 remainder = dividend % divisor;
+    regs->lo = quotient;
+    regs->hi = remainder;
+  }
+}
+
+void ddiv(registers_t* regs, u32 instr) {
+  s64 dividend = regs->gpr[RS(instr)];
+  s64 divisor = regs->gpr[RT(instr)];
+  if(divisor == 0) {
+    regs->lo = 0xffffffffffffffff;
+    regs->hi = dividend;
+  } else {
+    s64 quotient = dividend / divisor;
+    s64 remainder = dividend % divisor;
+    regs->lo = quotient;
+    regs->hi = remainder;
+  }
+}
+
+void ddivu(registers_t* regs, u32 instr) {
+  u64 dividend = regs->gpr[RS(instr)];
+  u64 divisor = regs->gpr[RT(instr)];
+  if(divisor == 0) {
+    regs->lo = 0xffffffffffffffff;
+    regs->hi = (s64)dividend;
+  } else {
+    s64 quotient = dividend / divisor;
+    s64 remainder = dividend % divisor;
     regs->lo = quotient;
     regs->hi = remainder;
   }
@@ -346,6 +390,27 @@ void jr(registers_t* regs, u32 instr) {
   branch(regs, true, address);
 }
 
+void dsub(registers_t* regs, u32 instr) {
+  s64 rt = regs->gpr[RT(instr)];
+  s64 rs = regs->gpr[RS(instr)];
+  s64 result = rs - rt;
+  regs->gpr[RD(instr)] = result;
+}
+
+void dsubu(registers_t* regs, u32 instr) {
+  u64 rt = regs->gpr[RT(instr)];
+  u64 rs = regs->gpr[RS(instr)];
+  u64 result = rs - rt;
+  regs->gpr[RD(instr)] = result;
+}
+
+void sub(registers_t* regs, u32 instr) {
+  s32 rt = regs->gpr[RT(instr)];
+  s32 rs = regs->gpr[RS(instr)];
+  s32 result = rs - rt;
+  regs->gpr[RD(instr)] = (s64)result;
+}
+
 void subu(registers_t* regs, u32 instr) {
   u32 rt = regs->gpr[RT(instr)];
   u32 rs = regs->gpr[RS(instr)];
@@ -357,6 +422,14 @@ void multu(registers_t* regs, u32 instr) {
   u32 rt = regs->gpr[RT(instr)];
   u32 rs = regs->gpr[RS(instr)];
   u64 result = (u64)rt * (u64)rs;
+  regs->lo = (s64)((s32)result);
+  regs->hi = (s64)((s32)(result >> 32));
+}
+
+void mult(registers_t* regs, u32 instr) {
+  s32 rt = regs->gpr[RT(instr)];
+  s32 rs = regs->gpr[RS(instr)];
+  s64 result = (s64)rt * (s64)rs;
   regs->lo = (s64)((s32)result);
   regs->hi = (s64)((s32)(result >> 32));
 }

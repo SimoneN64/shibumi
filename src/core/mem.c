@@ -112,7 +112,7 @@ u32 read32(mem_t* mem, u32 vaddr, bool tlb) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logdebug("[ERR] Unimplemented %s[%08X] 32-bit read\n", regions_str(paddr), paddr); return 0;
+    default: logdebug("[WARN] Unimplemented %s[%08X] 32-bit read\n", regions_str(paddr), paddr); return 0;
   }
 }
 
@@ -166,7 +166,7 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: break;
-    default: logdebug("[ERR] Unimplemented %s[%08X] 32-bit write (%08X)\n", regions_str(paddr), paddr, val);
+    default: logdebug("[WARN] Unimplemented %s[%08X] 32-bit write (%08X)\n", regions_str(paddr), paddr, val);
   }
 }
 

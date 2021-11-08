@@ -18,7 +18,7 @@ u32 vi_read(vi_t* vi, u32 paddr) {
     case 0x04400010: return vi->current;
     case 0x04400018: return vi->vsync;
     case 0x0440001C: return vi->hsync;
-    default: logfatal("Unimplemented VI read (%08X)\n", paddr);
+    default: logdebug("[WARN] Unimplemented VI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -30,6 +30,6 @@ void vi_write(vi_t* vi, u32 paddr, u32 val) {
     case 0x04400010: vi->current = val; break;
     case 0x04400018: vi->vsync = val; break;
     case 0x0440001C: vi->hsync = val; break;
-    default: logdebug("Unimplemented VI write (%08X)\n", paddr);
+    default: logdebug("[WARN] Unimplemented VI[%08X] write (%08X)\n", paddr, val);
   }
 }
