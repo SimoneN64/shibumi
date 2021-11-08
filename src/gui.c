@@ -1,8 +1,7 @@
-#include "utils.h"
 #include <capstone.h>
 #include <core.h>
 #include <gui.h>
-#include <utils/log.h>
+#include <utils.h>
 #include <string.h>
 #include <memoryview.h>
 
@@ -400,7 +399,7 @@ void destroy_gui(gui_t* gui) {
 void open_file(gui_t* gui) {
   gui->rom_file = "";
   nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
-  nfdresult_t result = NFD_OpenDialog(&gui->rom_file, &filter, 1, "roms/");
+  nfdresult_t result = NFD_OpenDialog(&gui->rom_file, &filter, 1, EMU_DIR);
   if(result == NFD_OKAY) {
     reset(gui);
   }

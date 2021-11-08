@@ -65,6 +65,10 @@ elseif(CMAKE_BUILD_TYPE MATCHES Release)
   add_compile_options(-O3)
 endif()
 
+file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resources/)
+
+add_definitions("-DEMU_DIR=\"${CMAKE_SOURCE_DIR}\"")
+
 add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
 )
