@@ -5,13 +5,13 @@
 #include <string.h>
 #include <memoryview.h>
 
-int core_callback(void* vpargs) {
+void* core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
     run_frame(&gui->core);
   }
 
-  return 0;
+  return NULL;
 }
 
 void init_gui(gui_t* gui, const char* title) {
@@ -73,7 +73,7 @@ void init_gui(gui_t* gui, const char* title) {
 
   NFD_Init();
 
-  thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
+  pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
 }
 
 ImVec2 image_size;
@@ -370,7 +370,7 @@ void debugger_window(gui_t* gui) {
 
 void destroy_gui(gui_t* gui) {
   gui->emu_quit = true;
-  thrd_join(gui->emu_thread_id, NULL);
+  pthread_join(gui->emu_thread_id, NULL);
   destroy_disasm(&gui->debugger);
   NFD_Quit();
   ImGui_ImplOpenGL3_Shutdown();
@@ -395,7 +395,7 @@ void start(gui_t* gui) {
   gui->emu_quit = !gui->rom_loaded;
   gui->core.running = gui->rom_loaded;
   if(gui->rom_loaded) {
-    thrd_create(&gui->emu_thread_id, core_callback, (void*)gui);
+    pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
   }
 }
 
@@ -406,7 +406,7 @@ void reset(gui_t* gui) {
 
 void stop(gui_t* gui) {
   gui->emu_quit = true;
-  thrd_join(gui->emu_thread_id, NULL);
+  pthread_join(gui->emu_thread_id, NULL);
   init_core(&gui->core);
   gui->rom_loaded = false;
   gui->core.running = false;
