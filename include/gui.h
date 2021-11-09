@@ -5,11 +5,14 @@
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 #include <cimgui_impl.h>
+#include <cimgui_memory_editor.h>
 #include <pthread.h>
 #include <core.h>
 #include <stdatomic.h>
 #include <nfd.h>
 
+#define BYTES_PER_LINE 16
+#define SPACE_HEX_ASCII 10
 #define N64_ASPECT_RATIO (float)4 / 3
 
 static const ImVec4 colors_disasm[3] = {{.x = 1, .y = 0.000, .z = 0, .w = 1},  // RED
@@ -33,6 +36,7 @@ typedef struct {
   bool rom_loaded, running;
   SDL_GLContext gl_context;
   pthread_t emu_thread_id;
+  MemoryEditor memory_editor;
   clock_t delta;
   double fps, frametime;
   atomic_bool emu_quit;

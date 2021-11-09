@@ -3,7 +3,6 @@
 #include <gui.h>
 #include <utils.h>
 #include <string.h>
-#include <memoryview.h>
 
 void* core_callback(void* vpargs) {
   gui_t* gui = (gui_t*)vpargs;
@@ -24,7 +23,7 @@ void init_gui(gui_t* gui, const char* title) {
 
   gui->rom_loaded = false;
   gui->running = true;
-  gui->show_debug_windows = false;
+  gui->show_debug_windows = true;
 
   const char* glsl_version = "#version 130";
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -59,6 +58,9 @@ void init_gui(gui_t* gui, const char* title) {
   
   init_core(&gui->core);
   init_disasm(&gui->debugger);
+
+  igInitMemoryEditor(&gui->memory_editor);
+  gui->memory_editor.ReadFn = read8_ignore_tlb_and_maps;
 
   gui->framebuffer = calloc(320 * 240, 4);
 
@@ -202,12 +204,14 @@ void update_texture(gui_t* gui) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, gui->gl_data.glFormat, gui->framebuffer);
   }
 
+  memory_regions_t* memory_regions = &gui->core.mem.memory_regions;
+
   if(format == f8888) {
-    memcpy(gui->framebuffer, &gui->core.mem.rdram[origin & RDRAM_DSIZE], w * h * gui->gl_data.depth);
+    memcpy(gui->framebuffer, &memory_regions->rdram[origin & RDRAM_DSIZE], w * h * gui->gl_data.depth);
   } else {
     for(int i = 0; i < w * h * gui->gl_data.depth; i += gui->gl_data.depth) {
-      gui->framebuffer[i] = gui->core.mem.rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
-      gui->framebuffer[i + 1] = gui->core.mem.rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)];
+      gui->framebuffer[i] = memory_regions->rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
+      gui->framebuffer[i + 1] = memory_regions->rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)];
     }
   }
 
@@ -279,7 +283,7 @@ void disassembly(gui_t *gui) {
 
   if(gui->rom_loaded) {
     for(int i = 0; i < 25; i++) {
-      instructions[i] = read32(&gui->core.mem, pointer + i * 4, true);
+      instructions[i] = read32(&gui->core.mem, pointer + i * 4);
     }
   } else {
     memset(instructions, 0xFFFFFFFF, 100);
@@ -378,7 +382,7 @@ void registers_view(gui_t *gui) {
 void debugger_window(gui_t* gui) {
   if(gui->show_debug_windows) {
     disassembly(gui);
-    igMemoryView(&gui->core.mem);
+    DrawWindow(&gui->memory_editor, "Memory Editor", &gui->core.mem.memory_regions, UINT32_MAX, 0);
     registers_view(gui);
   }
 }

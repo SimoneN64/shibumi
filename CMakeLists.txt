@@ -15,8 +15,10 @@ add_subdirectory(external/nativefiledialog-extended/)
 
 file(GLOB_RECURSE EMU_SRC "src/*.c")
 
+file(GLOB CIMGUI_MEM_EDITOR_SRC
+  "${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/*.c")
+
 file(GLOB CIMGUI_SRC
-  "${CMAKE_SOURCE_DIR}/external/memoryview/*.c"
   "${CMAKE_SOURCE_DIR}/external/cimgui/*.cpp"
   "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/*.cpp"
   "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/backends/imgui_impl_sdl.cpp"
@@ -24,6 +26,7 @@ file(GLOB CIMGUI_SRC
 )
 
 add_library(cimgui ${CIMGUI_SRC})
+add_library(cimgui_memory_editor ${CIMGUI_MEM_EDITOR_SRC})
 
 target_compile_definitions(cimgui PRIVATE 
 	IMGUI_IMPL_API=extern\ \"C\")
@@ -44,11 +47,11 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include/core/cpu/registers/
   ${CMAKE_SOURCE_DIR}/include/core/scheduler/
   ${CMAKE_SOURCE_DIR}/external/
-  ${CMAKE_SOURCE_DIR}/external/memoryview/
   ${CMAKE_SOURCE_DIR}/external/nativefiledialog-extended/src/include/
   ${CMAKE_SOURCE_DIR}/external/cimgui/
   ${CMAKE_SOURCE_DIR}/external/cimgui/imgui/
   ${CMAKE_SOURCE_DIR}/external/cimgui/generator/output
+  ${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/
 )
 
 if(WIN32)
@@ -73,4 +76,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd cimgui ${CAPSTONE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd cimgui cimgui_memory_editor ${CAPSTONE_LIBRARIES})

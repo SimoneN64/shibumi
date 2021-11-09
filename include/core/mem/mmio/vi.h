@@ -1,5 +1,6 @@
 #pragma once
 #include <common.h>
+#include <stdbool.h>
 
 enum VI_FORMAT {
   blank = 0,
@@ -24,5 +25,6 @@ typedef struct {
 } vi_t;
 
 void init_vi(vi_t* vi);
+u8 vi_read8(vi_t* vi, u32 paddr);
 u32 vi_read(vi_t* vi, u32 paddr);
 void vi_write(vi_t* vi, u32 paddr, u32 val);

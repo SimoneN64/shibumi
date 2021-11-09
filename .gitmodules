@@ -8,3 +8,6 @@
 [submodule "tests/Dillon"]
 	path = tests/Dillon
 	url = https://github.com/Dillonb/n64-tests
+[submodule "external/cimgui_memory_editor"]
+	path = external/cimgui_memory_editor
+	url = https://github.com/CocoSimone/cimgui_memory_editor

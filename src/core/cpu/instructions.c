@@ -1,4 +1,3 @@
-#include "log.h"
 #include <instructions.h>
 #include <utils.h>
 #include <assert.h>
@@ -208,7 +207,7 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened");
   }
 
-  s32 value = read32(mem, address, true);
+  s32 value = read32(mem, address);
   regs->gpr[RT(instr)] = (s64)value;
 }
 
@@ -244,7 +243,7 @@ void lwu(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened");
   }
 
-  u32 value = read32(mem, address, true);
+  u32 value = read32(mem, address);
   regs->gpr[RT(instr)] = value;
 }
 

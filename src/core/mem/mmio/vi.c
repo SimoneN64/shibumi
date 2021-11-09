@@ -10,6 +10,26 @@ void init_vi(vi_t* vi) {
   vi->hsync = 0;
 }
 
+static const u8 shift_amount[4] = { 24, 16, 8, 0 };
+
+u8 vi_read8(vi_t* vi, u32 paddr) {
+  switch(paddr) {
+    case 0x04400000 ... 0x04400003:
+      return (vi->status.raw) >> shift_amount[paddr & 0xf];
+    case 0x04400004 ... 0x04400007:
+      return (vi->origin) >> shift_amount[paddr & 0xf];
+    case 0x04400008 ... 0x0440000B:
+      return (vi->width) >> shift_amount[paddr & 0xf];
+    case 0x04400010 ... 0x04400013:
+      return (vi->current) >> shift_amount[paddr & 0xf];
+    case 0x04400018 ... 0x0440001B:
+      return (vi->vsync) >> shift_amount[paddr & 0xf];
+    case 0x0440001C ... 0x0440001F:
+      return (vi->hsync) >> shift_amount[paddr & 0xf];
+    default: logdebug("[WARN] Unhandled VI[%08X] read\n", paddr); return 0;
+  }
+}
+
 u32 vi_read(vi_t* vi, u32 paddr) {
   switch(paddr) {
     case 0x04400000: return vi->status.raw;
@@ -18,7 +38,7 @@ u32 vi_read(vi_t* vi, u32 paddr) {
     case 0x04400010: return vi->current;
     case 0x04400018: return vi->vsync;
     case 0x0440001C: return vi->hsync;
-    default: logdebug("[WARN] Unimplemented VI[%08X] read\n", paddr); return 0;
+    default: logdebug("[WARN] Unhandled VI[%08X] read\n", paddr); return 0;
   }
 }
 

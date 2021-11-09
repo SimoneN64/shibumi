@@ -9,7 +9,7 @@ void init_cpu(cpu_t *cpu) {
 void step(cpu_t *cpu, mem_t *mem) {
   registers_t* regs = &cpu->regs;
   regs->gpr[0] = 0;
-  u32 instruction = read32(mem, regs->pc, true);
+  u32 instruction = read32(mem, regs->pc);
   regs->old_pc = regs->pc;
   regs->pc = regs->next_pc;
   regs->next_pc += 4;
