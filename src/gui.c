@@ -59,8 +59,7 @@ void init_gui(gui_t* gui, const char* title) {
   init_core(&gui->core);
   init_disasm(&gui->debugger);
 
-  igInitMemoryEditor(&gui->memory_editor);
-  gui->memory_editor.ReadFn = read8_ignore_tlb_and_maps;
+  // InitMemoryEditor(&gui->memory_editor, read8_ignore_tlb_and_maps, NULL);
 
   gui->framebuffer = calloc(320 * 240, 4);
 
@@ -382,7 +381,7 @@ void registers_view(gui_t *gui) {
 void debugger_window(gui_t* gui) {
   if(gui->show_debug_windows) {
     disassembly(gui);
-    DrawWindow(&gui->memory_editor, "Memory Editor", &gui->core.mem.memory_regions, UINT32_MAX, 0);
+    // Draw(&gui->memory_editor, &gui->core.mem, "Memory Editor", 800, 0);
     registers_view(gui);
   }
 }
