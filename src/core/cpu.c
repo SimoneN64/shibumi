@@ -56,9 +56,11 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x19: daddiu(regs, instr); break;
   case 0x20: lb(mem, regs, instr); break;
   case 0x21: lh(mem, regs, instr); break;
+  case 0x22: lwl(mem, regs, instr); break;
   case 0x23: lw(mem, regs, instr); break;
   case 0x24: lbu(mem, regs, instr); break;
   case 0x25: lhu(mem, regs, instr); break;
+  case 0x26: lwr(mem, regs, instr); break;
   case 0x27: lwu(mem, regs, instr); break;
   case 0x28: sb(mem, regs, instr); break;
   case 0x29: sh(mem, regs, instr); break;
@@ -90,6 +92,9 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     case 0x11: mthi(regs, instr); break;
     case 0x12: mflo(regs, instr); break;
     case 0x13: mtlo(regs, instr); break;
+    case 0x14: dsllv(regs, instr); break;
+    case 0x16: dsrlv(regs, instr); break;
+    case 0x17: dsrav(regs, instr); break;
     case 0x18: mult(regs, instr); break;
     case 0x19: multu(regs, instr); break;
     case 0x1A: div_(regs, instr); break;
@@ -112,6 +117,12 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     case 0x2D: daddu(regs, instr); break;
     case 0x2E: dsub(regs, instr); break;
     case 0x2F: dsubu(regs, instr); break;
+    case 0x38: dsll(regs, instr); break;
+    case 0x3A: dsrl(regs, instr); break;
+    case 0x3B: dsra(regs, instr); break;
+    case 0x3C: dsll32(regs, instr); break;
+    case 0x3E: dsrl32(regs, instr); break;
+    case 0x3F: dsra32(regs, instr); break;
     default: logfatal("[CPU ERR] Unimplemented special instruction %02X, PC: %016lX\n", mask, regs->old_pc);
   }
 }
