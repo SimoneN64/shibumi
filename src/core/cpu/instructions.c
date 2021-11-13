@@ -212,14 +212,23 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
 }
 
 void lwl(mem_t* mem, registers_t* regs, u32 instr) {
-  u64 address = regs->gpr[RS(instr)] + (s16)instr;
-
-
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  u32 shift = 8 * ((address ^ 0) & 3);
+  u32 mask = 0xFFFFFFFF << shift;
+  u32 data = read32(mem, address & ~3);
+  s64 rt = regs->gpr[RT(instr)];
+  s32 result = (rt & ~mask) | (data << shift);
+  regs->gpr[RT(instr)] = result;
 }
 
 void lwr(mem_t* mem, registers_t* regs, u32 instr) {
-  u64 address = regs->gpr[RS(instr)] + (s16)instr;
-
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  u32 shift = 8 * ((address ^ 3) & 3);
+  u32 mask = 0xFFFFFFFF >> shift;
+  u32 data = read32(mem, address & ~3);
+  s64 rt = regs->gpr[RT(instr)];
+  s32 result = (rt & ~mask) | (data >> shift);
+  regs->gpr[RT(instr)] = result;
 }
 
 void ld(mem_t* mem, registers_t* regs, u32 instr) {
@@ -230,6 +239,26 @@ void ld(mem_t* mem, registers_t* regs, u32 instr) {
 
   s64 value = read64(mem, address);
   regs->gpr[RT(instr)] = value;
+}
+
+void ldl(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  s32 shift = 8 * ((address ^ 0) & 7);
+  u64 mask = 0xFFFFFFFFFFFFFFFF << shift;
+  u64 data = read64(mem, address & ~7);
+  s64 rt = regs->gpr[RT(instr)];
+  s64 result = (rt & ~mask) | (data << shift);
+  regs->gpr[RT(instr)] = result;
+}
+
+void ldr(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  s32 shift = 8 * ((address ^ 7) & 7);
+  u64 mask = 0xFFFFFFFFFFFFFFFF >> shift;
+  u64 data = read64(mem, address & ~7);
+  s64 rt = regs->gpr[RT(instr)];
+  s64 result = (rt & ~mask) | (data >> shift);
+  regs->gpr[RT(instr)] = result;
 }
 
 void lbu(mem_t* mem, registers_t* regs, u32 instr) {
@@ -288,6 +317,42 @@ void sd(mem_t* mem, registers_t* regs, u32 instr) {
   }
   
   write64(mem, address, regs->gpr[RT(instr)]);
+}
+
+void sdl(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  s32 shift = 8 * ((address ^ 0) & 7);
+  u64 mask = 0xFFFFFFFFFFFFFFFF >> shift;
+  u64 data = read64(mem, address & ~7);
+  s64 rt = regs->gpr[RT(instr)];
+  write64(mem, address & ~7, (data & ~mask) | (rt >> shift));
+}
+
+void sdr(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  s32 shift = 8 * ((address ^ 7) & 7);
+  u64 mask = 0xFFFFFFFFFFFFFFFF << shift;
+  u64 data = read64(mem, address & ~7);
+  s64 rt = regs->gpr[RT(instr)];
+  write64(mem, address & ~7, (data & ~mask) | (rt << shift));
+}
+
+void swl(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  u32 shift = 8 * ((address ^ 0) & 3);
+  u32 mask = 0xFFFFFFFF >> shift;
+  u32 data = read32(mem, address & ~3);
+  u32 rt = regs->gpr[RT(instr)];
+  write32(mem, regs, address & ~3, (data & ~mask) | (rt >> shift));
+}
+
+void swr(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  u32 shift = 8 * ((address ^ 3) & 3);
+  u32 mask = 0xFFFFFFFF << shift;
+  u32 data = read32(mem, address & ~3);
+  u32 rt = regs->gpr[RT(instr)];
+  write32(mem, regs, address & ~3, (data & ~mask) | (rt << shift));
 }
 
 void ori(registers_t* regs, u32 instr) {

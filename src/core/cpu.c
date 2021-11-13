@@ -54,6 +54,8 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
   case 0x18: daddiu(regs, instr); break;
   case 0x19: daddiu(regs, instr); break;
+  case 0x1A: ldl(mem, regs, instr); break;
+  case 0x1B: ldr(mem, regs, instr); break;
   case 0x20: lb(mem, regs, instr); break;
   case 0x21: lh(mem, regs, instr); break;
   case 0x22: lwl(mem, regs, instr); break;
@@ -64,7 +66,11 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
   case 0x27: lwu(mem, regs, instr); break;
   case 0x28: sb(mem, regs, instr); break;
   case 0x29: sh(mem, regs, instr); break;
+  case 0x2A: swl(mem, regs, instr); break;
   case 0x2B: sw(mem, regs, instr); break;
+  case 0x2C: sdl(mem, regs, instr); break;
+  case 0x2D: sdr(mem, regs, instr); break;
+  case 0x2E: swr(mem, regs, instr); break;
   case 0x2F: break;
   case 0x37: ld(mem, regs, instr); break;
   case 0x3F: sd(mem, regs, instr); break;
