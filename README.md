@@ -3,6 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/cocosimone/shibumi/badge)](https://www.codefactor.io/repository/github/cocosimone/shibumi)
 
 Experimental Nintendo 64 emulator in C11.
+
 82,78% of Krom's tests are currently passing. Details as follows:
 - [x] ADD/ADDI/ADDU/ADDIU: 100%
 - [x] AND/NOR/OR/XOR: 100%
