@@ -25,5 +25,5 @@ Experimental Nintendo 64 emulator in C11.
 - [x] SD/SDL/SDR: 100%
 - [x] SLL/SLLV/SRA/SRAV/SRL/SRLV: 100%
 - [x] SUB/SUBU: 100%
-- [ ] CPUTIMINGNTSC: 0%, because I have only a very basic framebuffer implemented and no timing. I'll integrate [paraLLEl-rdp](https://github.com/Themaister/parallel-rdp-standalone) eventually and make an effort to pass it. Not my highest priority.
+- [ ] CPUTIMINGNTSC: 0%, because I only have a very basic framebuffer implemented and no timing. I'll integrate [paraLLEl-rdp](https://github.com/Themaister/parallel-rdp-standalone) eventually and make an effort to pass it. Not my highest priority.
 - [ ] LL_LLD_SC_SCD: 0%, I have no idea what this is :sweat_smile:
