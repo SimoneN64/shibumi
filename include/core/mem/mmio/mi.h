@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #define MI_VERSION_REG 0x02020102
 
+typedef struct registers_t registers_t;
+
 typedef union {
   struct {
     unsigned sp:1;
@@ -16,7 +18,7 @@ typedef union {
   u32 raw;
 } mi_intr_t;
 
-typedef struct {
+typedef struct mi_t {
   u32 mi_mode;
   mi_intr_t mi_intr, mi_intr_mask;
 } mi_t;
@@ -24,4 +26,4 @@ typedef struct {
 void init_mi(mi_t* mi);
 u8 mi_read8(mi_t* mi, u32 paddr);
 u32 mi_read(mi_t* mi, u32 paddr);
-void mi_write(mi_t* mi, u32 paddr, u32 val);
+void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val);

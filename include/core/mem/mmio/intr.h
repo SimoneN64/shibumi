@@ -1,6 +1,6 @@
 #pragma once
-#include <mi.h>
 
+typedef struct mi_t mi_t;
 typedef struct registers_t registers_t;
 
 typedef enum {

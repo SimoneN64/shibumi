@@ -1,5 +1,6 @@
 #include <intr.h>
 #include <registers.h>
+#include <mi.h>
 
 void interrupt_raise(mi_t* mi, registers_t* regs, interrupt_t intr) {
   switch(intr) {

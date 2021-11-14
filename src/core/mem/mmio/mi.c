@@ -1,6 +1,8 @@
 #include <mi.h>
 #include <log.h>
 #include <assert.h>
+#include <intr.h>
+#include <registers.h>
 
 void init_mi(mi_t* mi) {
   mi->mi_intr_mask.raw = 0;
@@ -34,58 +36,58 @@ u32 mi_read(mi_t* mi, u32 paddr) {
   }
 }
 
-void mi_write(mi_t* mi, u32 paddr, u32 val) {
+void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
   switch(paddr) {
-  case 0x04300000:
-  mi->mi_mode &= 0xFFFFFF80;
-  mi->mi_mode |= val & 0x7F;
-  if (val & (1 << 7)) {
-    mi->mi_mode &= ~(1 << 7);
-  }
+    case 0x04300000:
+      mi->mi_mode &= 0xFFFFFF80;
+      mi->mi_mode |= val & 0x7F;
+      if (val & (1 << 7)) {
+        mi->mi_mode &= ~(1 << 7);
+      }
 
-  if (val & (1 << 8)) {
-    mi->mi_mode |= 1 << 7;
-  }
+      if (val & (1 << 8)) {
+        mi->mi_mode |= 1 << 7;
+      }
 
-  if (val & (1 << 9)) {
-    mi->mi_mode &= ~(1 << 8);
-  }
+      if (val & (1 << 9)) {
+        mi->mi_mode &= ~(1 << 8);
+      }
 
-  if (val & (1 << 10)) {
-    mi->mi_mode |= 1 << 8;
-  }
+      if (val & (1 << 10)) {
+        mi->mi_mode |= 1 << 8;
+      }
 
-  if (val & (1 << 11)) {
-    mi->mi_intr.dp = false;
-  }
+      if (val & (1 << 11)) {
+        mi->mi_intr.dp = false;
+      }
 
-  if (val & (1 << 12)) {
-    mi->mi_mode &= ~(1 << 9);
-  }
+      if (val & (1 << 12)) {
+        mi->mi_mode &= ~(1 << 9);
+      }
 
-  if (val & (1 << 13)) {
-    mi->mi_mode |= 1 << 9;
-  }
-  break;
-  case 0x04300004: break;
-  case 0x0430000C:
-  for (int bit = 0; bit < 6; bit++) {
-    int clearbit = bit << 1;
-    int setbit = (bit << 1) + 1;
+      if (val & (1 << 13)) {
+        mi->mi_mode |= 1 << 9;
+      }
+      break;
+    case 0x04300004: break;
+    case 0x0430000C:
+      for (int bit = 0; bit < 6; bit++) {
+        int clearbit = bit << 1;
+        int setbit = (bit << 1) + 1;
 
-    if (val & (1 << clearbit)) {
-      mi->mi_intr_mask.raw &= ~(1 << bit);
-    }
-    
-    if (val & (1 << setbit)) {
-      mi->mi_intr_mask.raw |= 1 << bit;
-    }
-  }
-  if(mi->mi_intr_mask.raw != 0) {
-    logfatal("Fire interrupts!\n");
-  }
-  // TODO: fire interrupts
-  break;
-  default: logfatal("[ERR] Unhandled MI[%08X] write (%08X)\n", val, paddr);
+        if (val & (1 << clearbit)) {
+          mi->mi_intr_mask.raw &= ~(1 << bit);
+        }
+        
+        if (val & (1 << setbit)) {
+          mi->mi_intr_mask.raw |= 1 << bit;
+        }
+      }
+
+      if(mi->mi_intr_mask.raw != 0) {
+        process_interrupt(mi, regs);
+      }
+      break;
+    default: logfatal("[ERR] Unhandled MI[%08X] write (%08X)\n", val, paddr);
   }
 }

@@ -161,7 +161,7 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x00000000 ... 0x007FFFFF: waccess(32, memory_regions->rdram, paddr, val); break;
     case 0x04000000 ... 0x04000FFF: waccess(32, memory_regions->dmem, paddr & DMEM_DSIZE, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(32, memory_regions->imem, paddr & IMEM_DSIZE, val); break;
-    case 0x04300000 ... 0x043FFFFF: mi_write(&mem->mmio.mi, paddr, val); break;
+    case 0x04300000 ... 0x043FFFFF: mi_write(&mem->mmio.mi, regs, paddr, val); break;
     case 0x04400000 ...	0x044FFFFF: vi_write(&mem->mmio.vi, paddr, val); break;
     case 0x04600000 ... 0x046FFFFF: pi_write(mem, regs, paddr, val); break;
     case 0x04700000 ... 0x047FFFFF: ri_write(&mem->mmio.ri, paddr, val); break;
