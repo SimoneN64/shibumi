@@ -124,10 +124,7 @@ void divu(registers_t* regs, u32 instr) {
 void ddiv(registers_t* regs, u32 instr) {
   s64 dividend = regs->gpr[RS(instr)];
   s64 divisor = regs->gpr[RT(instr)];
-  if (divisor == 0xFFFFFFFFFFFFFFFF && dividend == 0x8000000000000000) {
-    regs->lo = dividend;
-    regs->hi = 0;
-  } else if(divisor == 0) {
+  if(divisor == 0) {
     regs->hi = dividend;
     if(dividend >= 0) {
       regs->lo = -1;
@@ -211,7 +208,20 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
   }
 
   s32 value = read32(mem, address);
-  regs->gpr[RT(instr)] = (s64)value;
+  regs->gpr[RT(instr)] = value;
+}
+
+void ll(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  if ((address & 3) != 0) {
+    logfatal("Unaligned access that shouldn't have happened\n");
+  }
+
+  regs->LLBit = true;
+  regs->cp0.LLAddr = address;
+
+  s32 value = read32(mem, address);
+  regs->gpr[RT(instr)] = value;
 }
 
 void lwl(mem_t* mem, registers_t* regs, u32 instr) {
@@ -239,6 +249,19 @@ void ld(mem_t* mem, registers_t* regs, u32 instr) {
   if ((address & 7) != 0) {
     logfatal("Unaligned access that shouldn't have happened\n");
   }
+
+  s64 value = read64(mem, address);
+  regs->gpr[RT(instr)] = value;
+}
+
+void lld(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  if ((address & 7) != 0) {
+    logfatal("Unaligned access that shouldn't have happened\n");
+  }
+
+  regs->LLBit = true;
+  regs->cp0.LLAddr = address;
 
   s64 value = read64(mem, address);
   regs->gpr[RT(instr)] = value;
@@ -293,6 +316,32 @@ void lwu(mem_t* mem, registers_t* regs, u32 instr) {
 void sb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   write8(mem, address, regs->gpr[RT(instr)]);
+}
+
+void sc(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  if ((address & 3) != 0) {
+    logfatal("Unaligned access that shouldn't have happened\n");
+  }
+  
+  if(regs->LLBit) {
+    write32(mem, regs, address, regs->gpr[RT(instr)]);
+  }
+
+  regs->gpr[RT(instr)] = (u64)regs->LLBit;
+}
+
+void scd(mem_t* mem, registers_t* regs, u32 instr) {
+  u32 address = regs->gpr[RS(instr)] + (s16)instr;
+  if ((address & 7) != 0) {
+    logfatal("Unaligned access that shouldn't have happened\n");
+  }
+  
+  if(regs->LLBit) {
+    write64(mem, address, regs->gpr[RT(instr)]);
+  }
+
+  regs->gpr[RT(instr)] = (u64)regs->LLBit;
 }
 
 void sh(mem_t* mem, registers_t* regs, u32 instr) {
@@ -575,6 +624,7 @@ void dmultu(registers_t* regs, u32 instr) {
   u128 result = (u128)rt * (u128)rs;
   regs->lo = (s64)(result & 0xFFFFFFFFFFFFFFFF);
   regs->hi = (s64)(result >> 64);
+  //logdebug("LO: %016lX, HI: %016lX\n", regs->lo, regs->hi);
 }
 
 void dmult(registers_t* regs, u32 instr) {
@@ -583,6 +633,7 @@ void dmult(registers_t* regs, u32 instr) {
   s128 result = (s128)rt * (s128)rs;
   regs->lo = result & 0xFFFFFFFFFFFFFFFF;
   regs->hi = result >> 64;
+  //logdebug("LO: %016lX, HI: %016lX\n", regs->lo, regs->hi);
 }
 
 void multu(registers_t* regs, u32 instr) {

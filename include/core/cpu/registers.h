@@ -1,6 +1,7 @@
 #pragma once
 #include <cop0.h>
 #include <cop1.h>
+#include <stdbool.h>
 
 static const char* regs_str[32] = {
   "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3",
@@ -14,6 +15,8 @@ typedef struct registers_t {
   cop0_t cp0;
   s64 old_pc, pc, next_pc;
   s64 hi, lo;
+  u32 instruction;
+  bool LLBit;
 } registers_t;
 
 void init_registers(registers_t* regs);

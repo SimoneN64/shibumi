@@ -3,6 +3,7 @@
 
 typedef union {
   struct {
+    unsigned:32;
     unsigned:2;
     unsigned exc_code:5;
     unsigned:1;
@@ -25,11 +26,12 @@ typedef union {
     unsigned branch_delay:1;
   };
 
-  u32 raw;
+  s64 raw;
 } cop0_cause_t;
 
 typedef union {
   struct {
+    unsigned:32;
     unsigned ie:1;
     unsigned exl:1;
     unsigned erl:1;
@@ -48,7 +50,7 @@ typedef union {
     unsigned cu3:1;
   };
 
-  u32 raw;
+  s64 raw;
 } cop0_status_t;
 
 typedef struct {
