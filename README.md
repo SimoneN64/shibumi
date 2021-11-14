@@ -4,14 +4,19 @@
 
 Experimental Nintendo 64 emulator in C11.
 
-82,78% of Krom's tests are currently passing. Details as follows:
-- [x] ADD/ADDI/ADDU/ADDIU: 100%
-- [x] AND/NOR/OR/XOR: 100%
-- [x] DADD/DADDI/DADDU/DADDIU: 100%
+95% of Krom's tests are currently passing. Details as follows:
+- [x] ADD/ADDI: 100%
+- [X] ADDU/ADDIU: 100%
+- [x] AND: 100%
+- [x] NOR: 100%
+- [x] OR: 100%
+- [x] XOR: 100%
+- [x] DADD/DADDI: 100%
+- [x] DADDU/DADDIU: 100%
 - [x] DDIV/DDIVU: 100% if you ignore that DDIV crashes on SIGFPE, and won't be fixed because it's a dumb edge case no game uses :upside_down_face:
 - [x] DIV/DIVU: 100%
-- [ ] DMULT: 64,28% (9 out of 14 cases pass)
-- [ ] DMULTU: 61,1% (11 out of 18 cases pass)
+- [x] DMULT: 100%
+- [x] DMULTU: 100%
 - [x] DSSL/DSSL32/DSSLV/DSRA/DSRA32/DSRAV/DSRL/DSRL32/DSRLV: 100%
 - [x] DSUB/DSUBU: 100%
 - [x] LB/LBU: 100%

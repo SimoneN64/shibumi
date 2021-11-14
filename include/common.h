@@ -11,6 +11,9 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
+typedef __uint128_t u128;
+typedef __int128_t s128;
+
 #define RDRAM_SIZE 0x800000
 #define RDRAM_DSIZE (RDRAM_SIZE - 1)
 #define SRAM_SIZE 0x8000000

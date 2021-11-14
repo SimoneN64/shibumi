@@ -82,7 +82,7 @@ void init_gui(gui_t* gui, const char* title) {
 
 ImVec2 image_size;
 
-static void resize_callback(ImGuiSizeCallbackData* data) {
+static inline void resize_callback(ImGuiSizeCallbackData* data) {
   ImVec2 window_size;
   igGetWindowSize(&window_size);
   float x = window_size.x - 15, y = window_size.y - 15;
@@ -102,9 +102,7 @@ void main_loop(gui_t* gui) {
   ImGuiIO* io = igGetIO();
   ImVec4 clear_color = {0.45f, 0.55f, 0.60f, 1.00f};
   unsigned int frames = 0;
-  while(gui->running) {
-    update_texture(gui);
-    
+  while(gui->running) {    
     SDL_Event event;
     while(SDL_PollEvent(&event)) {
       ImGui_ImplSDL2_ProcessEvent(&event);
@@ -139,6 +137,7 @@ void main_loop(gui_t* gui) {
     igSetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
     igBegin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
     main_menubar(gui);
+    update_texture(gui);
     ImVec2 window_size;
     igGetWindowSize(&window_size);
     ImVec2 result = {(window_size.x - image_size.x) * 0.5, (window_size.y - image_size.y + 15) * 0.5};

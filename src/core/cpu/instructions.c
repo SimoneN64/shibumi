@@ -569,17 +569,17 @@ void subu(registers_t* regs, u32 instr) {
 void dmultu(registers_t* regs, u32 instr) {
   u64 rt = regs->gpr[RT(instr)];
   u64 rs = regs->gpr[RS(instr)];
-  u64 result = rt * rs;
-  regs->lo = result;
-  regs->hi = (result >> 32);
+  u128 result = (u128)rt * (u128)rs;
+  regs->lo = (s64)(result & 0xFFFFFFFFFFFFFFFF);
+  regs->hi = (s64)(result >> 64);
 }
 
 void dmult(registers_t* regs, u32 instr) {
   s64 rt = regs->gpr[RT(instr)];
   s64 rs = regs->gpr[RS(instr)];
-  s64 result = rt * rs;
-  regs->lo = result;
-  regs->hi = (result >> 32);
+  s128 result = (s128)rt * (s128)rs;
+  regs->lo = result & 0xFFFFFFFFFFFFFFFF;
+  regs->hi = result >> 64;
 }
 
 void multu(registers_t* regs, u32 instr) {
