@@ -124,7 +124,10 @@ void divu(registers_t* regs, u32 instr) {
 void ddiv(registers_t* regs, u32 instr) {
   s64 dividend = regs->gpr[RS(instr)];
   s64 divisor = regs->gpr[RT(instr)];
-  if(divisor == 0) {
+  if (divisor == 0xFFFFFFFFFFFFFFFF && dividend == 0x8000000000000000) {
+    regs->lo = dividend;
+    regs->hi = 0;
+  } else if(divisor == 0) {
     regs->hi = dividend;
     if(dividend >= 0) {
       regs->lo = -1;
