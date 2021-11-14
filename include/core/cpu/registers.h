@@ -15,7 +15,6 @@ typedef struct registers_t {
   cop0_t cp0;
   s64 old_pc, pc, next_pc;
   s64 hi, lo;
-  u32 instruction;
   bool LLBit;
 } registers_t;
 
