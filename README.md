@@ -3,4 +3,4 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/cocosimone/shibumi/badge)](https://www.codefactor.io/repository/github/cocosimone/shibumi)
 
 Experimental Nintendo 64 emulator in C11.
-All of [Krom and Dillon's](tests/) instruction tests are currently passing.
+All of [Krom and Dillon's](tests/) *CPU* (note: no FPU) instruction tests are currently passing.

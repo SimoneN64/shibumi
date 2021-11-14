@@ -1,63 +1,129 @@
 #pragma once
-#include <common.h>
+#include <cop0.h>
+#include <string.h>
 
 typedef union {
   struct {
-    unsigned rm:2;
-    union {
-      struct {
-        unsigned i:1;
-        unsigned u:1;
-        unsigned o:1;
-        unsigned z:1;
-        unsigned v:1;
-      };
-      unsigned raw:5;
-    } flags, enables;
-    union {
-      struct {
-        unsigned i:1;
-        unsigned u:1;
-        unsigned o:1;
-        unsigned z:1;
-        unsigned v:1;
-        unsigned e:1;
-      };
-      unsigned raw:6;
-    } cause;
+    unsigned rounding_mode:2;
+    unsigned flag_inexact_operation:1;
+    unsigned flag_underflow:1;
+    unsigned flag_overflow:1;
+    unsigned flag_division_by_zero:1;
+    unsigned flag_invalid_operation:1;
+    unsigned enable_inexact_operation:1;
+    unsigned enable_underflow:1;
+    unsigned enable_overflow:1;
+    unsigned enable_division_by_zero:1;
+    unsigned enable_invalid_operation:1;
+    unsigned cause_inexact_operation:1;
+    unsigned cause_underflow:1;
+    unsigned cause_overflow:1;
+    unsigned cause_division_by_zero:1;
+    unsigned cause_invalid_operation:1;
+    unsigned cause_unimplemented_operation:1;
     unsigned:5;
-    unsigned c:1;
+    unsigned compare:1;
     unsigned fs:1;
     unsigned:7;
-  };
+  } PACKED;
+
+  struct {
+    unsigned:7;
+    unsigned enable:5;
+    unsigned cause:6;
+    unsigned:14;
+  } PACKED;
 
   u32 raw;
-} cop1_status_t;
+} fcr31_t;
+
+ASSERTWORD(fcr31_t);
 
 typedef union {
   struct {
-    unsigned rev:8;
-    unsigned imp:8;
-    unsigned:16;
-  };
-  u32 raw;
-} cop1_revision_t;
+    u32 lo:32;
+    u32 hi:32;
+  } PACKED;
 
-typedef union {
-  struct {
-    u32 low, hi;
-  };
-
-  u64 reg;
+  u64 raw;
 } fgr_t;
 
-typedef struct {
-  cop1_revision_t fcr0;
-  u32 fcr[30];
-  cop1_status_t fcr31;
-} fcr_t;
+ASSERTDWORD(fgr_t);
 
 typedef struct {
+  u32 fcr0;
+  fcr31_t fcr31;
   fgr_t fgr[32];
-  fcr_t fcr;
 } cop1_t;
+
+INLINE u32 get_cop1_reg_word(cop1_t* cop1, cop0_t* cop0, u8 index) {
+  if(cop0->Status.fr) {
+    return cop1->fgr[index].lo;
+  } else {
+    if(index & 1) {
+      return cop1->fgr[index & ~1].hi;
+    } else {
+      return cop1->fgr[index].lo;
+    }
+  }
+}
+
+INLINE void set_cop1_reg_word(cop1_t* cop1, cop0_t* cop0, u8 index, u32 value) {
+  if(cop0->Status.fr) {
+    cop1->fgr[index].lo = value;
+  } else {
+    if(index & 1) {
+      cop1->fgr[index & ~1].hi = value;
+    } else {
+      cop1->fgr[index].lo = value;
+    }
+  }
+}
+
+INLINE u64 get_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index) {
+  if(!cop0->Status.fr) {
+    index &= ~1;
+  }
+  
+  return cop1->fgr[index].raw;
+}
+
+INLINE void set_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index, u64 value) {
+  if(!cop0->Status.fr) {
+    index &= ~1;
+  } 
+  
+  cop1->fgr[index].raw = value;
+}
+
+INLINE void set_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index, double value) {
+  _Static_assert(sizeof(double) == sizeof(u64), "double || dword != 64 bits");
+
+  u64 raw;
+  memcpy(&raw, &value, sizeof(double));
+  set_cop1_reg_dword(cop1, cop0, index, raw);
+}
+
+INLINE double get_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index) {
+  _Static_assert(sizeof(double) == sizeof(u64), "double || dword != 64 bits");
+  double doublevalue;
+  u64 raw = get_cop1_reg_dword(cop1, cop0, index);
+  memcpy(&doublevalue, &raw, sizeof(double));
+  return doublevalue;
+}
+
+INLINE void set_cop1_register_float(cop1_t *cop1, cop0_t *cop0, u8 index, float value) {
+  _Static_assert(sizeof(float) == sizeof(u32), "float || word != 32 bits");
+
+  u32 raw;
+  memcpy(&raw, &value, sizeof(float));
+  set_cop1_reg_word(cop1, cop0, index, raw);
+}
+
+INLINE float get_cop1_register_float(cop1_t *cop1, cop0_t *cop0, u8 index) {
+  _Static_assert(sizeof(float) == sizeof(u32), "float || word != 32 bits");
+  u32 raw = get_cop1_reg_word(cop1, cop0, index);
+  float floatvalue;
+  memcpy(&floatvalue, &raw, sizeof(float));
+  return floatvalue;
+}

@@ -1,4 +1,5 @@
 #include <instructions.h>
+#include <instruction/decode_instr.h>
 #include <utils.h>
 #include <assert.h>
 
@@ -8,10 +9,10 @@
 void mtcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
   case 0:
-    ((s64*)&regs->cp0)[RD(instr)] = (u32)regs->gpr[RT(instr)];
+    set_cop0_reg_word(&regs->cp0, RD(instr), regs->gpr[RT(instr)]);
     break;
   case 1:
-    ((s64*)&regs->cp1)[RD(instr)] = (u32)regs->gpr[RT(instr)];
+    set_cop1_reg_word(&regs->cp1, &regs->cp0, RD(instr), regs->gpr[RT(instr)]);
     break;
   default:
     logfatal("Invalid MTC%d", index);
@@ -21,10 +22,10 @@ void mtcz(registers_t* regs, u32 instr, u8 index) {
 void mfcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
   case 0:
-    regs->gpr[RT(instr)] = ((s64*)&regs->cp0)[RD(instr)];
+    regs->gpr[RT(instr)] = (s32)get_cop0_reg_word(&regs->cp0, RD(instr));
     break;
   case 1:
-    regs->gpr[RT(instr)] = ((s64*)&regs->cp1)[RD(instr)];
+    regs->gpr[RT(instr)] = (s32)get_cop1_reg_word(&regs->cp1, &regs->cp0, RD(instr));
     break;
   default:
     logfatal("Invalid MFC%d", index);
@@ -35,8 +36,13 @@ void cfcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
   case 1: {
     u8 rd = RD(instr);
-    assert(rd == 0 || rd == 31);
-    regs->gpr[RT(instr)] = ((s64*)&regs->cp1.fcr)[rd];
+    s32 val = 0;
+    switch(rd) {
+      case 0: val = regs->cp1.fcr0; break;
+      case 31: val = regs->cp1.fcr31.raw; break;
+      default: logfatal("Undefined CFC1 with rd != 0 or 31\n");
+    }
+    regs->gpr[RT(instr)] = val;
   } break;
   default:
     logfatal("Invalid CFC%d", index);
@@ -47,8 +53,15 @@ void ctcz(registers_t* regs, u32 instr, u8 index) {
   switch(index) {
   case 1: {
     u8 rd = RD(instr);
-    assert(rd == 0 || rd == 31);
-    ((s64*)&regs->cp1.fcr)[rd] = regs->gpr[RT(instr)];
+    u32 val = regs->gpr[RT(instr)];
+    switch(rd) {
+      case 0: logfatal("CTC1 attempt to write to FCR0 which is read only!\n");
+      case 31: {
+        val &= 0x183ffff;
+        regs->cp1.fcr31.raw = val;
+      } break;
+      default: logfatal("Undefined CTC1 with rd != 0 or 31\n");
+    }
   } break;
   default:
     logfatal("Invalid CTC%d", index);
@@ -59,21 +72,21 @@ void add(registers_t* regs, u32 instr) {
   s32 rs = regs->gpr[RS(instr)];
   s32 rt = regs->gpr[RT(instr)];
   s32 result = rs + rt;
-  regs->gpr[RD(instr)] = (s64)result;
+  regs->gpr[RD(instr)] = result;
 }
 
 void addu(registers_t* regs, u32 instr) {
   s32 rs = regs->gpr[RS(instr)];
   s32 rt = regs->gpr[RT(instr)];
   s32 result = rs + rt;
-  regs->gpr[RD(instr)] = (s64)result;
+  regs->gpr[RD(instr)] = result;
 }
 
 void addiu(registers_t* regs, u32 instr) {
   u32 reg = regs->gpr[RS(instr)];
   s16 imm = instr;
   s32 result = reg + imm;
-  regs->gpr[RT(instr)] = (s64)result;
+  regs->gpr[RT(instr)] = result;
 }
 
 void daddiu(registers_t* regs, u32 instr) {
@@ -124,7 +137,10 @@ void divu(registers_t* regs, u32 instr) {
 void ddiv(registers_t* regs, u32 instr) {
   s64 dividend = regs->gpr[RS(instr)];
   s64 divisor = regs->gpr[RT(instr)];
-  if(divisor == 0) {
+  if (dividend == 0x8000000000000000 && divisor == 0xFFFFFFFFFFFFFFFF) {
+    regs->lo = dividend;
+    regs->hi = 0;
+  } else if(divisor == 0) {
     regs->hi = dividend;
     if(dividend >= 0) {
       regs->lo = -1;
@@ -329,6 +345,7 @@ void sc(mem_t* mem, registers_t* regs, u32 instr) {
   }
 
   regs->gpr[RT(instr)] = (u64)regs->LLBit;
+  regs->LLBit = false;
 }
 
 void scd(mem_t* mem, registers_t* regs, u32 instr) {
@@ -342,6 +359,7 @@ void scd(mem_t* mem, registers_t* regs, u32 instr) {
   }
 
   regs->gpr[RT(instr)] = (u64)regs->LLBit;
+  regs->LLBit = false;
 }
 
 void sh(mem_t* mem, registers_t* regs, u32 instr) {
@@ -451,7 +469,7 @@ void sltu(registers_t* regs, u32 instr) {
 }
 
 void xori(registers_t* regs, u32 instr) {
-  u16 imm = instr;
+  s64 imm = (s16)instr;
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] ^ imm;
 }
 
@@ -460,7 +478,7 @@ void xor_(registers_t* regs, u32 instr) {
 }
 
 void andi(registers_t* regs, u32 instr) {
-  s64 imm = ze_imm(instr);
+  s64 imm = (s16)instr;
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] & imm;
 }
 
@@ -475,9 +493,9 @@ void sll(registers_t* regs, u32 instr) {
 }
 
 void sllv(registers_t* regs, u32 instr) {
-  u8 amount = (regs->gpr[RS(instr)]) & 0x1F;
+  u8 sa = (regs->gpr[RS(instr)]) & 0x1F;
   u32 rt = regs->gpr[RT(instr)];
-  s32 result = rt << amount;
+  s32 result = rt << sa;
   regs->gpr[RD(instr)] = (s64)result;
 }
 
@@ -507,9 +525,9 @@ void srl(registers_t* regs, u32 instr) {
 }
 
 void srlv(registers_t* regs, u32 instr) {
-  u8 amount = (regs->gpr[RS(instr)] & 0x1F);
+  u8 sa = (regs->gpr[RS(instr)] & 0x1F);
   u32 rt = regs->gpr[RT(instr)];
-  s32 result = rt >> amount;
+  s32 result = rt >> sa;
   regs->gpr[RD(instr)] = (s64)result;
 }
 
@@ -575,7 +593,7 @@ void j(registers_t* regs, u32 instr) {
   u32 target = (instr & 0x3ffffff) << 2;
   u32 address = (regs->old_pc & ~0xfffffff) | target;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %08X)\n", instr, address);
+    logfatal("Unaligned access that shouldn't have happened (instr: %08X) (addr: %08X)\n", instr, address);
   }
   
   branch(regs, true, address);
