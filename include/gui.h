@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
+#include <imgui_memory_editor.h>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -34,7 +35,7 @@ struct Gui {
   bool rom_loaded = false, running = true;
   SDL_GLContext gl_context;
   std::thread emu_thread;
-  // MemoryEditor memory_editor;
+  MemoryEditor memory_editor;
   clock_t delta;
   double fps = 60.0, frametime = 16.0;
   std::atomic_bool emu_quit = false;

@@ -20,7 +20,7 @@ Gui::Gui(const char* title) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   
-  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
   gl_context = SDL_GL_CreateContext(window);
   SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(0); // Enable vsync
@@ -29,10 +29,11 @@ Gui::Gui(const char* title) {
   ImGui::CreateContext();
 
   ImGuiIO& io = ImGui::GetIO(); (void)io;
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  ImGuiStyle& style = ImGui::GetStyle();
 
   ImGui::StyleColorsDark();
+
+  style.WindowRounding = 10;
 
   ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
   ImGui_ImplOpenGL3_Init(glsl_version);
@@ -42,7 +43,7 @@ Gui::Gui(const char* title) {
   init_core(&core);
   init_disasm(&debugger);
 
-  // InitMemoryEditor(&memory_editor, read8_ignore_tlb_and_maps, NULL);
+  memory_editor.ReadOnly = true;
 
   framebuffer = (u8*)malloc(320 * 240 * 4);
   memset(framebuffer, 0x000000ff, 320 * 240 * 4);
@@ -144,12 +145,6 @@ void Gui::MainLoop() {
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    
-    SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
-    SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault(NULL, NULL);
-    SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
 
     SDL_GL_SwapWindow(window);
   }
@@ -374,7 +369,7 @@ void Gui::RegistersView() {
 void Gui::DebuggerWindow() {
   if(show_debug_windows) {
     Disassembly();
-    // Draw(&gui->memory_editor, &gui->core.mem, "Memory Editor", 800, 0);
+    memory_editor.DrawWindow("Memory Editor", &core.mem.memory_regions, 0xFFFFFFFF);
     RegistersView();
   }
 }

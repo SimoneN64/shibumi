@@ -45,6 +45,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/external/nativefiledialog-extended/src/include/
   ${CMAKE_SOURCE_DIR}/external/imgui/
   ${CMAKE_SOURCE_DIR}/external/imgui/backends/
+  ${CMAKE_SOURCE_DIR}/external/imgui_memory_editor/imgui_memory_editor/
   #${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/
 )
 

@@ -185,17 +185,18 @@ void write64(mem_t* mem, u32 vaddr, u64 val) {
   }
 }
 
-u8 read8_ignore_tlb_and_maps(mem_t* mem, u32 addr) {
-  memory_regions_t* memory_regions = &mem->memory_regions;
+u8 read8_ignore_tlb_and_maps(const void* mem, size_t addr) {
+  mem_t* mem_ = (mem_t*)mem;
+  memory_regions_t* memory_regions = &mem_->memory_regions;
   switch(addr) {
     case 0x00000000 ... 0x007FFFFF: return memory_regions->rdram != NULL ? memory_regions->rdram[addr] : 0;
     case 0x04000000 ... 0x04000FFF: return memory_regions->dmem[addr & DMEM_DSIZE];
     case 0x04001000 ... 0x04001FFF: return memory_regions->imem[addr & IMEM_DSIZE];
-    case 0x04300000 ... 0x043FFFFF: return mi_read8(&mem->mmio.mi, addr);
-    case 0x04400000 ...	0x044FFFFF: return vi_read8(&mem->mmio.vi, addr);
-    case 0x04600000 ... 0x046FFFFF: return pi_read8(&mem->mmio.mi, &mem->mmio.pi, addr);
-    case 0x04700000 ... 0x047FFFFF: return ri_read8(&mem->mmio.ri, addr);
-    case 0x10000000 ... 0x1FBFFFFF: return memory_regions->cart != NULL ? memory_regions->cart[addr & mem->rom_mask] : 0;
+    case 0x04300000 ... 0x043FFFFF: return mi_read8(&mem_->mmio.mi, addr);
+    case 0x04400000 ...	0x044FFFFF: return vi_read8(&mem_->mmio.vi, addr);
+    case 0x04600000 ... 0x046FFFFF: return pi_read8(&mem_->mmio.mi, &mem_->mmio.pi, addr);
+    case 0x04700000 ... 0x047FFFFF: return ri_read8(&mem_->mmio.ri, addr);
+    case 0x10000000 ... 0x1FBFFFFF: return memory_regions->cart != NULL ? memory_regions->cart[addr & mem_->rom_mask] : 0;
     case 0x1FC00000 ... 0x1FC007BF: return memory_regions->pif_bootrom[addr & PIF_BOOTROM_DSIZE];
     case 0x1FC007C0 ... 0x1FC007FF: return memory_regions->pif_ram[addr & PIF_RAM_DSIZE];
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
