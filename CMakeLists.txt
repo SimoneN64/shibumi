@@ -70,7 +70,7 @@ endif()
 
 file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resources/)
 
-add_definitions("-DEMU_DIR=\"${CMAKE_SOURCE_DIR}\"")
+add_definitions("-DEMU_DIR=\"${CMAKE_SOURCE_DIR}\" -mno-ms-bitfields")
 
 add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}

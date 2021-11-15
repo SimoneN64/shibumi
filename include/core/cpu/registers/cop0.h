@@ -2,17 +2,18 @@
 #include <common.h>
 
 typedef union {
+  u32 raw;
   struct {
     unsigned:8;
     unsigned interrupt_pending:8;
     unsigned:16;
-  };
+  } PACKED;
   struct {
     unsigned:2;
     unsigned exc_code:5;
     unsigned:1;
     union {
-      struct{
+      struct {
         unsigned ip0:1;
         unsigned ip1:1;
         unsigned ip2:1;
@@ -28,9 +29,7 @@ typedef union {
     unsigned cop_error:2;
     unsigned:1;
     unsigned branch_delay:1;
-  };
-
-  u32 raw;
+  } PACKED;
 } cop0_cause_t;
 
 ASSERTWORD(cop0_cause_t);
