@@ -1,7 +1,3 @@
-[submodule "external/cimgui"]
-	path = external/cimgui
-	url = https://github.com/cimgui/cimgui/
-	branch = docking_inter
 [submodule "external/nativefiledialog-extended"]
 	path = external/nativefiledialog-extended
 	url = https://github.com/btzy/nativefiledialog-extended
@@ -11,3 +7,6 @@
 [submodule "external/cimgui_memory_editor"]
 	path = external/cimgui_memory_editor
 	url = https://github.com/CocoSimone/cimgui_memory_editor
+[submodule "external/imgui"]
+	path = external/imgui
+	url = https://github.com/ocornut/imgui

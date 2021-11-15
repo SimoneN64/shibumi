@@ -1,13 +1,14 @@
 #pragma once
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_opengl3.h>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include <cimgui.h>
-#include <cimgui_impl.h>
-#include <cimgui_memory_editor.h>
+// #include <cimgui_memory_editor.h>
 #include <pthread.h>
 #include <core.h>
+#include <time.h>
 #include <stdatomic.h>
 #include <nfd.h>
 
@@ -24,9 +25,9 @@ typedef struct {
   u8 depth;
 } gl_data_t;
 
-typedef struct {
+struct Gui {
   ImGuiContext* ctx;
-  ImGuiIO* io;
+  ImGuiIO& io;
   bool show_debug_windows;
 	SDL_Window* window;
   unsigned int id; // OpenGL framebuffer texture ID
@@ -34,7 +35,7 @@ typedef struct {
   bool rom_loaded, running;
   SDL_GLContext gl_context;
   pthread_t emu_thread_id;
-  MemoryEditor memory_editor;
+  // MemoryEditor memory_editor;
   clock_t delta;
   double fps, frametime;
   atomic_bool emu_quit;
@@ -42,17 +43,17 @@ typedef struct {
   gl_data_t gl_data;
   disasm_t debugger;
   u8* framebuffer;
-} gui_t;
-
-void init_gui(gui_t* gui, const char* title);
-void main_loop(gui_t* gui);
-void destroy_gui(gui_t* gui);
-void open_file(gui_t* gui);
-void main_menubar(gui_t* gui);
-void debugger_window(gui_t* gui);
-void disassembly(gui_t* gui);
-void registers_view(gui_t* gui);
-void update_texture(gui_t* gui);
-void reset(gui_t* gui);
-void stop(gui_t* gui);
-void start(gui_t* gui);
+  
+  Gui(const char* title);
+  void main_loop();
+  void destroy_gui();
+  void open_file();
+  void main_menubar();
+  void debugger_window();
+  void disassembly();
+  void registers_view();
+  void update_texture();
+  void reset();
+  void stop();
+  void start();
+};

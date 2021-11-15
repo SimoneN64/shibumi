@@ -5,6 +5,7 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -13,23 +14,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
 
-file(GLOB_RECURSE EMU_SRC "src/*.c")
+file(GLOB_RECURSE EMU_SRC_C "src/*.c")
+file(GLOB EMU_SRC_CXX "src/gui.cpp")
+file(GLOB EMU_SRC ${EMU_SRC_C} ${EMU_SRC_CXX})
 
-file(GLOB CIMGUI_MEM_EDITOR_SRC
-  "${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/*.c")
-
-file(GLOB CIMGUI_SRC
-  "${CMAKE_SOURCE_DIR}/external/cimgui/*.cpp"
-  "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/*.cpp"
-  "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/backends/imgui_impl_sdl.cpp"
-  "${CMAKE_SOURCE_DIR}/external/cimgui/imgui/backends/imgui_impl_opengl3.cpp"
+file(GLOB IMGUI_SRC
+  "${CMAKE_SOURCE_DIR}/external/imgui/*.cpp"
+  "${CMAKE_SOURCE_DIR}/external/imgui/backends/imgui_impl_sdl.cpp"
+  "${CMAKE_SOURCE_DIR}/external/imgui/backends/imgui_impl_opengl3.cpp"
 )
 
-add_library(cimgui ${CIMGUI_SRC})
-add_library(cimgui_memory_editor ${CIMGUI_MEM_EDITOR_SRC})
-
-target_compile_definitions(cimgui PRIVATE 
-	IMGUI_IMPL_API=extern\ \"C\")
+add_library(imgui ${IMGUI_SRC})
+#add_library(cimgui_memory_editor ${CIMGUI_MEM_EDITOR_SRC})
 
 include(FindPkgConfig)
 pkg_check_modules (CAPSTONE REQUIRED capstone)
@@ -48,10 +44,9 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/include/core/scheduler/
   ${CMAKE_SOURCE_DIR}/external/
   ${CMAKE_SOURCE_DIR}/external/nativefiledialog-extended/src/include/
-  ${CMAKE_SOURCE_DIR}/external/cimgui/
-  ${CMAKE_SOURCE_DIR}/external/cimgui/imgui/
-  ${CMAKE_SOURCE_DIR}/external/cimgui/generator/output
-  ${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/
+  ${CMAKE_SOURCE_DIR}/external/imgui/
+  ${CMAKE_SOURCE_DIR}/external/imgui/backends/
+  #${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/
 )
 
 if(WIN32)
@@ -68,12 +63,13 @@ elseif(CMAKE_BUILD_TYPE MATCHES Release)
   add_compile_options(-O3)
 endif()
 
-file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resources/)
+add_compile_options(-mno-ms-bitfields)
+add_definitions("-DEMU_DIR=\"${CMAKE_SOURCE_DIR}\"")
 
-add_definitions("-DEMU_DIR=\"${CMAKE_SOURCE_DIR}\" -mno-ms-bitfields")
+file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resources/)
 
 add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd cimgui cimgui_memory_editor ${CAPSTONE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd imgui ${CAPSTONE_LIBRARIES})

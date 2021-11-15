@@ -5,7 +5,7 @@
 #include <string.h>
 
 void* core_callback(void* vpargs) {
-  gui_t* gui = (gui_t*)vpargs;
+  Gui* gui = (Gui*)vpargs;
   while(!atomic_load(&gui->emu_quit)) {
     clock_t begin = clock();
     run_frame(&gui->core);
@@ -16,14 +16,14 @@ void* core_callback(void* vpargs) {
   return NULL;
 }
 
-void init_gui(gui_t* gui, const char* title) {
+Gui::Gui(const char* title) : io(ImGui::GetIO()) {
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     logfatal("Error: %s\n", SDL_GetError());
   }
 
-  gui->rom_loaded = false;
-  gui->running = true;
-  gui->show_debug_windows = true;
+  rom_loaded = false;
+  running = true;
+  show_debug_windows = true;
 
   const char* glsl_version = "#version 130";
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -35,49 +35,48 @@ void init_gui(gui_t* gui, const char* title) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   
-  gui->window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-  gui->gl_context = SDL_GL_CreateContext(gui->window);
-  SDL_GL_MakeCurrent(gui->window, gui->gl_context);
+  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+  gl_context = SDL_GL_CreateContext(window);
+  SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(0); // Enable vsync
 
   ImFontAtlas* firacode_font_atlas = ImFontAtlas_ImFontAtlas();
   ImFont* firacode_font = ImFontAtlas_AddFontFromFileTTF(firacode_font_atlas, "resources/FiraCode-VariableFont_wght.ttf", 16, NULL, NULL);
 
-  gui->ctx = igCreateContext(firacode_font_atlas);
-  gui->io = igGetIO();
-  gui->io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-  gui->io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  ctx = ImGui::CreateContext(firacode_font_atlas);
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-  ImGui_ImplSDL2_InitForOpenGL(gui->window, gui->gl_context);
+  ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  ImGuiStyle* style = igGetStyle();
-  igStyleColorsDark(style);
+  ImGuiStyle& style = ImGui::GetStyle();
+  ImGui::StyleColorsDark();
   
-  style->WindowRounding = 10;
+  style.WindowRounding = 10;
   
-  init_core(&gui->core);
-  init_disasm(&gui->debugger);
+  init_core(&core);
+  init_disasm(&debugger);
 
-  // InitMemoryEditor(&gui->memory_editor, read8_ignore_tlb_and_maps, NULL);
+  // InitMemoryEditor(&memory_editor, read8_ignore_tlb_and_maps, NULL);
 
-  gui->framebuffer = calloc(320 * 240, 4);
+  framebuffer = calloc(320 * 240, 4);
 
-  glGenTextures(1, &gui->id);
-  glBindTexture(GL_TEXTURE_2D, gui->id);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, gui->framebuffer);
+  glGenTextures(1, &id);
+  glBindTexture(GL_TEXTURE_2D, id);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, framebuffer);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-  gui->gl_data.depth = 2;
-  gui->gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
-  gui->gl_data.old_format = 0xE;
+  gl_data.depth = 2;
+  gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
+  gl_data.old_format = 0xE;
 
   NFD_Init();
 
-  pthread_create(&gui->emu_thread_id, NULL, core_callback, (void*)gui);
+  pthread_create(&emu_thread_id, NULL, core_callback, (void*)gui);
 }
 
 ImVec2 image_size;
