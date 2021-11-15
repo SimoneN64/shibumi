@@ -28,7 +28,10 @@ struct gl_data_t {
 
 struct Gui {
   ImGuiContext* ctx;
-  bool show_debug_windows = false;
+  bool show_disasm = false;
+  bool show_regs = false;
+  bool show_memory_editor = false;
+  bool show_metrics = false;
 	SDL_Window* window;
   unsigned int id; // OpenGL framebuffer texture ID
 	nfdchar_t* rom_file;

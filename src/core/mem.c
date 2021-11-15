@@ -185,7 +185,7 @@ void write64(mem_t* mem, u32 vaddr, u64 val) {
   }
 }
 
-u8 read8_ignore_tlb_and_maps(const void* mem, size_t addr) {
+u8 read8_ignore_tlb_and_maps(const u8* mem, size_t addr) {
   mem_t* mem_ = (mem_t*)mem;
   memory_regions_t* memory_regions = &mem_->memory_regions;
   switch(addr) {

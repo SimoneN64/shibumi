@@ -20,7 +20,7 @@ Gui::Gui(const char* title) {
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   
-  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
   gl_context = SDL_GL_CreateContext(window);
   SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(0); // Enable vsync
@@ -30,6 +30,9 @@ Gui::Gui(const char* title) {
 
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   ImGuiStyle& style = ImGui::GetStyle();
+
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   ImGui::StyleColorsDark();
 
@@ -44,6 +47,7 @@ Gui::Gui(const char* title) {
   init_disasm(&debugger);
 
   memory_editor.ReadOnly = true;
+  memory_editor.ReadFn = read8_ignore_tlb_and_maps;
 
   framebuffer = (u8*)malloc(320 * 240 * 4);
   memset(framebuffer, 0x000000ff, 320 * 240 * 4);
@@ -119,10 +123,11 @@ void Gui::MainLoop() {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
     
+    if(show_metrics) ImGui::ShowMetricsWindow(&show_metrics);
     DebuggerWindow();
   
     ImGui::SetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
-    ImGui::Begin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
+    ImGui::Begin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking);
     MainMenubar();
     UpdateTexture();
     ImVec2 window_size = ImGui::GetWindowSize();
@@ -145,6 +150,12 @@ void Gui::MainLoop() {
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+    SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
+    SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
 
     SDL_GL_SwapWindow(window);
   }
@@ -242,7 +253,12 @@ void Gui::MainMenubar() {
     }
 
     if(ImGui::BeginMenu("Settings")) {
-      ImGui::MenuItem("Show debug windows", NULL, &show_debug_windows, true);
+      ImGui::MenuItem("Show disassembly", NULL, &show_disasm, true);
+      ImGui::MenuItem("Show register watch", NULL, &show_regs, true);
+      if(ImGui::MenuItem("Show memory editor", NULL, &show_memory_editor, true)) {
+        memory_editor.Open = show_memory_editor;
+      }
+      ImGui::MenuItem("Show metrics", NULL, &show_metrics, true);
       ImGui::EndMenu();
     }
     ImVec2 close_button_size = ImGui::CalcTextSize("[X]");
@@ -280,7 +296,7 @@ void Gui::Disassembly() {
   memcpy(code, instructions, 100);
   
   debugger.count = cs_disasm(debugger.handle, code, sizeof(code), pointer, 25, &debugger.insn);
-  ImGui::Begin("Disassembly", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+  ImGui::Begin("Disassembly", &show_disasm, 0);
 
   ImVec2 window_size = ImGui::GetWindowSize();
 
@@ -354,7 +370,7 @@ void Gui::Disassembly() {
 
 void Gui::RegistersView() {
   registers_t* regs = &core.cpu.regs;
-  ImGui::Begin("Registers view");
+  ImGui::Begin("Registers view", &show_regs, 0);
   for(int i = 0; i < 32; i+=4) {
     ImGui::Text("%4s: %08lX %4s: %08lX %4s: %08lX %4s: %08lX", regs_str[i], regs->gpr[i], regs_str[i + 1], regs->gpr[i + 1], regs_str[i + 2], regs->gpr[i + 2], regs_str[i + 3], regs->gpr[i + 3]);
   }
@@ -367,9 +383,14 @@ void Gui::RegistersView() {
 }
 
 void Gui::DebuggerWindow() {
-  if(show_debug_windows) {
+  if(show_disasm) {
     Disassembly();
-    memory_editor.DrawWindow("Memory Editor", &core.mem.memory_regions, 0xFFFFFFFF);
+  }
+  show_memory_editor = memory_editor.Open;
+  if(show_memory_editor) {
+    memory_editor.DrawWindow("Memory editor", &core.mem, 0xFFFFFFFF);
+  }
+  if(show_regs) {
     RegistersView();
   }
 }
