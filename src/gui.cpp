@@ -5,15 +5,6 @@
 #include <string>
 #include <cstring>
 
-void core_callback(Gui* gui) {
-  while(!atomic_load(&gui->emu_quit)) {
-    clock_t begin = clock();
-    run_frame(&gui->core);
-    clock_t end = clock();
-    gui->delta += end - begin;
-  }
-}
-
 Gui::Gui(const char* title) {
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     logfatal("Error: %s\n", SDL_GetError());
@@ -53,7 +44,8 @@ Gui::Gui(const char* title) {
 
   // InitMemoryEditor(&memory_editor, read8_ignore_tlb_and_maps, NULL);
 
-  framebuffer = (u8*)calloc(320 * 240, 4);
+  framebuffer = (u8*)malloc(320 * 240 * 4);
+  memset(framebuffer, 0x000000ff, 320 * 240 * 4);
 
   glGenTextures(1, &id);
   glBindTexture(GL_TEXTURE_2D, id);
@@ -63,18 +55,25 @@ Gui::Gui(const char* title) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-  emu_thread = std::thread(core_callback, this);
+  emu_thread = std::thread([](Gui* gui) {
+    while(!atomic_load(&gui->emu_quit)) {
+      clock_t begin = clock();
+      run_frame(&gui->core);
+      clock_t end = clock();
+      gui->delta += end - begin;
+    }
+  }, this);
 
   NFD_Init();
 }
 
 ImVec2 image_size;
 
-static inline void resize_callback(ImGuiSizeCallbackData* data) {
+INLINE void resize_callback(ImGuiSizeCallbackData* data) {
   ImVec2 window_size = ImGui::GetWindowSize();
   float x = window_size.x - 15, y = window_size.y - 15;
   float current_aspect_ratio = x / y;
-  
+
   if(N64_ASPECT_RATIO > current_aspect_ratio) {
     y = x / (N64_ASPECT_RATIO);
   } else {
@@ -120,7 +119,7 @@ void Gui::MainLoop() {
     ImGui::NewFrame();
     
     DebuggerWindow();
-    
+  
     ImGui::SetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
     ImGui::Begin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
     MainMenubar();
@@ -192,11 +191,16 @@ void Gui::UpdateTexture() {
   memory_regions_t* memory_regions = &core.mem.memory_regions;
 
   if(format == f8888) {
+    framebuffer[4] = 0xff;
     memcpy(framebuffer, &memory_regions->rdram[origin & RDRAM_DSIZE], w * h * gl_data.depth);
+    for(int i = 0; i < w * h * gl_data.depth; i += gl_data.depth) {
+      framebuffer[i + 4] |= 0xff;
+    }
   } else {
+    framebuffer[1] |= 1;
     for(int i = 0; i < w * h * gl_data.depth; i += gl_data.depth) {
       framebuffer[i] = memory_regions->rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
-      framebuffer[i + 1] = memory_regions->rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)];
+      framebuffer[i + 1] = memory_regions->rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)] | (1 << 16);
     }
   }
 
@@ -246,11 +250,15 @@ void Gui::MainMenubar() {
       ImGui::MenuItem("Show debug windows", NULL, &show_debug_windows, true);
       ImGui::EndMenu();
     }
-
-    ImGui::SameLine(window_size.x - 220, -1);
-    ImGui::Text(rom_loaded ? "[ %.2f fps ][ %.2f ms ]" : "[ NaN fps ][ NaN ms ]", fps, frametime);
-    ImGui::SameLine(window_size.x - 30, -1);
-    if(ImGui::BeginMenu("X")) {
+    ImVec2 close_button_size = ImGui::CalcTextSize("[X]");
+    char fps_text[255];
+    sprintf(fps_text, rom_loaded ? "[ %.2f fps ][ %.2f ms ]" : "[ NaN fps ][ NaN ms ]", fps, frametime);
+    ImVec2 fps_size = ImGui::CalcTextSize(fps_text);
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::SameLine(window_size.x - close_button_size.x - fps_size.x - style.ItemInnerSpacing.x * 4 - 12, -1);
+    ImGui::Text(fps_text);
+    ImGui::SameLine(window_size.x - close_button_size.x - style.ItemInnerSpacing.x * 2 - 12, -1);
+    if(ImGui::BeginMenu("[X]")) {
       running = false;
       ImGui::EndMenu();
     }
@@ -398,7 +406,14 @@ void Gui::Start() {
   emu_quit = !rom_loaded;
   core.running = rom_loaded;
   if(rom_loaded) {
-    emu_thread = std::thread(core_callback, this);
+    emu_thread = std::thread([](Gui* gui) {
+      while(!atomic_load(&gui->emu_quit)) {
+        clock_t begin = clock();
+        run_frame(&gui->core);
+        clock_t end = clock();
+        gui->delta += end - begin;
+      }
+    }, this);
   }
 }
 
