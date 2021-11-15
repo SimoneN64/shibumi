@@ -14,9 +14,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
 
-file(GLOB_RECURSE EMU_SRC_C "src/*.c")
-file(GLOB EMU_SRC_CXX "src/gui.cpp")
-file(GLOB EMU_SRC ${EMU_SRC_C} ${EMU_SRC_CXX})
+file(GLOB_RECURSE GUI_SRC "src/*.cpp")
+file(GLOB_RECURSE EMU_SRC "src/*.c")
 
 file(GLOB IMGUI_SRC
   "${CMAKE_SOURCE_DIR}/external/imgui/*.cpp"
@@ -70,6 +69,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resourc
 
 add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
+  ${GUI_SRC}
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd imgui ${CAPSTONE_LIBRARIES})

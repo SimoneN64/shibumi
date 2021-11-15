@@ -1,8 +1,10 @@
 #pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <core/cpu.h>
 #include <core/mem.h>
 #include <disasm.h>
-#include <stdatomic.h>
 
 typedef struct {
   cpu_t cpu;
@@ -13,3 +15,6 @@ typedef struct {
 
 void init_core(core_t* core);
 void run_frame(core_t* core);
+#ifdef __cplusplus
+}
+#endif

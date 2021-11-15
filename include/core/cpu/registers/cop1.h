@@ -97,15 +97,12 @@ INLINE void set_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index, u64 value) 
 }
 
 INLINE void set_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index, double value) {
-  _Static_assert(sizeof(double) == sizeof(u64), "double || dword != 64 bits");
-
   u64 raw;
   memcpy(&raw, &value, sizeof(double));
   set_cop1_reg_dword(cop1, cop0, index, raw);
 }
 
 INLINE double get_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index) {
-  _Static_assert(sizeof(double) == sizeof(u64), "double || dword != 64 bits");
   double doublevalue;
   u64 raw = get_cop1_reg_dword(cop1, cop0, index);
   memcpy(&doublevalue, &raw, sizeof(double));
@@ -113,15 +110,12 @@ INLINE double get_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index) {
 }
 
 INLINE void set_cop1_register_float(cop1_t *cop1, cop0_t *cop0, u8 index, float value) {
-  _Static_assert(sizeof(float) == sizeof(u32), "float || word != 32 bits");
-
   u32 raw;
   memcpy(&raw, &value, sizeof(float));
   set_cop1_reg_word(cop1, cop0, index, raw);
 }
 
 INLINE float get_cop1_register_float(cop1_t *cop1, cop0_t *cop0, u8 index) {
-  _Static_assert(sizeof(float) == sizeof(u32), "float || word != 32 bits");
   u32 raw = get_cop1_reg_word(cop1, cop0, index);
   float floatvalue;
   memcpy(&floatvalue, &raw, sizeof(float));

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stddef.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -15,8 +16,14 @@ typedef __uint128_t u128;
 typedef __int128_t s128;
 
 #define PACKED __attribute__((__packed__))
-#define ASSERTWORD(type) _Static_assert(sizeof(type) == 4, #type " must be 32 bits")
-#define ASSERTDWORD(type) _Static_assert(sizeof(type) == 8, #type " must be 64 bits")
+#ifdef __cplusplus
+extern "C" {
+#endif
+#define ASSERTWORD(type)// _Static_assert(sizeof(type) == 4, #type " must be 32 bits")
+#define ASSERTDWORD(type)// _Static_assert(sizeof(type) == 8, #type " must be 64 bits")
+#ifdef __cplusplus
+}
+#endif
 #define INLINE static inline __attribute__((always_inline))
 
 #define RDRAM_SIZE 0x800000

@@ -5,26 +5,19 @@
 #include <string>
 #include <cstring>
 
-void* core_callback(void* vpargs) {
-  Gui* gui = (Gui*)vpargs;
+void core_callback(Gui* gui) {
   while(!atomic_load(&gui->emu_quit)) {
     clock_t begin = clock();
     run_frame(&gui->core);
     clock_t end = clock();
     gui->delta += end - begin;
   }
-
-  return NULL;
 }
 
-Gui::Gui(const char* title) : io(ImGui::GetIO()) {
+Gui::Gui(const char* title) {
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     logfatal("Error: %s\n", SDL_GetError());
   }
-
-  rom_loaded = false;
-  running = true;
-  show_debug_windows = true;
 
   const char* glsl_version = "#version 130";
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
@@ -41,20 +34,19 @@ Gui::Gui(const char* title) : io(ImGui::GetIO()) {
   SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(0); // Enable vsync
 
-  ImFontAtlas* firacode_font_atlas = ImFontAtlas_ImFontAtlas();
-  ImFont* firacode_font = ImFontAtlas_AddFontFromFileTTF(firacode_font_atlas, "resources/FiraCode-VariableFont_wght.ttf", 16, NULL, NULL);
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
 
-  ctx = ImGui::CreateContext(firacode_font_atlas);
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+  ImGui::StyleColorsDark();
 
   ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
   ImGui_ImplOpenGL3_Init(glsl_version);
 
-  ImGuiStyle& style = ImGui::GetStyle();
-  ImGui::StyleColorsDark();
-  
-  style.WindowRounding = 10;
+  io.Fonts->AddFontFromFileTTF("resources/FiraCode-VariableFont_wght.ttf", 16);
   
   init_core(&core);
   init_disasm(&debugger);
@@ -71,13 +63,9 @@ Gui::Gui(const char* title) : io(ImGui::GetIO()) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-  gl_data.depth = 2;
-  gl_data.glFormat = GL_UNSIGNED_SHORT_5_5_5_1;
-  gl_data.old_format = 0xE;
+  emu_thread = std::thread(core_callback, this);
 
   NFD_Init();
-
-  pthread_create(&emu_thread_id, NULL, core_callback, (void*)this);
 }
 
 ImVec2 image_size;
@@ -97,7 +85,8 @@ static inline void resize_callback(ImGuiSizeCallbackData* data) {
   image_size.y = y - 30;
 }
 
-void Gui::main_loop() {
+void Gui::MainLoop() {
+  ImGuiIO& io = ImGui::GetIO(); (void)io;
   ImVec4 clear_color = {0.45f, 0.55f, 0.60f, 1.00f};
   unsigned int frames = 0;
   while(running) {    
@@ -114,7 +103,7 @@ void Gui::main_loop() {
           break;  
         case SDL_KEYDOWN:
           switch(event.key.keysym.sym) {
-            case SDLK_o: open_file(); break;
+            case SDLK_o: OpenFile(); break;
             case SDLK_p:
               if(rom_loaded) {
                 core.running = !core.running;
@@ -130,12 +119,12 @@ void Gui::main_loop() {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
     
-    debugger_window();
+    DebuggerWindow();
     
     ImGui::SetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
     ImGui::Begin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
-    main_menubar();
-    update_texture();
+    MainMenubar();
+    UpdateTexture();
     ImVec2 window_size = ImGui::GetWindowSize();
     ImVec2 result = {static_cast<float>((window_size.x - image_size.x) * 0.5), static_cast<float>((window_size.y - image_size.y + 15) * 0.5)};
     ImGui::SetCursorPos(result);
@@ -144,14 +133,15 @@ void Gui::main_loop() {
 
     frames++;
 
-    if(clock_to_ms(delta)>1000.0) {
+    if(clock_to_ms(delta) > 1000.0) {
       fps = (double)frames * 0.5 + fps *0.5;
       frames = 0;
       delta -= CLOCKS_PER_SEC;
-      frametime = 1000.0/((fps == 0) ? 0.001 : fps);
+      frametime = 1000.0 / ((fps == 0) ? 0.001 : fps);
     }
 
     ImGui::Render();
+    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -166,7 +156,7 @@ void Gui::main_loop() {
   }
 }
 
-void Gui::update_texture() {
+void Gui::UpdateTexture() {
   u32 w = core.mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = core.mem.mmio.vi.status.format;
@@ -214,12 +204,12 @@ void Gui::update_texture() {
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, gl_data.glFormat, framebuffer);
 }
 
-void Gui::main_menubar() {
+void Gui::MainMenubar() {
   ImVec2 window_size = ImGui::GetWindowSize();
   if(ImGui::BeginMenuBar()) {
     if(ImGui::BeginMenu("File")) {
       if(ImGui::MenuItem("Open", "O")) {
-        open_file();
+        OpenFile();
       }
 
       if(ImGui::MenuItem("Exit", "Esc")) {
@@ -242,11 +232,11 @@ void Gui::main_menubar() {
       }
 
       if(ImGui::MenuItem("Stop", NULL, false, rom_loaded)) {
-        stop();
+        Stop();
       }
 
       if(ImGui::MenuItem("Reset", NULL, false, rom_loaded)) {
-        reset();
+        Reset();
       }
 
       ImGui::EndMenu();
@@ -269,7 +259,7 @@ void Gui::main_menubar() {
   }
 }
 
-void Gui::disassembly() {
+void Gui::Disassembly() {
   u32 instructions[25] = {};
   u32 pc = core.cpu.regs.pc;
   u32 pointer = pc - (14 * 4);
@@ -340,12 +330,12 @@ void Gui::disassembly() {
       const float font_size = ImGui::GetFontSize() * op_str.length() / 2;
       switch(j) {
       case 12 ... 14:
-        ImGui::TextColored(colors_disasm[j & 3], "0x%"PRIx64":\t%s", debugger.insn[j].address, debugger.insn[j].mnemonic);
+        ImGui::TextColored(colors_disasm[j & 3], "0x%" PRIx64 ":\t%s", debugger.insn[j].address, debugger.insn[j].mnemonic);
         ImGui::SameLine(window_size.x - font_size - 10, -1);
         ImGui::TextColored(colors_disasm[j & 3], "%s", debugger.insn[j].op_str);
         break;
       default:
-        ImGui::Text("0x%"PRIx64":\t%s", debugger.insn[j].address, debugger.insn[j].mnemonic);
+        ImGui::Text("0x%" PRIx64 ":\t%s", debugger.insn[j].address, debugger.insn[j].mnemonic);
         ImGui::SameLine(window_size.x - font_size - 10, -1);
         ImGui::Text("%s", debugger.insn[j].op_str);
       }
@@ -359,32 +349,32 @@ void Gui::disassembly() {
   ImGui::End();
 }
 
-void Gui::registers_view() {
+void Gui::RegistersView() {
   registers_t* regs = &core.cpu.regs;
   ImGui::Begin("Registers view");
   for(int i = 0; i < 32; i+=4) {
-    ImGui::Text("%4s: %08X %4s: %08X %4s: %08X %4s: %08X", regs_str[i], regs->gpr[i], regs_str[i + 1], regs->gpr[i + 1], regs_str[i + 2], regs->gpr[i + 2], regs_str[i + 3], regs->gpr[i + 3]);
+    ImGui::Text("%4s: %08lX %4s: %08lX %4s: %08lX %4s: %08lX", regs_str[i], regs->gpr[i], regs_str[i + 1], regs->gpr[i + 1], regs_str[i + 2], regs->gpr[i + 2], regs_str[i + 3], regs->gpr[i + 3]);
   }
   ImGui::Separator();
   s64 pipe[3] = {regs->old_pc, regs->pc, regs->next_pc};
   for(int i = 0; i < 3; i++) {
-    ImGui::Text("pipe[%d]: %08llX", i, pipe[i]);
+    ImGui::Text("pipe[%d]: %08lX", i, pipe[i]);
   }
   ImGui::End();
 }
 
-void Gui::debugger_window() {
+void Gui::DebuggerWindow() {
   if(show_debug_windows) {
-    disassembly();
+    Disassembly();
     // Draw(&gui->memory_editor, &gui->core.mem, "Memory Editor", 800, 0);
-    registers_view();
+    RegistersView();
   }
 }
 
 Gui::~Gui() {
   emu_quit = true;
-  pthread_join(gui->emu_thread_id, NULL);
-  destroy_disasm(&gui->debugger);
+  emu_thread.join();
+  destroy_disasm(&debugger);
   NFD_Quit();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplSDL2_Shutdown();
@@ -394,32 +384,32 @@ Gui::~Gui() {
   SDL_Quit();
 }
 
-void Gui::open_file() {
+void Gui::OpenFile() {
   rom_file = "";
   nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
   nfdresult_t result = NFD_OpenDialog(&rom_file, &filter, 1, EMU_DIR);
   if(result == NFD_OKAY) {
-    reset();
+    Reset();
   }
 }
 
-void Gui::start() {
+void Gui::Start() {
   rom_loaded = load_rom(&core.mem, rom_file);
   emu_quit = !rom_loaded;
   core.running = rom_loaded;
   if(rom_loaded) {
-    pthread_create(&emu_thread_id, NULL, core_callback, (void*)gui);
+    emu_thread = std::thread(core_callback, this);
   }
 }
 
-void Gui::reset() {
-  stop();
-  start();
+void Gui::Reset() {
+  Stop();
+  Start();
 }
 
-void Gui::stop() {
+void Gui::Stop() {
   emu_quit = true;
-  pthread_join(emu_thread_id, NULL);
+  emu_thread.join();
   init_core(&core);
   rom_loaded = false;
   core.running = false;
