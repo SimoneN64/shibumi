@@ -10,8 +10,10 @@
 // #include <cimgui_memory_editor.h>
 #include <nfd.hpp>
 #include <atomic>
-#include <thread>
+#include <pthread.h>
 #include <ctime>
+#include <log.h>
+#include <string>
 
 #define N64_ASPECT_RATIO (float)4 / 3
 
@@ -26,18 +28,28 @@ struct gl_data_t {
   u8 depth = 2;
 };
 
+INLINE ImU32 colors_print(message_type type) {
+  switch(type) {
+    case INFO: return 0xffffffff;
+    case WARNING: return 0xff00ccff;
+    case FATAL: return 0xff0000ff;
+  }
+}
+
 struct Gui {
   ImGuiContext* ctx;
-  bool show_disasm = false;
-  bool show_regs = false;
-  bool show_memory_editor = false;
-  bool show_metrics = false;
+  bool show_disasm = false, show_regs = false;
+  bool show_memory_editor = false, show_metrics = false;
+  bool show_logs = true;
+  float log_pos_y = 0;
+  std::string old_message = "NULL";
+  message_type old_message_type = INFO;
 	SDL_Window* window;
   unsigned int id; // OpenGL framebuffer texture ID
 	nfdchar_t* rom_file;
   bool rom_loaded = false, running = true;
   SDL_GLContext gl_context;
-  std::thread emu_thread;
+  pthread_t emu_thread;
   MemoryEditor memory_editor;
   clock_t delta;
   double fps = 60.0, frametime = 16.0;
@@ -54,6 +66,7 @@ struct Gui {
   void OpenFile();
   void MainMenubar();
   void DebuggerWindow();
+  void LogWindow();
   void Disassembly();
   void RegistersView();
   void UpdateTexture();

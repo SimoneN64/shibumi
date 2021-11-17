@@ -63,7 +63,9 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     case 0x38: sc(mem, regs, instr); break;
     case 0x3C: scd(mem, regs, instr); break;
     case 0x3F: sd(mem, regs, instr); break;
-    default: logfatal("[CPU ERR] Unimplemented instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+    default:
+      alloc_strlencpy(last_message, "[CPU ERR] Unimplemented instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+      last_message_type = FATAL;
   }
 }
 

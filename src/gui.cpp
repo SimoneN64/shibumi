@@ -5,6 +5,18 @@
 #include <string>
 #include <cstring>
 
+INLINE void* core_callback(void* args) {
+  Gui* gui = (Gui*)args;
+  while(!atomic_load(&gui->emu_quit)) {
+    clock_t begin = clock();
+    run_frame(&gui->core);
+    clock_t end = clock();
+    gui->delta += end - begin;
+  }
+  
+  return NULL;
+}
+
 Gui::Gui(const char* title) {
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     logfatal("Error: %s\n", SDL_GetError());
@@ -48,6 +60,7 @@ Gui::Gui(const char* title) {
 
   memory_editor.ReadOnly = true;
   memory_editor.ReadFn = read8_ignore_tlb_and_maps;
+  memory_editor.Open = show_memory_editor;
 
   framebuffer = (u8*)malloc(320 * 240 * 4);
   memset(framebuffer, 0x000000ff, 320 * 240 * 4);
@@ -60,14 +73,7 @@ Gui::Gui(const char* title) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-  emu_thread = std::thread([](Gui* gui) {
-    while(!atomic_load(&gui->emu_quit)) {
-      clock_t begin = clock();
-      run_frame(&gui->core);
-      clock_t end = clock();
-      gui->delta += end - begin;
-    }
-  }, this);
+  pthread_create(&emu_thread, NULL, core_callback, (void*)this);
 
   NFD_Init();
 }
@@ -255,6 +261,7 @@ void Gui::MainMenubar() {
     if(ImGui::BeginMenu("Settings")) {
       ImGui::MenuItem("Show disassembly", NULL, &show_disasm, true);
       ImGui::MenuItem("Show register watch", NULL, &show_regs, true);
+      ImGui::MenuItem("Show logs", NULL, &show_logs, true);
       if(ImGui::MenuItem("Show memory editor", NULL, &show_memory_editor, true)) {
         memory_editor.Open = show_memory_editor;
       }
@@ -368,6 +375,26 @@ void Gui::Disassembly() {
   ImGui::End();
 }
 
+void Gui::LogWindow() {
+  ImGui::Begin("Logs", &show_logs);
+  ImVec2 log_size, window_pos = ImGui::GetWindowPos();
+
+  if(last_message_type == FATAL) {
+    Stop();
+  }
+
+  if(last_message != nullptr && strcmp(last_message, "") && strcmp(last_message, old_message.c_str())) {
+    old_message = std::string(last_message);
+    old_message_type = last_message_type;
+    log_size = ImGui::CalcTextSize(last_message);
+    log_pos_y += log_size.y;
+  }
+
+  auto drawList = ImGui::GetWindowDrawList();
+  drawList->AddText(ImVec2(window_pos.x + 5, log_pos_y + window_pos.y + 5), colors_print(last_message_type), last_message);
+  ImGui::End();
+}
+
 void Gui::RegistersView() {
   registers_t* regs = &core.cpu.regs;
   ImGui::Begin("Registers view", &show_regs, 0);
@@ -383,21 +410,16 @@ void Gui::RegistersView() {
 }
 
 void Gui::DebuggerWindow() {
-  if(show_disasm) {
-    Disassembly();
-  }
+  if(show_disasm) Disassembly();
   show_memory_editor = memory_editor.Open;
-  if(show_memory_editor) {
-    memory_editor.DrawWindow("Memory editor", &core.mem, 0xFFFFFFFF);
-  }
-  if(show_regs) {
-    RegistersView();
-  }
+  if(show_memory_editor) memory_editor.DrawWindow("Memory editor", &core.mem, 0xFFFFFFFF);
+  if(show_regs) RegistersView();
+  if(show_logs) LogWindow();
 }
 
 Gui::~Gui() {
   emu_quit = true;
-  emu_thread.join();
+  pthread_join(emu_thread, NULL);
   destroy_disasm(&debugger);
   NFD_Quit();
   ImGui_ImplOpenGL3_Shutdown();
@@ -422,14 +444,7 @@ void Gui::Start() {
   emu_quit = !rom_loaded;
   core.running = rom_loaded;
   if(rom_loaded) {
-    emu_thread = std::thread([](Gui* gui) {
-      while(!atomic_load(&gui->emu_quit)) {
-        clock_t begin = clock();
-        run_frame(&gui->core);
-        clock_t end = clock();
-        gui->delta += end - begin;
-      }
-    }, this);
+    pthread_create(&emu_thread, NULL, core_callback, (void*)this);
   }
 }
 
@@ -440,7 +455,7 @@ void Gui::Reset() {
 
 void Gui::Stop() {
   emu_quit = true;
-  emu_thread.join();
+  pthread_join(emu_thread, NULL);
   init_core(&core);
   rom_loaded = false;
   core.running = false;
