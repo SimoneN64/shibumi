@@ -29,7 +29,6 @@ static inline bool should_service_interrupt(registers_t* regs) {
 
 void handle_interrupt(cpu_t* cpu, mem_t* mem) {
   if(should_service_interrupt(&cpu->regs)) {
-    alloc_strlencpy(last_message, "Should service interrupt!");
-    last_message_type = FATAL;
+    log_(FATAL, "Should service interrupt!");
   }
 }

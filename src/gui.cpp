@@ -61,6 +61,9 @@ Gui::Gui(const char* title) {
   memory_editor.ReadOnly = true;
   memory_editor.ReadFn = read8_ignore_tlb_and_maps;
   memory_editor.Open = show_memory_editor;
+  logger.InfoStr = message_type_strings[0].c_str();
+  logger.WarnStr = message_type_strings[1].c_str();
+  logger.ErrorStr = message_type_strings[2].c_str();
 
   framebuffer = (u8*)malloc(320 * 240 * 4);
   memset(framebuffer, 0x000000ff, 320 * 240 * 4);
@@ -274,7 +277,7 @@ void Gui::MainMenubar() {
     ImVec2 fps_size = ImGui::CalcTextSize(fps_text);
     ImGuiStyle& style = ImGui::GetStyle();
     ImGui::SameLine(window_size.x - close_button_size.x - fps_size.x - style.ItemInnerSpacing.x * 4 - 12, -1);
-    ImGui::Text(fps_text);
+    ImGui::Text("%s", fps_text);
     ImGui::SameLine(window_size.x - close_button_size.x - style.ItemInnerSpacing.x * 2 - 12, -1);
     if(ImGui::BeginMenu("[X]")) {
       running = false;
@@ -376,23 +379,17 @@ void Gui::Disassembly() {
 }
 
 void Gui::LogWindow() {
-  ImGui::Begin("Logs", &show_logs);
-  ImVec2 log_size, window_pos = ImGui::GetWindowPos();
-
-  if(last_message_type == FATAL) {
-    Stop();
-  }
-
+  std::string final_message{};
   if(last_message != nullptr && strcmp(last_message, "") && strcmp(last_message, old_message.c_str())) {
+    if(last_message_type == FATAL) {
+      Stop();
+    }
     old_message = std::string(last_message);
     old_message_type = last_message_type;
-    log_size = ImGui::CalcTextSize(last_message);
-    log_pos_y += log_size.y;
+    final_message = message_type_strings[last_message_type] + " " + old_message;
+    logger.AddLog("%s", final_message.c_str());
   }
-
-  auto drawList = ImGui::GetWindowDrawList();
-  drawList->AddText(ImVec2(window_pos.x + 5, log_pos_y + window_pos.y + 5), colors_print(last_message_type), last_message);
-  ImGui::End();
+  logger.Draw("Logs", &show_logs);
 }
 
 void Gui::RegistersView() {
@@ -431,7 +428,6 @@ Gui::~Gui() {
 }
 
 void Gui::OpenFile() {
-  rom_file = "";
   nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
   nfdresult_t result = NFD_OpenDialog(&rom_file, &filter, 1, EMU_DIR);
   if(result == NFD_OKAY) {

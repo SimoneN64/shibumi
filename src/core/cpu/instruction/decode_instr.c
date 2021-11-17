@@ -30,7 +30,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
         case 0x04: mtcz(regs, instr, cop_number); break;
         case 0x06: ctcz(regs, instr, cop_number); break;
         case 0x10: break;
-        default: logfatal("Unimplemented control registers transfer %02X (mask: %02X) (PC: %016lX)\n", 
+        default: log_(FATAL, "Unimplemented control registers transfer %02X (mask: %02X) (PC: %016lX)\n", 
                           op_type, mask, regs->pc);
       }
     } break;
@@ -64,8 +64,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     case 0x3C: scd(mem, regs, instr); break;
     case 0x3F: sd(mem, regs, instr); break;
     default:
-      alloc_strlencpy(last_message, "[CPU ERR] Unimplemented instruction %02X, PC: %016lX\n", mask, regs->old_pc);
-      last_message_type = FATAL;
+      log_(FATAL, "Unimplemented instruction %02X, PC: %016lX\n", mask, regs->old_pc);
   }
 }
 
@@ -120,7 +119,7 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     case 0x3C: dsll32(regs, instr); break;
     case 0x3E: dsrl32(regs, instr); break;
     case 0x3F: dsra32(regs, instr); break;
-    default: logfatal("[CPU ERR] Unimplemented special instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+    default: log_(FATAL, "Unimplemented special instruction %02X, PC: %016lX\n", mask, regs->old_pc);
   }
 }
 
@@ -134,6 +133,6 @@ void regimm(registers_t* regs, mem_t *mem, u32 instr) {
       regs->gpr[31] = regs->pc + 4;
       b(regs, instr, regs->gpr[RS(instr)] >= 0);
       break;
-    default: logfatal("[CPU ERR] Unimplemented regimm instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+    default: log_(FATAL, "Unimplemented regimm instruction %02X, PC: %016lX\n", mask, regs->old_pc);
   }
 }

@@ -83,7 +83,7 @@ u8 read8(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return memory_regions->rdram[BYTE_ADDR(paddr)];
     case 0x04001000 ... 0x04001FFF: return memory_regions->imem[BYTE_ADDR(paddr) & IMEM_DSIZE];
-    default: logdebug("[ERR] Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr); return 0;
+    default: log_(FATAL, "Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr); return 0;
   }
 }
 
@@ -94,7 +94,7 @@ u16 read16(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(16, memory_regions->rdram, HALF_ADDR(paddr));
     case 0x04001000 ... 0x04001FFF: return raccess(16, memory_regions->imem, HALF_ADDR(paddr) & IMEM_DSIZE);
-    default: logdebug("[ERR] Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr); return 0;
+    default: log_(FATAL, "Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr); return 0;
   }
 }
 
@@ -117,7 +117,7 @@ u32 read32_(mem_t* mem, u32 vaddr, bool tlb) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logdebug("[WARN] Unimplemented %s[%08X] 32-bit read\n", regions_str(paddr), paddr); return 0;
+    default: log_(WARNING, "Unimplemented %s[%08X] 32-bit read\n", regions_str(paddr), paddr); return 0;
   }
 }
 
@@ -128,7 +128,7 @@ u64 read64(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(64, memory_regions->rdram, paddr); break;
     case 0x04001000 ... 0x04001FFF: return raccess(64, memory_regions->imem, paddr & IMEM_DSIZE); break;
-    default: logdebug("[ERR] Unimplemented %s[%08X] 64-bit read\n", regions_str(paddr), paddr); return 0;
+    default: log_(FATAL, "Unimplemented %s[%08X] 64-bit read\n", regions_str(paddr), paddr); return 0;
   }
 }
 
@@ -138,7 +138,7 @@ void write8(mem_t* mem, u32 vaddr, u8 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: memory_regions->rdram[BYTE_ADDR(paddr)] = val; break;
     case 0x04001000 ... 0x04001FFF: memory_regions->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val; break;
-    default: logdebug("[ERR] Unimplemented %s[%08X] 8-bit write (%02X)\n", regions_str(paddr), paddr, val);
+    default: log_(FATAL, "Unimplemented %s[%08X] 8-bit write (%02X)\n", regions_str(paddr), paddr, val);
   }
 }
 
@@ -149,7 +149,7 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(16, memory_regions->rdram, HALF_ADDR(paddr), val); break;
     case 0x04001000 ... 0x04001FFF: waccess(16, memory_regions->imem, HALF_ADDR(paddr) & IMEM_DSIZE, val); break;
-    default: logdebug("[ERR] Unimplemented %s[%08X] 16-bit write (%04X)\n", regions_str(paddr), paddr, val);
+    default: log_(FATAL, "Unimplemented %s[%08X] 16-bit write (%04X)\n", regions_str(paddr), paddr, val);
   }
 }
 
@@ -170,7 +170,7 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: break;
-    default: logdebug("[WARN] Unimplemented %s[%08X] 32-bit write (%08X)\n", regions_str(paddr), paddr, val);
+    default: log_(FATAL, "Unimplemented %s[%08X] 32-bit write (%08X)\n", regions_str(paddr), paddr, val);
   }
 }
 
@@ -181,7 +181,7 @@ void write64(mem_t* mem, u32 vaddr, u64 val) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(64, memory_regions->rdram, paddr, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(64, memory_regions->imem, paddr & IMEM_DSIZE, val); break;
-    default: logdebug("[ERR] Unimplemented %s[%08X] 64-bit write (%16lX)\n", regions_str(paddr), paddr, val);
+    default: log_(FATAL, "Unimplemented %s[%08X] 64-bit write (%16lX)\n", regions_str(paddr), paddr, val);
   }
 }
 
@@ -203,6 +203,6 @@ u8 read8_ignore_tlb_and_maps(const u8* mem, size_t addr) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logdebug("[WARN] Unimplemented %s[%08X] 32-bit read\n", regions_str(addr), addr); return 0;
+    default: log_(WARNING, "Unimplemented %s[%08zX] 32-bit read\n", regions_str(addr), addr); return 0;
   }
 }

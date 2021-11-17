@@ -33,7 +33,7 @@ u8 pi_read8(mi_t* mi, pi_t* pi, u32 paddr) {
     }
     case 0x04600014 ... 0x04600030:
       return (pi->stub[(paddr & 0xff) - 5]) >> shift_amount[paddr & 0xf];
-    default: logdebug("[WARN] Unhandled PI[%08X] read\n", paddr); return 0;
+    default: log_(WARNING, "[WARN] Unhandled PI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -54,7 +54,7 @@ u32 pi_read(mi_t* mi, pi_t* pi, u32 paddr) {
     case 0x04600014: case 0x04600018: case 0x0460001C: case 0x04600020:
     case 0x04600024: case 0x04600028: case 0x0460002C: case 0x04600030:
       return pi->stub[(paddr & 0xff) - 5];
-    default: logdebug("[WARN] Unhandled PI[%08X] read\n", paddr); return 0;
+    default: log_(WARNING, "Unhandled PI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -78,7 +78,7 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       pi->cart_addr = cart_addr + len;
       interrupt_raise(mi, regs, PI);
       pi->status = pi->status & 0xFFFFFFFE;
-      logdebug("PI DMA from rdram to cart (size: %.2f MiB)\n", (float)len / 1048576);
+      log_(INFO, "PI DMA from rdram to cart (size: %.2f MiB)\n", (float)len / 1048576);
     } break;
     case 0x0460000C: {
       u32 len = (val & 0x00FFFFFF) + 1;
@@ -93,7 +93,7 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       pi->cart_addr = cart_addr + len;
       interrupt_raise(mi, regs, PI);
       pi->status = pi->status & 0xFFFFFFFE;
-      logdebug("PI DMA from cart to rdram (size: %.2f MiB)\n", (float)len / 1048576);
+      log_(INFO, "PI DMA from cart to rdram (size: %.2f MiB)\n", (float)len / 1048576);
     } break;
     case 0x04600010:
     if(val & 2) {
@@ -103,6 +103,6 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
     case 0x04600024: case 0x04600028: case 0x0460002C: case 0x04600030:
       pi->stub[(paddr & 0xff) - 5] = val & 0xff;
       break;
-    default: logfatal("[ERR] Unhandled PI[%08X] write (%08X)\n", val, paddr);
+    default: log_(FATAL, "Unhandled PI[%08X] write (%08X)\n", val, paddr);
   }
 }

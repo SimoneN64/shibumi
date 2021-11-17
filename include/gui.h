@@ -4,6 +4,7 @@
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_memory_editor.h>
+#include <imgui_logger/imgui_logger.h>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -36,6 +37,8 @@ INLINE ImU32 colors_print(message_type type) {
   }
 }
 
+static const std::string message_type_strings[3] = {"[INFO]", "[WARNING]", "[FATAL]"};
+
 struct Gui {
   ImGuiContext* ctx;
   bool show_disasm = false, show_regs = false;
@@ -51,6 +54,7 @@ struct Gui {
   SDL_GLContext gl_context;
   pthread_t emu_thread;
   MemoryEditor memory_editor;
+  Logger logger;
   clock_t delta;
   double fps = 60.0, frametime = 16.0;
   std::atomic_bool emu_quit = false;

@@ -20,7 +20,7 @@ u8 ri_read8(ri_t* ri, u32 paddr) {
       return ri->select >> shift_amount[paddr & 0xf];
     case 0x04700010 ... 0x04700013:
       return ri->refresh >> shift_amount[paddr & 0xf];
-    default: logdebug("[WARN] Unhandled RI[%08X] read\n", paddr); return 0;
+    default: log_(WARNING, "Unhandled RI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -30,7 +30,7 @@ u32 ri_read(ri_t* ri, u32 paddr) {
     case 0x04700004: return ri->config;
     case 0x0470000C: return ri->select;
     case 0x04700010: return ri->refresh;
-    default: logdebug("[WARN] Unhandled RI[%08X] read\n", paddr); return 0;
+    default: log_(WARNING, "Unhandled RI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -40,6 +40,6 @@ void ri_write(ri_t* ri, u32 paddr, u32 value) {
     case 0x04700004: ri->config = value; break;
     case 0x0470000C: ri->select = value; break;
     case 0x04700010: ri->refresh = value; break;
-    default: logfatal("[ERR] Unimplemented RI[%08X] register (%08X)\n", paddr, value);
+    default: log_(FATAL, "Unimplemented RI[%08X] register (%08X)\n", paddr, value);
   }
 }

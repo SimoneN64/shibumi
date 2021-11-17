@@ -22,7 +22,7 @@ u8 mi_read8(mi_t *mi, u32 paddr) {
       return (mi->mi_intr.raw & 0x3F) >> shift_amount[paddr & 0xf];
     case 0x0430000C ... 0x0430000F:
       return (mi->mi_intr_mask.raw & 0x3F) >> shift_amount[paddr & 0xf];
-    default: logdebug("[WARN] Unhandled MI[%08X] read\n", paddr); return 0;
+    default: log_(WARNING, "Unhandled MI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -32,7 +32,7 @@ u32 mi_read(mi_t* mi, u32 paddr) {
     case 0x04300004: return MI_VERSION_REG;
     case 0x04300008: return mi->mi_intr.raw & 0x3F;
     case 0x0430000C: return mi->mi_intr_mask.raw & 0x3F;
-    default: logdebug("[WARN] Unhandled MI[%08X] read\n", paddr); return 0;
+    default: log_(WARNING, "Unhandled MI[%08X] read\n", paddr); return 0;
   }
 }
 
@@ -88,6 +88,6 @@ void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
         process_interrupt(mi, regs);
       }
       break;
-    default: logfatal("[ERR] Unhandled MI[%08X] write (%08X)\n", val, paddr);
+    default: log_(FATAL, "Unhandled MI[%08X] write (%08X)\n", val, paddr);
   }
 }
