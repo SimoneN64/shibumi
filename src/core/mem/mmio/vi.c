@@ -26,7 +26,37 @@ u8 vi_read8(vi_t* vi, u32 paddr) {
       return (vi->vsync) >> shift_amount[paddr & 0xf];
     case 0x0440001C ... 0x0440001F:
       return (vi->hsync) >> shift_amount[paddr & 0xf];
-    default: log_(WARNING, "Unhandled VI[%08X] read\n", paddr); return 0;
+    default: return 0;
+  }
+}
+
+void vi_write8(vi_t* vi, u8 val, u32 paddr) {
+  switch(paddr) {
+    case 0x04400000 ... 0x04400003:
+      vi->status.raw &= ~(0xff << shift_amount[paddr & 0xf]);
+      vi->status.raw |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04400004 ... 0x04400007:
+      vi->origin &= ~(0xff << shift_amount[paddr & 0xf]);
+      vi->origin |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04400008 ... 0x0440000B:
+      vi->width &= ~(0xff << shift_amount[paddr & 0xf]);
+      vi->width |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04400010 ... 0x04400013:
+      vi->current &= ~(0xff << shift_amount[paddr & 0xf]);
+      vi->current |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04400018 ... 0x0440001B:
+      vi->vsync &= ~(0xff << shift_amount[paddr & 0xf]);
+      vi->vsync |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x0440001C ... 0x0440001F:
+      vi->hsync &= ~(0xff << shift_amount[paddr & 0xf]);
+      vi->hsync |= (val << shift_amount[paddr & 0xf]);
+      break;
+    default: break;
   }
 }
 

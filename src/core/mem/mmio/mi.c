@@ -22,7 +22,21 @@ u8 mi_read8(mi_t *mi, u32 paddr) {
       return (mi->mi_intr.raw & 0x3F) >> shift_amount[paddr & 0xf];
     case 0x0430000C ... 0x0430000F:
       return (mi->mi_intr_mask.raw & 0x3F) >> shift_amount[paddr & 0xf];
-    default: log_(WARNING, "Unhandled MI[%08X] read\n", paddr); return 0;
+    default: return 0;
+  }
+}
+
+void mi_write8(mi_t* mi, u8 val, u32 paddr) {
+  switch(paddr) {
+    case 0x04300000 ... 0x04300003:
+      mi->mi_mode &= ~(0xff << shift_amount[paddr & 0xf]);
+      mi->mi_mode |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x0430000C ... 0x0430000F:
+      mi->mi_intr_mask.raw &= ~(0xff << shift_amount[paddr & 0xf]);
+      mi->mi_intr_mask.raw |= (val << shift_amount[paddr & 0xf]);
+      break;
+    default: break;
   }
 }
 

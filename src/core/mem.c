@@ -203,6 +203,27 @@ u8 read8_ignore_tlb_and_maps(const u8* mem, size_t addr) {
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
     case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: log_(WARNING, "Unimplemented %s[%08zX] 32-bit read\n", regions_str(addr), addr); return 0;
+    default: return 0;
+  }
+}
+
+void write8_ignore_tlb_and_maps(u8* mem, size_t addr, u8 val) {
+  mem_t* mem_ = (mem_t*)mem;
+  memory_regions_t* memory_regions = &mem_->memory_regions;
+  switch(addr) {
+    case 0x00000000 ... 0x007FFFFF: memory_regions->rdram != NULL ? (memory_regions->rdram[addr] = val) : 0; break;
+    case 0x04000000 ... 0x04000FFF: memory_regions->dmem[addr & DMEM_DSIZE] = val; break;
+    case 0x04001000 ... 0x04001FFF: memory_regions->imem[addr & IMEM_DSIZE] = val; break;
+    case 0x04300000 ... 0x043FFFFF: mi_write8(&mem_->mmio.mi, val, addr); break;
+    case 0x04400000 ...	0x044FFFFF: vi_write8(&mem_->mmio.vi, val, addr); break;
+    case 0x04600000 ... 0x046FFFFF: pi_write8(&mem_->mmio.mi, &mem_->mmio.pi, val, addr); break;
+    case 0x04700000 ... 0x047FFFFF: ri_write8(&mem_->mmio.ri, val, addr); break;
+    case 0x1FC007C0 ... 0x1FC007FF: memory_regions->pif_ram[addr & PIF_RAM_DSIZE] = val; break;
+    case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
+    case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
+    case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
+    case 0x10000000 ... 0x1FBFFFFF: case 0x1FC00000 ... 0x1FC007BF:
+    case 0x1FC00800 ... 0x7FFFFFFF: break;
+    default: break;
   }
 }

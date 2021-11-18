@@ -31,8 +31,12 @@ Gui::Gui(const char* title) {
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+
+  SDL_DisplayMode mode;
+  SDL_GetCurrentDisplayMode(0, &mode);
+  int w = mode.w - (mode.w / 4), h = mode.h - (mode.h / 4);
   
-  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
   gl_context = SDL_GL_CreateContext(window);
   SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(0); // Enable vsync
@@ -43,7 +47,6 @@ Gui::Gui(const char* title) {
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   ImGuiStyle& style = ImGui::GetStyle();
 
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
   ImGui::StyleColorsDark();
@@ -58,7 +61,7 @@ Gui::Gui(const char* title) {
   init_core(&core);
   init_disasm(&debugger);
 
-  memory_editor.ReadOnly = true;
+  memory_editor.WriteFn = write8_ignore_tlb_and_maps;
   memory_editor.ReadFn = read8_ignore_tlb_and_maps;
   memory_editor.Open = show_memory_editor;
   logger.InfoStr = message_type_strings[0].c_str();
@@ -159,12 +162,6 @@ void Gui::MainLoop() {
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
-    SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault();
-    SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
 
     SDL_GL_SwapWindow(window);
   }
@@ -409,7 +406,12 @@ void Gui::RegistersView() {
 void Gui::DebuggerWindow() {
   if(show_disasm) Disassembly();
   show_memory_editor = memory_editor.Open;
-  if(show_memory_editor) memory_editor.DrawWindow("Memory editor", &core.mem, 0xFFFFFFFF);
+  if(show_memory_editor) {
+    ImGui::Begin("Memory editor", &show_memory_editor);
+    memory_editor.Open = show_memory_editor;
+    memory_editor.DrawContents(&core.mem, 0x400);
+    ImGui::End();
+  }
   if(show_regs) RegistersView();
   if(show_logs) LogWindow();
 }

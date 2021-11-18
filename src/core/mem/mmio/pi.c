@@ -33,7 +33,35 @@ u8 pi_read8(mi_t* mi, pi_t* pi, u32 paddr) {
     }
     case 0x04600014 ... 0x04600030:
       return (pi->stub[(paddr & 0xff) - 5]) >> shift_amount[paddr & 0xf];
-    default: log_(WARNING, "[WARN] Unhandled PI[%08X] read\n", paddr); return 0;
+    default: return 0;
+  }
+}
+
+void pi_write8(mi_t* mi, pi_t* pi, u8 val, u32 paddr) {
+  switch(paddr) {
+    case 0x04600000 ... 0x04600003:
+      pi->dram_addr &= ~(0xff << shift_amount[paddr & 0xf]);
+      pi->dram_addr |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04600004 ... 0x04600007:
+      pi->cart_addr &= ~(0xff << shift_amount[paddr & 0xf]);
+      pi->cart_addr |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04600008 ... 0x0460000B:
+      pi->rd_len &= ~(0xff << shift_amount[paddr & 0xf]);
+      pi->rd_len |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x0460000C ... 0x0460000F:
+      pi->wr_len &= ~(0xff << shift_amount[paddr & 0xf]);
+      pi->wr_len |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04600010 ... 0x04600013:
+      break;
+    case 0x04600014 ... 0x04600030:
+      pi->stub[(paddr & 0xff) - 5] &= ~(0xff << shift_amount[paddr & 0xf]);
+      pi->stub[(paddr & 0xff) - 5] |= (val << shift_amount[paddr & 0xf]);
+      break;
+    default: break;
   }
 }
 

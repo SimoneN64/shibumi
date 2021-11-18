@@ -32,3 +32,4 @@ void write64(mem_t* mem, u32 vaddr, u64 val);
 #define read32_ignore_tlb(mem, vaddr) read32_(mem, vaddr, false)
 
 u8 read8_ignore_tlb_and_maps(const u8* mem, size_t addr);
+void write8_ignore_tlb_and_maps(u8* mem, size_t addr, u8 val);

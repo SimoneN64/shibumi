@@ -20,7 +20,29 @@ u8 ri_read8(ri_t* ri, u32 paddr) {
       return ri->select >> shift_amount[paddr & 0xf];
     case 0x04700010 ... 0x04700013:
       return ri->refresh >> shift_amount[paddr & 0xf];
-    default: log_(WARNING, "Unhandled RI[%08X] read\n", paddr); return 0;
+    default: return 0;
+  }
+}
+
+void ri_write8(ri_t* ri, u8 val, u32 paddr) {
+  switch(paddr) {
+    case 0x04700000 ... 0x04700003:
+      ri->mode &= ~(0xff << shift_amount[paddr & 0xf]);
+      ri->mode |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04700004 ... 0x04700007:
+      ri->config &= ~(0xff << shift_amount[paddr & 0xf]);
+      ri->config |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x0470000C ... 0x0470000F:
+      ri->select &= ~(0xff << shift_amount[paddr & 0xf]);
+      ri->select |= (val << shift_amount[paddr & 0xf]);
+      break;
+    case 0x04700010 ... 0x04700013:
+      ri->refresh &= ~(0xff << shift_amount[paddr & 0xf]);
+      ri->refresh |= (val << shift_amount[paddr & 0xf]);
+      break;
+    default: break;
   }
 }
 

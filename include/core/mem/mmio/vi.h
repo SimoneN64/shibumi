@@ -26,5 +26,6 @@ typedef struct {
 
 void init_vi(vi_t* vi);
 u8 vi_read8(vi_t* vi, u32 paddr);
+void vi_write8(vi_t* vi, u8 val, u32 paddr);
 u32 vi_read(vi_t* vi, u32 paddr);
 void vi_write(vi_t* vi, u32 paddr, u32 val);
