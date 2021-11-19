@@ -61,9 +61,6 @@ Gui::Gui(const char* title) {
   init_core(&core);
   init_disasm(&debugger);
 
-  memory_editor.WriteFn = write8_ignore_tlb_and_maps;
-  memory_editor.ReadFn = read8_ignore_tlb_and_maps;
-  memory_editor.Open = show_memory_editor;
   logger.InfoStr = message_type_strings[0].c_str();
   logger.WarnStr = message_type_strings[1].c_str();
   logger.ErrorStr = message_type_strings[2].c_str();
@@ -200,19 +197,17 @@ void Gui::UpdateTexture() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, gl_data.glFormat, framebuffer);
   }
 
-  memory_regions_t* memory_regions = &core.mem.memory_regions;
-
   if(format == f8888) {
     framebuffer[4] = 0xff;
-    memcpy(framebuffer, &memory_regions->rdram[origin & RDRAM_DSIZE], w * h * gl_data.depth);
+    memcpy(framebuffer, &core.mem.rdram[origin & RDRAM_DSIZE], w * h * gl_data.depth);
     for(int i = 0; i < w * h * gl_data.depth; i += gl_data.depth) {
       framebuffer[i + 4] |= 0xff;
     }
   } else {
     framebuffer[1] |= 1;
     for(int i = 0; i < w * h * gl_data.depth; i += gl_data.depth) {
-      framebuffer[i] = memory_regions->rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
-      framebuffer[i + 1] = memory_regions->rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)] | (1 << 16);
+      framebuffer[i] = core.mem.rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
+      framebuffer[i + 1] = core.mem.rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)] | (1 << 16);
     }
   }
 
@@ -262,9 +257,6 @@ void Gui::MainMenubar() {
       ImGui::MenuItem("Show disassembly", NULL, &show_disasm, true);
       ImGui::MenuItem("Show register watch", NULL, &show_regs, true);
       ImGui::MenuItem("Show logs", NULL, &show_logs, true);
-      if(ImGui::MenuItem("Show memory editor", NULL, &show_memory_editor, true)) {
-        memory_editor.Open = show_memory_editor;
-      }
       ImGui::MenuItem("Show metrics", NULL, &show_metrics, true);
       ImGui::EndMenu();
     }
@@ -405,13 +397,6 @@ void Gui::RegistersView() {
 
 void Gui::DebuggerWindow() {
   if(show_disasm) Disassembly();
-  show_memory_editor = memory_editor.Open;
-  if(show_memory_editor) {
-    ImGui::Begin("Memory editor", &show_memory_editor);
-    memory_editor.Open = show_memory_editor;
-    memory_editor.DrawContents(&core.mem, 0x400);
-    ImGui::End();
-  }
   if(show_regs) RegistersView();
   if(show_logs) LogWindow();
 }

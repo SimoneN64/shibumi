@@ -5,16 +5,13 @@
 #define BYTE_ADDR(x) ((x) ^ 3)
 #define HALF_ADDR(x) ((x) ^ 2)
 
-typedef struct {
+typedef struct mem_t {
   u8 *cart, *rdram, *sram;
   u8 dmem[DMEM_SIZE], imem[IMEM_SIZE], pif_ram[PIF_RAM_SIZE];
   u8 pif_bootrom[PIF_BOOTROM_SIZE];
-} memory_regions_t;
-
-typedef struct mem_t {
-  memory_regions_t memory_regions;
   size_t rom_mask;
   mmio_t mmio;
+  u8 addr_sa;
 } mem_t;
 
 void init_mem(mem_t* mem);
@@ -30,6 +27,3 @@ void write64(mem_t* mem, u32 vaddr, u64 val);
 
 #define read32(mem, vaddr) read32_(mem, vaddr, true)
 #define read32_ignore_tlb(mem, vaddr) read32_(mem, vaddr, false)
-
-u8 read8_ignore_tlb_and_maps(const u8* mem, size_t addr);
-void write8_ignore_tlb_and_maps(u8* mem, size_t addr, u8 val);

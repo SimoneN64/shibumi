@@ -3,12 +3,10 @@
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
-#include <imgui_memory_editor.h>
 #include <imgui_logger.h>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
-// #include <cimgui_memory_editor.h>
 #include <nfd.hpp>
 #include <atomic>
 #include <pthread.h>
@@ -34,8 +32,7 @@ struct gl_data_t {
 struct Gui {
   ImGuiContext* ctx;
   bool show_disasm = false, show_regs = false;
-  bool show_memory_editor = true, show_metrics = false;
-  bool show_logs = false;
+  bool show_metrics = false, show_logs = true;
   float log_pos_y = 0;
   std::string old_message = "NULL";
   message_type old_message_type = INFO;
@@ -45,7 +42,6 @@ struct Gui {
   bool rom_loaded = false, running = true;
   SDL_GLContext gl_context;
   pthread_t emu_thread;
-  MemoryEditor memory_editor;
   Logger logger;
   clock_t delta;
   double fps = 60.0, frametime = 16.0;

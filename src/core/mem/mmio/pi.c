@@ -89,7 +89,6 @@ u32 pi_read(mi_t* mi, pi_t* pi, u32 paddr) {
 void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
   pi_t* pi = &mem->mmio.pi;
   mi_t* mi = &mem->mmio.mi;
-  memory_regions_t* memory_regions = &mem->memory_regions;
   switch(paddr) {
     case 0x04600000: pi->dram_addr = val; break;
     case 0x04600004: pi->cart_addr = val; break;
@@ -101,7 +100,7 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
         len -= dram_addr & 0x7;
       }
       pi->rd_len = len;
-      memcpy(&memory_regions->cart[cart_addr & mem->rom_mask], &memory_regions->rdram[dram_addr & RDRAM_DSIZE], len);
+      memcpy(&mem->cart[cart_addr & mem->rom_mask], &mem->rdram[dram_addr & RDRAM_DSIZE], len);
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
       interrupt_raise(mi, regs, PI);
@@ -116,7 +115,7 @@ void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
         len -= dram_addr & 0x7;
       }
       pi->wr_len = len;
-      memcpy(&memory_regions->rdram[dram_addr & RDRAM_DSIZE], &memory_regions->cart[cart_addr & mem->rom_mask], len);
+      memcpy(&mem->rdram[dram_addr & RDRAM_DSIZE], &mem->cart[cart_addr & mem->rom_mask], len);
       pi->dram_addr = dram_addr + len;
       pi->cart_addr = cart_addr + len;
       interrupt_raise(mi, regs, PI);
