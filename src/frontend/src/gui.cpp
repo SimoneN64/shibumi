@@ -260,6 +260,7 @@ void Gui::MainMenubar() {
       ImGui::MenuItem("Show metrics", NULL, &show_metrics, true);
       ImGui::EndMenu();
     }
+
     ImVec2 close_button_size = ImGui::CalcTextSize("[X]");
     char fps_text[255];
     sprintf(fps_text, rom_loaded ? "[ %.2f fps ][ %.2f ms ]" : "[ NaN fps ][ NaN ms ]", fps, frametime);
@@ -268,6 +269,7 @@ void Gui::MainMenubar() {
     ImGui::SameLine(window_size.x - close_button_size.x - fps_size.x - style.ItemInnerSpacing.x * 4 - 12, -1);
     ImGui::Text("%s", fps_text);
     ImGui::SameLine(window_size.x - close_button_size.x - style.ItemInnerSpacing.x * 2 - 12, -1);
+    
     if(ImGui::BeginMenu("[X]")) {
       running = false;
       ImGui::EndMenu();

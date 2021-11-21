@@ -5,17 +5,21 @@ if(CMAKE_VERSION VERSION_LESS "3.7.0")
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
+include(FindPkgConfig)
+pkg_check_modules (CAPSTONE REQUIRED capstone)
+pkg_check_modules (SDL2 REQUIRED sdl2)
 
-file(GLOB_RECURSE GUI_SRC "src/*.cpp")
-file(GLOB_RECURSE EMU_SRC "src/*.c")
+file(GLOB_RECURSE GUI_SRC "src/frontend/src/*.cpp" "src/frontend/src/*.c")
+file(GLOB_RECURSE EMU_SRC "src/shibumi/src/*.c")
 
 file(GLOB IMGUI_SRC
   "${CMAKE_SOURCE_DIR}/external/imgui/*.cpp"
@@ -26,21 +30,18 @@ file(GLOB IMGUI_SRC
 add_library(imgui ${IMGUI_SRC})
 #add_library(cimgui_memory_editor ${CIMGUI_MEM_EDITOR_SRC})
 
-include(FindPkgConfig)
-pkg_check_modules (CAPSTONE REQUIRED capstone)
-pkg_check_modules (SDL2 REQUIRED sdl2)
-
 include_directories(
   ${SDL2_INCLUDE_DIRS}
   ${CAPSTONE_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/include
-  ${CMAKE_SOURCE_DIR}/include/utils/
-  ${CMAKE_SOURCE_DIR}/include/core/
-  ${CMAKE_SOURCE_DIR}/include/core/mem/
-  ${CMAKE_SOURCE_DIR}/include/core/mem/mmio/
-  ${CMAKE_SOURCE_DIR}/include/core/cpu/
-  ${CMAKE_SOURCE_DIR}/include/core/cpu/registers/
-  ${CMAKE_SOURCE_DIR}/include/core/scheduler/
+  ${CMAKE_SOURCE_DIR}/src/frontend/include
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/utils/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/mem/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/mem/mmio/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/cpu/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/cpu/registers/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/scheduler/
   ${CMAKE_SOURCE_DIR}/external/
   ${CMAKE_SOURCE_DIR}/external/nativefiledialog-extended/src/include/
   ${CMAKE_SOURCE_DIR}/external/imgui/
@@ -72,6 +73,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resourc
 add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}
   ${GUI_SRC}
+  src/main.cpp
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd imgui ${CAPSTONE_LIBRARIES})
