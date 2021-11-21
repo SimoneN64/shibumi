@@ -1,6 +1,6 @@
 #include <capstone.h>
 #include <core.h>
-#include <gui.h>
+#include <gui.hpp>
 #include <utils.h>
 #include <string>
 #include <cstring>
@@ -59,11 +59,6 @@ Gui::Gui(const char* title) {
   io.Fonts->AddFontFromFileTTF("resources/FiraCode-VariableFont_wght.ttf", 16);
   
   init_core(&core);
-  init_disasm(&debugger);
-
-  logger.InfoStr = message_type_strings[0].c_str();
-  logger.WarnStr = message_type_strings[1].c_str();
-  logger.ErrorStr = message_type_strings[2].c_str();
 
   framebuffer = (u8*)malloc(320 * 240 * 4);
   memset(framebuffer, 0x000000ff, 320 * 240 * 4);
@@ -279,110 +274,6 @@ void Gui::MainMenubar() {
   }
 }
 
-void Gui::Disassembly() {
-  u32 instructions[25] = {};
-  u32 pc = core.cpu.regs.pc;
-  u32 pointer = pc - (14 * 4);
-  pointer -= (pointer & 3); // align the pointer
-
-  if(rom_loaded) {
-    for(int i = 0; i < 25; i++) {
-      instructions[i] = read32(&core.mem, pointer + i * 4);
-    }
-  } else {
-    memset(instructions, 0xFFFFFFFF, 100);
-  }
-
-  u8 code[100];
-  memcpy(code, instructions, 100);
-  
-  debugger.count = cs_disasm(debugger.handle, code, sizeof(code), pointer, 25, &debugger.insn);
-  ImGui::Begin("Disassembly", &show_disasm, 0);
-
-  ImVec2 window_size = ImGui::GetWindowSize();
-
-  if(ImGui::Button("Step", (ImVec2){ (window_size.x / 2) - 10, 20 })) {
-    core.stepping = true;
-    step(&core.cpu, &core.mem);
-  }
-
-  ImGui::SameLine(window_size.x / 2, 5);
-  if(ImGui::Button("Run frame", (ImVec2){ (window_size.x / 2) - 10, 20 })) {
-    core.stepping = true;
-    for(int i = 0; i < 100000; i++) {
-      step(&core.cpu, &core.mem);
-    }
-  }
-
-  static int num_instr = 0;
-
-  char run_n_instr_str[20];
-  sprintf(run_n_instr_str, "Run %d instr", num_instr);
-  run_n_instr_str[19] = '\0';
-
-  if(ImGui::Button(run_n_instr_str, (ImVec2){ (window_size.x / 3) - 10, 20 })) {
-    core.stepping = true;
-    for(int i = 0; i < num_instr; i++) {
-      step(&core.cpu, &core.mem);
-    }
-  }
-  
-  ImGui::SameLine(window_size.x / 3, 5);
-  ImGui::SetNextItemWidth(window_size.x / 10);
-  ImGui::InputInt("Instruction count to run", &num_instr, 0, 0, ImGuiInputTextFlags_CharsNoBlank);
-  
-  static int addr = 0xFFFFFFFF;
-
-  ImGui::InputInt("Address", &addr, 0, 0, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsNoBlank);
-
-  ImGui::SameLine(window_size.x - (window_size.x / 4), 5);
-
-  if(ImGui::Button("Set breakpoint", (ImVec2){(window_size.x / 4) - 10, 20})) {
-    core.break_addr = addr;
-  }
-
-  ImGui::Spacing();
-
-  ImGui::BeginChild("frame");
-  if(debugger.count > 0) {
-    for(size_t j = 0; j < debugger.count; j++) {
-      std::string op_str = debugger.insn[j].op_str;
-      const float font_size = ImGui::GetFontSize() * op_str.length() / 2;
-      switch(j) {
-      case 12 ... 14:
-        ImGui::TextColored(colors_disasm[j & 3], "0x%" PRIx64 ":\t%s", debugger.insn[j].address, debugger.insn[j].mnemonic);
-        ImGui::SameLine(window_size.x - font_size - 10, -1);
-        ImGui::TextColored(colors_disasm[j & 3], "%s", debugger.insn[j].op_str);
-        break;
-      default:
-        ImGui::Text("0x%" PRIx64 ":\t%s", debugger.insn[j].address, debugger.insn[j].mnemonic);
-        ImGui::SameLine(window_size.x - font_size - 10, -1);
-        ImGui::Text("%s", debugger.insn[j].op_str);
-      }
-    }
-
-    cs_free(debugger.insn, debugger.count);
-  } else {
-    ImGui::Text(rom_loaded ? "Could not disassemble instruction!" : "No game loaded!");
-  }
-  ImGui::EndChild();
-  ImGui::End();
-}
-
-void Gui::LogWindow() {
-  std::string final_message{};
-  if(last_message != nullptr && strcmp(last_message, "") && strcmp(last_message, old_message.c_str())) {
-    if(last_message_type == FATAL) {
-      Stop();
-    }
-    old_message = std::string(last_message);
-    old_message_type = last_message_type;
-    final_message = message_type_strings[last_message_type] + " " + old_message;
-    logger.AddLog("%s", final_message.c_str());
-  }
-  logger.Draw("Logs", &show_logs);
-}
-
 void Gui::RegistersView() {
   registers_t* regs = &core.cpu.regs;
   ImGui::Begin("Registers view", &show_regs, 0);
@@ -398,15 +289,14 @@ void Gui::RegistersView() {
 }
 
 void Gui::DebuggerWindow() {
-  if(show_disasm) Disassembly();
+  if(show_disasm) disassembler.Disassembly(this, &core);
   if(show_regs) RegistersView();
-  if(show_logs) LogWindow();
+  if(show_logs) logger.LogWindow(this);
 }
 
 Gui::~Gui() {
   emu_quit = true;
   pthread_join(emu_thread, NULL);
-  destroy_disasm(&debugger);
   NFD_Quit();
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplSDL2_Shutdown();

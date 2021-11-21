@@ -1,5 +1,4 @@
 #include <core.h>
-#include <disasm.h>
 #include <utils.h>
 
 void init_core(core_t* core) {

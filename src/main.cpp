@@ -1,4 +1,4 @@
-#include <gui.h>
+#include <gui.hpp>
 
 int main(int argc, char* argv[]) {
   Gui gui("渋味");

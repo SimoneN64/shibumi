@@ -1,9 +1,9 @@
 #pragma once
 #include <core.h>
+#include <gui/disasm.hpp>
 #include <imgui.h>
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
-#include <imgui_logger.h>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -11,16 +11,13 @@
 #include <atomic>
 #include <pthread.h>
 #include <ctime>
-#include <log.h>
-#include <string>
+#include <gui/logger.hpp>
 
 #define N64_ASPECT_RATIO (float)4 / 3
 
 static const ImVec4 colors_disasm[3] = {ImVec4(1.0, 0.000, 0.0, 1.0),  // RED
                                         ImVec4(1.0, 0.619, 0.0, 1.0),  // ORANGE
                                         ImVec4(1.0, 0.988, 0.0, 1.0)}; // YELLOW
-
-static const std::string message_type_strings[3] = {"[INFO]", "[WARNING]", "[FATAL]"};
 
 struct gl_data_t {
   u32 old_w, old_h;
@@ -48,7 +45,7 @@ struct Gui {
   std::atomic_bool emu_quit = false;
   core_t core;
   gl_data_t gl_data;
-  disasm_t debugger;
+  Disasm disassembler;
   u8* framebuffer;
   
   Gui(const char* title);
@@ -58,8 +55,6 @@ struct Gui {
   void OpenFile();
   void MainMenubar();
   void DebuggerWindow();
-  void LogWindow();
-  void Disassembly();
   void RegistersView();
   void UpdateTexture();
   void Reset();
