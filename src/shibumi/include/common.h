@@ -26,6 +26,7 @@ extern "C" {
 #endif
 #define INLINE static inline __attribute__((always_inline))
 
+#define N64_ASPECT_RATIO (float)4 / 3
 #define RDRAM_SIZE 0x800000
 #define RDRAM_DSIZE (RDRAM_SIZE - 1)
 #define SRAM_SIZE 0x8000000
