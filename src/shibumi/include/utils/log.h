@@ -18,9 +18,9 @@ extern enum message_type last_message_type;
     last_message_type = type; \
     size_t len = snprintf(NULL, 0, fmt, ##__VA_ARGS__) + 1; \
     if(last_message != NULL && strcmp(last_message, "")) { \
-      last_message = realloc(last_message, len); \
+      last_message = (char*)realloc(last_message, len); \
     } else { \
-      last_message = calloc(len, 1); \
+      last_message = (char*)calloc(len, 1); \
     } \
     snprintf(last_message, len, fmt, ##__VA_ARGS__); \
   } while(0)
