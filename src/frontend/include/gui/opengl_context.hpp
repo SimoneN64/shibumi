@@ -3,8 +3,8 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <core.h>
-#include <imgui.h>
 
+struct ImGuiIO;
 struct Gui;
 
 struct GLData {

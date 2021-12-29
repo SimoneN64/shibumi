@@ -4,6 +4,9 @@
 #include <utils.h>
 #include <string>
 #include <cstring>
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_opengl3.h>
 
 #define GLSL_VERSION "#version 130"
 
@@ -41,7 +44,7 @@ Gui::Gui(const char* title) : context(title, GLSL_VERSION) {
   
   init_core(&core);
 
-  pthread_create(&emu_thread, NULL, core_callback, (void*)this);
+  // pthread_create(&emu_thread, NULL, core_callback, (void*)this);
 
   NFD_Init();
 }
@@ -81,6 +84,11 @@ void Gui::MainLoop() {
     DebuggerWindow();
 
     context.MainWindow(this, &core);
+    
+    clock_t begin = clock();
+    run_frame(&core);
+    clock_t end = clock();
+    delta += end - begin;
 
     frames++;
 
@@ -181,7 +189,7 @@ void Gui::DebuggerWindow() {
 
 Gui::~Gui() {
   emu_quit = true;
-  pthread_join(emu_thread, NULL);
+  //pthread_join(emu_thread, NULL);
   NFD_Quit();
 }
 
@@ -197,9 +205,9 @@ void Gui::Start() {
   rom_loaded = load_rom(&core.mem, rom_file);
   emu_quit = !rom_loaded;
   core.running = rom_loaded;
-  if(rom_loaded) {
-    pthread_create(&emu_thread, NULL, core_callback, (void*)this);
-  }
+  //if(rom_loaded) {
+  //  pthread_create(&emu_thread, NULL, core_callback, (void*)this);
+  //}
 }
 
 void Gui::Reset() {
@@ -209,7 +217,7 @@ void Gui::Reset() {
 
 void Gui::Stop() {
   emu_quit = true;
-  pthread_join(emu_thread, NULL);
+  //pthread_join(emu_thread, NULL);
   init_core(&core);
   rom_loaded = false;
   core.running = false;

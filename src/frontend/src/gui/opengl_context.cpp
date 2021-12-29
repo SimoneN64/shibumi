@@ -1,6 +1,12 @@
+#include <GL/glew.h>
 #include <gui/opengl_context.hpp>
 #include <log.h>
 #include <gui.hpp>
+#include <imgui.h>
+#include <imgui_impl_sdl.h>
+#include <imgui_impl_opengl3.h>
+
+ImVec2 image_size;
 
 OpenGLContext::~OpenGLContext() {
   ImGui_ImplOpenGL3_Shutdown();
@@ -30,7 +36,11 @@ OpenGLContext::OpenGLContext(const char* title, const char* m_glsl_version) {
   SDL_GetCurrentDisplayMode(0, &mode);
   int w = mode.w - (mode.w / 4), h = mode.h - (mode.h / 4);
   
-  window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+  window = SDL_CreateWindow(title,
+    SDL_WINDOWPOS_CENTERED,
+    SDL_WINDOWPOS_CENTERED, w, h,
+    SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+  );
   gl_context = SDL_GL_CreateContext(window);
   SDL_GL_MakeCurrent(window, gl_context);
   SDL_GL_SetSwapInterval(0); // Enable vsync
@@ -45,23 +55,6 @@ OpenGLContext::OpenGLContext(const char* title, const char* m_glsl_version) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-}
-
-ImVec2 image_size;
-
-INLINE void resize_callback(ImGuiSizeCallbackData* data) {
-  ImVec2 window_size = ImGui::GetWindowSize();
-  float x = window_size.x - 15, y = window_size.y - 15;
-  float current_aspect_ratio = x / y;
-
-  if(N64_ASPECT_RATIO > current_aspect_ratio) {
-    y = x / (N64_ASPECT_RATIO);
-  } else {
-    x = y * (N64_ASPECT_RATIO);
-  }
-
-  image_size.x = x;
-  image_size.y = y - 30;
 }
 
 void OpenGLContext::UpdateTexture(core_t* core) {
@@ -116,7 +109,20 @@ void OpenGLContext::UpdateTexture(core_t* core) {
 }
 
 void OpenGLContext::MainWindow(Gui* gui, core_t *core) {
-  ImGui::SetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, resize_callback, NULL);
+  ImGui::SetNextWindowSizeConstraints((ImVec2){0, 0}, (ImVec2){__FLT_MAX__, __FLT_MAX__}, [](ImGuiSizeCallbackData* data) {
+      ImVec2 window_size = ImGui::GetWindowSize();
+      float x = window_size.x - 15, y = window_size.y - 15;
+      float current_aspect_ratio = x / y;
+
+      if(N64_ASPECT_RATIO > current_aspect_ratio) {
+        y = x / (N64_ASPECT_RATIO);
+      } else {
+        x = y * (N64_ASPECT_RATIO);
+      }
+
+      image_size.x = x;
+      image_size.y = y - 30;
+    }, NULL);
   ImGui::Begin("Display", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking);
   gui->MainMenubar();
   UpdateTexture(core);

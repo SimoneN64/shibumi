@@ -1,9 +1,6 @@
 #pragma once
 #include <core.h>
 #include <gui/disasm.hpp>
-#include <imgui.h>
-#include <imgui_impl_sdl.h>
-#include <imgui_impl_opengl3.h>
 #include <nfd.hpp>
 #include <atomic>
 #include <pthread.h>
