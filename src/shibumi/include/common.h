@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include <assert.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -16,14 +17,8 @@ typedef __uint128_t u128;
 typedef __int128_t s128;
 
 #define PACKED __attribute__((__packed__))
-#ifdef __cplusplus
-extern "C" {
-#endif
-#define ASSERTWORD(type)// _Static_assert(sizeof(type) == 4, #type " must be 32 bits")
-#define ASSERTDWORD(type)// _Static_assert(sizeof(type) == 8, #type " must be 64 bits")
-#ifdef __cplusplus
-}
-#endif
+#define ASSERTWORD(type) static_assert(sizeof(type) == 4, #type " must be 32 bits")
+#define ASSERTDWORD(type) static_assert(sizeof(type) == 8, #type " must be 64 bits")
 #define INLINE static inline __attribute__((always_inline))
 
 #define N64_ASPECT_RATIO (float)4 / 3
@@ -39,6 +34,3 @@ extern "C" {
 #define PIF_RAM_DSIZE (PIF_RAM_SIZE - 1)
 #define PIF_BOOTROM_SIZE 0x7C0
 #define PIF_BOOTROM_DSIZE (PIF_BOOTROM_SIZE - 1)
-#ifndef EMU_DIR
-#define EMU_DIR ""
-#endif

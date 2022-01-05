@@ -102,11 +102,8 @@ u32 read32_(mem_t* mem, u32 vaddr, bool tlb) {
     case 0x00000000 ... 0x007FFFFF: return raccess(32, mem->rdram, paddr);
     case 0x04000000 ... 0x04000FFF: return raccess(32, mem->dmem, paddr & DMEM_DSIZE);
     case 0x04001000 ... 0x04001FFF: return raccess(32, mem->imem, paddr & IMEM_DSIZE);
-    case 0x04300000 ... 0x043FFFFF: return mi_read(&mem->mmio.mi, paddr);
-    case 0x04400000 ...	0x044FFFFF: return vi_read(&mem->mmio.vi, paddr);
-    case 0x04600000 ... 0x046FFFFF: return pi_read(&mem->mmio.mi, &mem->mmio.pi, paddr);
-    case 0x04700000 ... 0x047FFFFF: return ri_read(&mem->mmio.ri, paddr);
-    case 0x04800000 ... 0x048FFFFF: return si_read(&mem->mmio.mi, &mem->mmio.si, paddr);
+    case 0x04040000 ... 0x040FFFFF: case 0x04300000 ...	0x044FFFFF:
+    case 0x04600000 ... 0x048FFFFF: return read_mmio(&mem->mmio, paddr);
     case 0x10000000 ... 0x1FBFFFFF: return raccess(32, mem->cart, paddr & mem->rom_mask);
     case 0x1FC00000 ... 0x1FC007BF: return raccess(32, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
     case 0x1FC007C0 ... 0x1FC007FF: return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
@@ -154,11 +151,8 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
     case 0x00000000 ... 0x007FFFFF: waccess(32, mem->rdram, paddr, val); break;
     case 0x04000000 ... 0x04000FFF: waccess(32, mem->dmem, paddr & DMEM_DSIZE, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(32, mem->imem, paddr & IMEM_DSIZE, val); break;
-    case 0x04300000 ... 0x043FFFFF: mi_write(&mem->mmio.mi, regs, paddr, val); break;
-    case 0x04400000 ...	0x044FFFFF: vi_write(&mem->mmio.vi, paddr, val); break;
-    case 0x04600000 ... 0x046FFFFF: pi_write(mem, regs, paddr, val); break;
-    case 0x04700000 ... 0x047FFFFF: ri_write(&mem->mmio.ri, paddr, val); break;
-    case 0x04800000 ... 0x048FFFFF: si_write(&mem->mmio.mi, regs, &mem->mmio.si, paddr, val);
+    case 0x04040000 ... 0x040FFFFF: case 0x04300000 ...	0x044FFFFF:
+    case 0x04600000 ... 0x048FFFFF: write_mmio(mem, regs, &mem->mmio.si, paddr, val); break;
     case 0x1FC007C0 ... 0x1FC007FF: waccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE, val); break;
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:

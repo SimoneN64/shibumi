@@ -10,8 +10,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
 find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
 include(FindPkgConfig)
@@ -37,6 +35,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/shibumi/include
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/utils/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/
+  ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/rsp/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/mem/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/mem/mmio/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/cpu/
@@ -66,9 +65,9 @@ elseif(CMAKE_BUILD_TYPE MATCHES Release)
 endif()
 
 add_compile_options(-mno-ms-bitfields)
-add_definitions("-DEMU_DIR=\"${CMAKE_SOURCE_DIR}\"")
 
 file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resources/)
+file(COPY ${CMAKE_SOURCE_DIR}/tests/ DESTINATION ${CMAKE_BINARY_DIR}/tests/)
 
 add_executable(${CMAKE_PROJECT_NAME}
   ${EMU_SRC}

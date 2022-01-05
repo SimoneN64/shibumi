@@ -4,6 +4,10 @@
 #include <ri.h>
 #include <vi.h>
 #include <si.h>
+#include <rsp.h>
+
+typedef struct mem_t mem_t;
+typedef struct registers_t registers_t;
 
 typedef struct {
   mi_t mi;
@@ -11,6 +15,9 @@ typedef struct {
   ri_t ri;
   vi_t vi;
   si_t si;
+  rsp_t rsp;
 } mmio_t;
 
 void init_mmio(mmio_t* mmio);
+u32 read_mmio(mmio_t* mmio, u32 addr);
+void write_mmio(mem_t* mem, registers_t* regs, si_t* si, u32 addr, u32 val);

@@ -8,8 +8,6 @@
 #include <imgui_impl_sdl.h>
 #include <imgui_impl_opengl3.h>
 
-#define GLSL_VERSION "#version 130"
-
 INLINE void* core_callback(void* args) {
   Gui* gui = (Gui*)args;
   while(!atomic_load(&gui->emu_quit)) {
@@ -22,7 +20,7 @@ INLINE void* core_callback(void* args) {
   return NULL;
 }
 
-Gui::Gui(const char* title) : context(title, GLSL_VERSION) {
+Gui::Gui(const char* title) : context(title) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
 
@@ -35,7 +33,7 @@ Gui::Gui(const char* title) : context(title, GLSL_VERSION) {
 
   style.WindowRounding = 10;
 
-  const char* glsl_version = GLSL_VERSION;
+  const char* glsl_version = "#version 330";
   
   ImGui_ImplSDL2_InitForOpenGL(context.window, context.gl_context);
   ImGui_ImplOpenGL3_Init(glsl_version);
@@ -195,7 +193,7 @@ Gui::~Gui() {
 
 void Gui::OpenFile() {
   nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
-  nfdresult_t result = NFD_OpenDialog(&rom_file, &filter, 1, EMU_DIR);
+  nfdresult_t result = NFD_OpenDialog(&rom_file, &filter, 1, ".");
   if(result == NFD_OKAY) {
     Reset();
   }

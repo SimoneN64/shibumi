@@ -1,7 +1,7 @@
 #include <si.h>
 #include <log.h>
 
-u32 si_read(mi_t* mi, si_t* si, u32 addr) {
+u32 si_read(si_t* si, mi_t* mi, u32 addr) {
   switch(addr) {
     case 0x04800018: {
       u32 value = 0;
@@ -13,9 +13,11 @@ u32 si_read(mi_t* mi, si_t* si, u32 addr) {
     }
     default: log_(FATAL, "Unhandled SI[%08X] read\n", addr);
   }
+
+  return 0;
 }
 
-void si_write(mi_t* mi, registers_t* regs, si_t* si, u32 addr, u32 val) {
+void si_write(si_t* si, mi_t* mi, registers_t* regs, u32 addr, u32 val) {
   switch(addr) {
     case 0x04800018:
       interrupt_lower(mi, regs, SI);

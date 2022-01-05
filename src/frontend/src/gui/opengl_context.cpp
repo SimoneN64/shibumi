@@ -17,12 +17,11 @@ OpenGLContext::~OpenGLContext() {
   SDL_Quit();
 }
 
-OpenGLContext::OpenGLContext(const char* title, const char* m_glsl_version) {
+OpenGLContext::OpenGLContext(const char* title) {
   if(SDL_Init(SDL_INIT_VIDEO) != 0) {
     logfatal("Error: %s\n", SDL_GetError());
   }
 
-  const char* glsl_version = m_glsl_version;
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);

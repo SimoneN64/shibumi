@@ -20,7 +20,7 @@ struct OpenGLContext {
   unsigned int id; // OpenGL framebuffer texture ID
   u8* framebuffer;
   SDL_GLContext gl_context;
-  OpenGLContext(const char* title, const char* m_glsl_version);
+  OpenGLContext(const char* title);
   void UpdateTexture(core_t* core);
   void MainWindow(Gui* gui, core_t* core);
   void Update(ImGuiIO& io);
