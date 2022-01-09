@@ -10,3 +10,6 @@
 [submodule "external/imgui_memory_editor"]
 	path = external/imgui_memory_editor
 	url = https://github.com/ocornut/imgui_club
+[submodule "external/Gui"]
+	path = external/Gui
+	url = https://github.com/CocoSimone/Gui

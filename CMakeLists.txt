@@ -12,26 +12,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
+add_subdirectory(external/Gui/)
 include(FindPkgConfig)
 pkg_check_modules (CAPSTONE REQUIRED capstone)
 pkg_check_modules (SDL2 REQUIRED sdl2)
 
-file(GLOB_RECURSE GUI_SRC "src/frontend/src/*.cpp" "src/frontend/src/*.c")
+file(GLOB_RECURSE GUI_SRC "src/frontend/*.cpp" "src/frontend/*.hpp")
 file(GLOB_RECURSE EMU_SRC "src/shibumi/src/*.c")
-
-file(GLOB IMGUI_SRC
-  "${CMAKE_SOURCE_DIR}/external/imgui/*.cpp"
-  "${CMAKE_SOURCE_DIR}/external/imgui/backends/imgui_impl_sdl.cpp"
-  "${CMAKE_SOURCE_DIR}/external/imgui/backends/imgui_impl_opengl3.cpp"
-)
-
-add_library(imgui ${IMGUI_SRC})
-#add_library(cimgui_memory_editor ${CIMGUI_MEM_EDITOR_SRC})
 
 include_directories(
   ${SDL2_INCLUDE_DIRS}
   ${CAPSTONE_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/frontend/include
+  ${CMAKE_SOURCE_DIR}/src/frontend/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/utils/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/
@@ -43,11 +35,9 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/shibumi/include/core/scheduler/
   ${CMAKE_SOURCE_DIR}/external/
   ${CMAKE_SOURCE_DIR}/external/nativefiledialog-extended/src/include/
-  ${CMAKE_SOURCE_DIR}/external/imgui/
   ${CMAKE_SOURCE_DIR}/external/imgui/backends/
   ${CMAKE_SOURCE_DIR}/external/imgui_memory_editor/imgui_memory_editor/
   ${CMAKE_SOURCE_DIR}/external/imgui_logger/
-  #${CMAKE_SOURCE_DIR}/external/cimgui_memory_editor/src/
 )
 
 if(WIN32)
@@ -75,4 +65,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/main.cpp
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd imgui ${CAPSTONE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd gui ${CAPSTONE_LIBRARIES})

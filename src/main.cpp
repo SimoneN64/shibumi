@@ -1,13 +1,7 @@
-#include <gui.hpp>
+#include <frontend.hpp>
 
 int main(int argc, char* argv[]) {
-  Gui gui("渋味");
-
-  if(argc > 1) {
-    gui.rom_file = argv[1];
-    gui.Reset();
-  }
-
-  gui.MainLoop();
+  Shibumi::Emulator emu(800, 600, "shibumi");
+  emu.Run();
   return 0;
 }
