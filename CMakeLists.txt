@@ -63,4 +63,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/main.cpp
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} nfd fmt::fmt gui ${CAPSTONE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} dl pthread nfd fmt::fmt gui ${CAPSTONE_LIBRARIES})

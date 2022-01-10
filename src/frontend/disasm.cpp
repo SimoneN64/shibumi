@@ -91,12 +91,12 @@ void Disasm::Disassembly(Emulator& emu, core_t& core) {
       switch(j) {
       case 12 ... 14:
         ImGui::TextColored(colorsDisasm[j & 3], "0x%" PRIx64 ":\t%s", insn[j].address, insn[j].mnemonic);
-        ImGui::SameLine(window_size.x - font_size - 10, -1);
+        ImGui::SameLine(window_size.x - font_size - 30, -1);
         ImGui::TextColored(colorsDisasm[j & 3], "%s", insn[j].op_str);
         break;
       default:
         ImGui::Text("0x%" PRIx64 ":\t%s", insn[j].address, insn[j].mnemonic);
-        ImGui::SameLine(window_size.x - font_size - 10, -1);
+        ImGui::SameLine(window_size.x - font_size - 30, -1);
         ImGui::Text("%s", insn[j].op_str);
       }
     }

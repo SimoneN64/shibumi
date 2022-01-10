@@ -25,15 +25,15 @@ void Logger::LogWindow(Emulator& emu) {
 }
 
 Emulator::Emulator(int w, int h, const std::string& title) 
-    : window(w, h, title), 
-      image(context.id, context.old_w, context.old_h, true) {
+    : window(w, h, title), context() {
   NFD_Init();
   init_core(&core);
-
   CreateMainMenuBar();
   CreateWindows();
   AddKeyHandlers();
   AddEvents();
+
+  image = ImagePainter(context.id, context.old_w, context.old_h, true);
 }
 
 void Emulator::CreateMainMenuBar() {
@@ -46,6 +46,14 @@ void Emulator::CreateMainMenuBar() {
   mainMenuBar.AddChild(&file);
   mainMenuBar.AddChild(&emulation);
   mainMenuBar.AddChild(&help);
+
+  emuThread = std::thread([this]() {
+    while(!emuQuit) {
+      auto start = SteadyClock::now();
+      run_frame(&core);
+      frametime = Milliseconds(SteadyClock::now() - start).count();
+    }
+  });
 }
 
 void Emulator::CreateFileMenu() {
@@ -55,6 +63,7 @@ void Emulator::CreateFileMenu() {
   });
 
   exit = MenuItem("Exit", [this]() {
+    Stop();
     window.Close();
   });
 
@@ -129,13 +138,15 @@ void Emulator::AddKeyHandlers() {
   });
 
   window.AddKeyHandler(Key::Escape, [this](){
+    Stop();
     window.Close();
   });
 }
 
 void Emulator::AddEvents() {
-  window.AddEvent([this]() {
-    run_frame(&core);
+  window.AddEvent([this] () {
+    std::string title = fmt::format("shibumi [{:.2f} fps] [{:.2f} ms]", 1000 / frametime, frametime);
+    window.SetWindowTitle(title);
   });
 
   window.AddEvent([this]() {
@@ -177,17 +188,24 @@ void Emulator::Reset() {
 
 void Emulator::Stop() {
   emuQuit = true;
-  init_core(&core);
+  emuThread.join();
   romLoaded = false;
   core.running = false;
+  init_core(&core);
 }
 
 void Emulator::Start() {
   romLoaded = load_rom(&core.mem, romFile);
   emuQuit = !romLoaded;
   core.running = romLoaded;
-  //if(romLoaded) {
-  //  pthread_create(&emu_thread, NULL, core_callback, (void*)this);
-  //}
+  if(romLoaded) {
+    emuThread = std::thread([this]() {
+      while(!emuQuit) {
+        auto start = SteadyClock::now();
+        run_frame(&core);
+        frametime = Milliseconds(SteadyClock::now() - start).count();
+      }
+    });
+  }
 }
 }

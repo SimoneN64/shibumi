@@ -5,6 +5,7 @@
 #include <nfd.hpp>
 #include <log.h>
 #include <disasm.hpp>
+#include <thread>
 
 namespace Shibumi
 {
@@ -22,6 +23,7 @@ struct Logger {
 };
 
 struct Emulator {
+  ~Emulator() { Stop(); }
   Emulator(int w, int h, const std::string& title);
   void Run();
   void OpenFile();
@@ -30,8 +32,8 @@ struct Emulator {
   void Start();
   bool romLoaded = false, cacheAboutWindow = false;
   std::atomic_bool emuQuit = false;
+  std::thread emuThread;
   nfdchar_t* romFile;
-  Context context;
   Logger logger;
   Disasm disasm;
   core_t core;
@@ -48,6 +50,9 @@ struct Emulator {
       Menu help;
         MenuItem about;
   
+  Context context;
+  
+  double frametime = 0;
   void AddEvents();
   void AddKeyHandlers();
   void CreateWindows();
