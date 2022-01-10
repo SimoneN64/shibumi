@@ -10,18 +10,22 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(OpenGL REQUIRED)
 add_subdirectory(external/nativefiledialog-extended/)
 add_subdirectory(external/Gui/)
+include(FetchContent)
 include(FindPkgConfig)
 pkg_check_modules (CAPSTONE REQUIRED capstone)
-pkg_check_modules (SDL2 REQUIRED sdl2)
+
+FetchContent_Declare(fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(fmt)
 
 file(GLOB_RECURSE GUI_SRC "src/frontend/*.cpp" "src/frontend/*.hpp")
 file(GLOB_RECURSE EMU_SRC "src/shibumi/src/*.c")
 
 include_directories(
-  ${SDL2_INCLUDE_DIRS}
   ${CAPSTONE_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/frontend/
   ${CMAKE_SOURCE_DIR}/src/shibumi/include
@@ -39,12 +43,6 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/external/imgui_memory_editor/imgui_memory_editor/
   ${CMAKE_SOURCE_DIR}/external/imgui_logger/
 )
-
-if(WIN32)
-  set(FLAGS -static ${SDL2_LIBRARIES} OpenGL::GL gcc stdc++ winpthread winmm version Imm32 Setupapi)
-else()
-  set(FLAGS dl pthread ${SDL2_LIBRARIES} OpenGL::GL)
-endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   add_compile_options(-g)
@@ -65,4 +63,4 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/main.cpp
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS} nfd gui ${CAPSTONE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} nfd fmt::fmt gui ${CAPSTONE_LIBRARIES})
