@@ -93,18 +93,25 @@ void Emulator::CreateHelpMenu() {
 
   window.AddEvent([this]() {
     if(cacheAboutWindow) {
-      ImGui::SetNextWindowSize(ImVec2{600, 200});
-      ImGui::Begin("About shibumi", &cacheAboutWindow);
-      ImGui::Text(R"(
-        shibumi is a Nintendo 64 emulator that strives to provide a wonderful
-                experience to both casual players and speedrunners.
-          It comes with a variety of tools such as TAS recording and input,
-           frame advancing, rewinding, but also debugging tools such as
-              registers watching, disassembly, instruction stepping
-                                and breakpoints.
-      
-            Nintendo 64 is a registered trademark of Nintendo Co. Ltd.
-      )");
+      const auto aboutText = R"(
+      shibumi is a Nintendo 64 emulator that strives to provide a wonderful
+              experience to both casual players and speedrunners.
+        It comes with a variety of tools such as TAS recording and input,
+          frame advancing, rewinding, but also debugging tools such as
+            registers watching, disassembly, instruction stepping
+                              and breakpoints.
+    
+          Nintendo 64 is a registered trademark of Nintendo Co. Ltd.
+      )";
+      const auto aboutTextSize = ImGui::CalcTextSize(aboutText);
+      const ImVec2 aboutWindowSize = {
+        static_cast<float>(aboutTextSize.x * 1.25),
+        static_cast<float>(aboutTextSize.y * 1.25)
+      };
+      ImGui::SetNextWindowSize(aboutWindowSize);
+      ImGui::Begin("About shibumi", &cacheAboutWindow, ImGuiWindowFlags_NoResize);
+      ImGui::SetCursorPos({aboutWindowSize.x / 16, aboutWindowSize.y / 7});
+      ImGui::Text(aboutText);
       ImGui::End();
     }
   });
