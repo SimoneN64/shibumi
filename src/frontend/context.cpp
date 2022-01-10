@@ -4,7 +4,7 @@ namespace Shibumi
 {
 Context::Context() {
   framebuffer = (u8*)malloc(320 * 240 * 4);
-  memset(framebuffer, 0x000000ff, 320 * 240 * 4);
+  memset(framebuffer, 0, 320 * 240 * 4);
   glGenTextures(1, &id);
   glBindTexture(GL_TEXTURE_2D, id);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, framebuffer);

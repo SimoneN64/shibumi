@@ -9,7 +9,7 @@ void init_rsp(rsp_t* rsp) {
 u32 sp_read(rsp_t* rsp, u32 addr) {
   switch (addr) {
     case 0x04040010: return rsp->sp_status.raw;
-    default: logfatal("Unimplemented SP register %08X\n", addr);
+    default: break; // logfatal("Unimplemented SP register read %08X\n", addr);
   }
 
   return 0;
@@ -40,6 +40,6 @@ void sp_write(rsp_t* rsp, mi_t* mi, registers_t* regs, u32 addr, u32 value) {
       CLEAR_SET(rsp->sp_status.signal_6_set, write.clear_signal_6, write.set_signal_6);
       CLEAR_SET(rsp->sp_status.signal_7_set, write.clear_signal_7, write.set_signal_7);
     }
-    default: logfatal("Unimplemented SP register %08X\n", addr);
+    default: break; //logfatal("Unimplemented SP register write %08X, val: %08X\n\n", addr, value);
   }
 }
