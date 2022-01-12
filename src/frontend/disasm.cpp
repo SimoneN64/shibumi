@@ -2,6 +2,7 @@
 #include <log.h>
 #include <imgui.h>
 #include <frontend.hpp>
+#include <fmt/core.h>
 
 namespace Shibumi
 {
@@ -64,13 +65,11 @@ void Disasm::Disassembly(Emulator& emu, core_t& core) {
 
   static int num_instr = 0;
 
-  char run_n_instr_str[20];
-  sprintf(run_n_instr_str, "Run %d instr", num_instr);
-  run_n_instr_str[19] = '\0';
+  std::string run_n_instr_str = fmt::format("Run {} instructions", num_instr);
 
   // emu.emuMutex.lock();
 
-  if(ImGui::Button(run_n_instr_str, (ImVec2){ (window_size.x / 3) - 10, 20 })) {
+  if(ImGui::Button(run_n_instr_str.c_str(), (ImVec2){ (window_size.x / 3) - 10, 20 })) {
     core.stepping = true;
     for(int i = 0; i < num_instr; i++) {
       step(&core.cpu, &core.mem);

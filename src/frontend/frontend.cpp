@@ -17,7 +17,7 @@ void Logger::LogWindow(Emulator& emu) {
   std::string finalMessage{};
   if(last_message != nullptr && strcmp(last_message, "") && strcmp(last_message, oldMessage.c_str())) {
     if(last_message_type == FATAL) {
-      emu.Stop();
+      emu.core.running = false;
     }
 
     oldMessage = std::string(last_message);
@@ -39,13 +39,13 @@ Emulator::Emulator(int w, int h, const std::string& title)
 
   image = ImagePainter(context.id, context.old_w, context.old_h, true);
 
-  emuThread = std::thread([this]() {
+  /* emuThread = std::thread([this]() {
     while(!emuQuit) {
       auto start = SteadyClock::now();
       run_frame(&core);
       frametime = Milliseconds(SteadyClock::now() - start).count();
     }
-  });
+  }); */
 }
 
 void Emulator::CreateMainMenuBar() {
@@ -195,6 +195,7 @@ void Emulator::AddEvents() {
   });
 
   window.AddEvent([this]() {
+    run_frame(&core);
     context.UpdateTexture(*this, core);
   });
 
@@ -234,7 +235,7 @@ void Emulator::Stop() {
   if(previouslyStopped) return;
   previouslyStopped = true;
   emuQuit = true;
-  emuThread.join();
+  // emuThread.join();
   romLoaded = false;
   core.running = false;
   init_core(&core);
@@ -246,13 +247,13 @@ void Emulator::Start() {
   emuQuit = !romLoaded;
   core.running = romLoaded;
   if(romLoaded) {
-    emuThread = std::thread([this]() {
+    /* emuThread = std::thread([this]() {
       while(!emuQuit) {
         auto start = SteadyClock::now();
         run_frame(&core);
         frametime = Milliseconds(SteadyClock::now() - start).count();
       }
-    });
+    }); */
   }
 }
 }

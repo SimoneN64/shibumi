@@ -42,6 +42,8 @@ void sp_write(rsp_t* rsp, mi_t* mi, registers_t* regs, u32 addr, u32 value) {
       CLEAR_SET(rsp->sp_status.signal_6_set, write.clear_signal_6, write.set_signal_6);
       CLEAR_SET(rsp->sp_status.signal_7_set, write.clear_signal_7, write.set_signal_7);
     } break;
+    case 0x04080000:
+      break;
     default: log_(FATAL, "Unimplemented SP register write %08X, val: %08X\n\n", addr, value);
   }
 }

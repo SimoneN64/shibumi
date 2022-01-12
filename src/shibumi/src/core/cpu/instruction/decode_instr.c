@@ -1,70 +1,104 @@
 #include <instruction/decode_instr.h>
 #include <log.h>
 #include <utils.h>
+#include <capstone.h>
 
 void exec(registers_t* regs, mem_t* mem, u32 instr) {
-  u8 mask = (instr >> 26) & 0x3F;
-  switch(mask) { // TODO: named constants for clearer code
-    case 0x00: special(regs, mem, instr); break;
-    case 0x01: regimm(regs, mem, instr); break;
-    case 0x02: j(regs, instr); break;
-    case 0x03: jal(regs, instr); break;
-    case 0x04: b(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
-    case 0x05: b(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
-    case 0x06: b(regs, instr, regs->gpr[RS(instr)] <= 0); break;
-    case 0x07: b(regs, instr, regs->gpr[RS(instr)] > 0); break;
-    case 0x08: addiu(regs, instr); break;
-    case 0x09: addiu(regs, instr); break;
-    case 0x0A: slti(regs, instr); break;
-    case 0x0B: sltiu(regs, instr); break;
-    case 0x0C: andi(regs, instr); break;
-    case 0x0D: ori(regs, instr); break;
-    case 0x0E: xori(regs, instr); break;
-    case 0x0F: lui(regs, instr); break;
-    case 0x10 ... 0x13: {
-      u8 cop_number = (instr >> 26) & 3;
-      u8 op_type = (instr >> 21) & 0x1F;
-      switch(op_type) {
-        case 0x00: mfcz(regs, instr, cop_number); break;
-        case 0x02: cfcz(regs, instr, cop_number); break;
-        case 0x04: mtcz(regs, instr, cop_number); break;
-        case 0x06: ctcz(regs, instr, cop_number); break;
-        case 0x10: break;
-        default: log_(FATAL, "Unimplemented control registers transfer %02X (mask: %02X) (PC: %016lX)\n", 
-                          op_type, mask, regs->pc);
-      }
-    } break;
-    case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
-    case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
-    case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
-    case 0x18: daddiu(regs, instr); break;
-    case 0x19: daddiu(regs, instr); break;
-    case 0x1A: ldl(mem, regs, instr); break;
-    case 0x1B: ldr(mem, regs, instr); break;
-    case 0x20: lb(mem, regs, instr); break;
-    case 0x21: lh(mem, regs, instr); break;
-    case 0x22: lwl(mem, regs, instr); break;
-    case 0x23: lw(mem, regs, instr); break;
-    case 0x24: lbu(mem, regs, instr); break;
-    case 0x25: lhu(mem, regs, instr); break;
-    case 0x26: lwr(mem, regs, instr); break;
-    case 0x27: lwu(mem, regs, instr); break;
-    case 0x28: sb(mem, regs, instr); break;
-    case 0x29: sh(mem, regs, instr); break;
-    case 0x2A: swl(mem, regs, instr); break;
-    case 0x2B: sw(mem, regs, instr); break;
-    case 0x2C: sdl(mem, regs, instr); break;
-    case 0x2D: sdr(mem, regs, instr); break;
-    case 0x2E: swr(mem, regs, instr); break;
-    case 0x2F: break;
-    case 0x30: ll(mem, regs, instr); break;
-    case 0x34: lld(mem, regs, instr); break;
-    case 0x37: ld(mem, regs, instr); break;
-    case 0x38: sc(mem, regs, instr); break;
-    case 0x3C: scd(mem, regs, instr); break;
-    case 0x3F: sd(mem, regs, instr); break;
-    default:
-      log_(FATAL, "Unimplemented instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+  u8 row = (instr >> 29) & 7;
+  u8 column = (instr >> 26) & 7;
+  switch(row) { // TODO: named constants for clearer code
+    case 0:
+      switch(column) {
+        case 0: special(regs, mem, instr); break;
+        case 1: regimm(regs, mem, instr); break;
+        case 2: j(regs, instr); break;
+        case 3: jal(regs, instr); break;
+        case 4: b(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
+        case 5: b(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
+        case 6: b(regs, instr, regs->gpr[RS(instr)] <= 0); break;
+        case 7: b(regs, instr, regs->gpr[RS(instr)] > 0); break;
+      } break;
+    case 1:
+      switch(column) {
+        case 0: addiu(regs, instr); break;
+        case 1: addiu(regs, instr); break;
+        case 2: slti(regs, instr); break;
+        case 3: sltiu(regs, instr); break;
+        case 4: andi(regs, instr); break;
+        case 5: ori(regs, instr); break;
+        case 6: xori(regs, instr); break;
+        case 7: lui(regs, instr); break;
+      } break;
+    case 2:
+      switch(column) {
+        case 0 ... 2: {
+          u8 row_cop = (instr >> 24) & 3;
+          u8 column_cop = (instr >> 21) & 7;
+          switch(row_cop) {
+            case 0:
+              switch(column_cop) {
+                case 0: mfcz(regs, instr, column); break;
+                case 2: cfcz(regs, instr, column); break;
+                case 4: mtcz(regs, instr, column); break;
+                case 6: ctcz(regs, instr, column); break;
+                default: log_(FATAL, "Unimplemented COPz rs column %d\n", column_cop);
+              } break;
+            default: log_(FATAL, "Unimplemented COPz rs row %d\n", row_cop);
+          }
+        } break;
+        case 4: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
+        case 5: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
+        case 6: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
+        case 7: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
+      } break;
+    case 3:
+      switch(column) {
+        case 0: daddiu(regs, instr); break;
+        case 1: daddiu(regs, instr); break;
+        case 2: ldl(mem, regs, instr); break;
+        case 3: ldr(mem, regs, instr); break;
+      } break;
+    case 4:
+      switch(column) {
+        case 0: lb(mem, regs, instr); break;
+        case 1: lh(mem, regs, instr); break;
+        case 2: lwl(mem, regs, instr); break;
+        case 3: lw(mem, regs, instr); break;
+        case 4: lbu(mem, regs, instr); break;
+        case 5: lhu(mem, regs, instr); break;
+        case 6: lwr(mem, regs, instr); break;
+        case 7: lwu(mem, regs, instr); break;
+      } break;
+    case 5:
+      switch(column) {
+        case 0: sb(mem, regs, instr); break;
+        case 1: sh(mem, regs, instr); break;
+        case 2: swl(mem, regs, instr); break;
+        case 3: sw(mem, regs, instr); break;
+        case 4: sdl(mem, regs, instr); break;
+        case 5: sdr(mem, regs, instr); break;
+        case 6: swr(mem, regs, instr); break;
+        case 7: break; // cache
+      } break;
+    case 6:
+      switch(column) {
+        case 0: ll(mem, regs, instr); break;
+        case 4: lld(mem, regs, instr); break;
+        case 7: ld(mem, regs, instr); break;
+      } break;
+    case 7:
+      switch(column) {
+        case 0: sc(mem, regs, instr); break;
+        case 4: scd(mem, regs, instr); break;
+        case 7: sd(mem, regs, instr); break;
+      } break;
+    default: {
+      csh handle;
+      cs_insn *insn;
+      size_t count = cs_disasm(handle, (u8*)&instr, sizeof(instr), regs->pc, 25, &insn);
+      log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+      cs_free(insn, count);
+    }
   }
 }
 
@@ -119,7 +153,13 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     case 0x3C: dsll32(regs, instr); break;
     case 0x3E: dsrl32(regs, instr); break;
     case 0x3F: dsra32(regs, instr); break;
-    default: log_(FATAL, "Unimplemented special instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+    default: {
+      csh handle;
+      cs_insn *insn;
+      size_t count = cs_disasm(handle, (u8*)&instr, sizeof(instr), regs->pc, 25, &insn);
+      log_(FATAL, "Unimplemented special instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+      cs_free(insn, count);
+    }
   }
 }
 
@@ -133,6 +173,12 @@ void regimm(registers_t* regs, mem_t *mem, u32 instr) {
       regs->gpr[31] = regs->pc + 4;
       b(regs, instr, regs->gpr[RS(instr)] >= 0);
       break;
-    default: log_(FATAL, "Unimplemented regimm instruction %02X, PC: %016lX\n", mask, regs->old_pc);
+    default: {
+      csh handle;
+      cs_insn *insn;
+      size_t count = cs_disasm(handle, (u8*)&instr, sizeof(instr), regs->pc, 25, &insn);
+      log_(FATAL, "Unimplemented regimm instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+      cs_free(insn, count);
+    }
   }
 }
