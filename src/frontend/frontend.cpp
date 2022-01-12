@@ -3,10 +3,14 @@
 
 namespace Shibumi
 {
-Logger::Logger() {
+Logger::Logger(Emulator& emu) {
   logger.InfoStr = messageTypeStrings[0].c_str();
   logger.WarnStr = messageTypeStrings[1].c_str();
   logger.ErrorStr = messageTypeStrings[2].c_str();
+  logWindow = Window("Logs", [this, &emu]() {
+    LogWindow(emu);
+  }, {ImGuiStyleVar_WindowRounding, 10.f});
+  emu.window.AddWidget(&logWindow);
 }
 
 void Logger::LogWindow(Emulator& emu) {
@@ -25,27 +29,15 @@ void Logger::LogWindow(Emulator& emu) {
 }
 
 Emulator::Emulator(int w, int h, const std::string& title) 
-    : window(w, h, title), context() {
+    : window(w, h, title), context(), logger(*this) {
   NFD_Init();
   init_core(&core);
-  CreateMainMenuBar();
-  CreateWindows();
   AddKeyHandlers();
   AddEvents();
+  CreateMainMenuBar();
+  CreateWindows();
 
   image = ImagePainter(context.id, context.old_w, context.old_h, true);
-}
-
-void Emulator::CreateMainMenuBar() {
-  mainMenuBar = MenuBar(nullptr, true); 
-  
-  CreateFileMenu();
-  CreateEmulationMenu();
-  CreateHelpMenu();
-
-  mainMenuBar.AddChild(&file);
-  mainMenuBar.AddChild(&emulation);
-  mainMenuBar.AddChild(&help);
 
   emuThread = std::thread([this]() {
     while(!emuQuit) {
@@ -56,7 +48,57 @@ void Emulator::CreateMainMenuBar() {
   });
 }
 
-void Emulator::CreateFileMenu() {
+void Emulator::CreateMainMenuBar() {
+  /*mainMenuBar = MenuBar(nullptr, true); 
+  
+  CreateFileMenu();
+  CreateEmulationMenu();
+  CreateHelpMenu();
+
+  mainMenuBar.AddChild(&file);
+  mainMenuBar.AddChild(&emulation);
+  mainMenuBar.AddChild(&help);
+  window.AddWidget(&mainMenuBar);*/
+  window.AddEvent([this]() {
+    if(ImGui::BeginMainMenuBar()) {
+      if(ImGui::BeginMenu("File")) {
+        if(ImGui::MenuItem("Open")) {
+          OpenFile();
+        }
+        if(ImGui::MenuItem("Exit")) {
+          Stop();
+          window.Close();
+        }
+        ImGui::EndMenu();
+      }
+      if(ImGui::BeginMenu("Emulation")) {
+        if(ImGui::MenuItem(core.running ? "Pause" : "Resume")) {
+          if(romLoaded) {
+            core.running = !core.running;
+          }
+        }
+        if(ImGui::MenuItem("Reset")) {
+          Reset();
+        }
+        if(ImGui::MenuItem("Stop")) {
+          Stop();
+        }
+        ImGui::EndMenu();
+      }
+      if(ImGui::BeginMenu("Help")) {
+        if(ImGui::MenuItem("About")) {
+          cacheAboutWindow = true;
+        }
+        ImGui::EndMenu();
+      }
+      ImGui::EndMainMenuBar();
+    }
+  });
+
+  CreateHelpWindow();
+}
+
+/* void Emulator::CreateFileMenu() {
   file = Menu("File", nullptr);
   open = MenuItem("Open", [this]() {
     OpenFile();
@@ -69,9 +111,9 @@ void Emulator::CreateFileMenu() {
 
   file.AddChild(&open);
   file.AddChild(&exit);
-}
+} */
 
-void Emulator::CreateEmulationMenu() {
+/* void Emulator::CreateEmulationMenu() {
   emulation = Menu("Emulation", nullptr);
   pause = MenuItem("Pause", [this]() {
     if(romLoaded) {
@@ -90,15 +132,16 @@ void Emulator::CreateEmulationMenu() {
   emulation.AddChild(&pause);
   emulation.AddChild(&reset);
   emulation.AddChild(&stop);
-}
+} */
 
-void Emulator::CreateHelpMenu() {
-  help = Menu("Help", nullptr);
-  about = MenuItem("About", [this]() {
-    cacheAboutWindow = true;
-  });
+//void Emulator::CreateHelpMenu() {
+void Emulator::CreateHelpWindow() {
+  // help = Menu("Help", nullptr);
+  // about = MenuItem("About", [this]() {
+  //   cacheAboutWindow = true;
+  // });
 
-  help.AddChild(&about);
+  // help.AddChild(&about);
 
   window.AddEvent([this]() {
     if(cacheAboutWindow) {
@@ -118,10 +161,12 @@ void Emulator::CreateHelpMenu() {
         static_cast<float>(aboutTextSize.y * 1.25)
       };
       ImGui::SetNextWindowSize(aboutWindowSize);
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.f);
       ImGui::Begin("About shibumi", &cacheAboutWindow, ImGuiWindowFlags_NoResize);
       ImGui::SetCursorPos({aboutWindowSize.x / 16, aboutWindowSize.y / 7});
       ImGui::Text(aboutText);
       ImGui::End();
+      ImGui::PopStyleVar();
     }
   });
 }
@@ -150,23 +195,22 @@ void Emulator::AddEvents() {
   });
 
   window.AddEvent([this]() {
-    logger.LogWindow(*this);
+    context.UpdateTexture(*this, core);
   });
 
-  window.AddEvent([this]() {
-    context.UpdateTexture(core);
+  window.SetEventOnClose([this]() {
+    Stop();
   });
 }
 
 void Emulator::CreateWindows() {
   disassembler = Window("Disassembly", [this]() {
     disasm.Disassembly(*this, core);
-  });
+  }, {ImGuiStyleVar_WindowRounding, 10.f});
 
   screen.AddChild(&image);
   window.AddWidget(&screen);
   window.AddWidget(&disassembler);
-  window.AddWidget(&mainMenuBar);
 }
 
 void Emulator::Run() {
@@ -187,6 +231,8 @@ void Emulator::Reset() {
 }
 
 void Emulator::Stop() {
+  if(previouslyStopped) return;
+  previouslyStopped = true;
   emuQuit = true;
   emuThread.join();
   romLoaded = false;
@@ -195,6 +241,7 @@ void Emulator::Stop() {
 }
 
 void Emulator::Start() {
+  previouslyStopped = false;
   romLoaded = load_rom(&core.mem, romFile);
   emuQuit = !romLoaded;
   core.running = romLoaded;

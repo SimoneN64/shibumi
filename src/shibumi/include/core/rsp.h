@@ -6,6 +6,7 @@ typedef struct registers_t registers_t;
 
 typedef struct {
   sp_status_t sp_status;
+  u16 old_pc, pc, next_pc;
 } rsp_t;
 
 void init_rsp(rsp_t* rsp);

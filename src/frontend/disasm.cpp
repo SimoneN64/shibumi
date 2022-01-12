@@ -22,6 +22,8 @@ Disasm::~Disasm() {
 }
 
 void Disasm::Disassembly(Emulator& emu, core_t& core) {
+  // emu.emuMutex.lock();
+
   u32 instructions[25] = {};
   u32 pc = core.cpu.regs.pc;
   u32 pointer = pc - (14 * 4);
@@ -35,11 +37,15 @@ void Disasm::Disassembly(Emulator& emu, core_t& core) {
     memset(instructions, 0xFFFFFFFF, 100);
   }
 
+  // emu.emuMutex.unlock();
+
   u8 code[100];
   memcpy(code, instructions, 100);
   
   count = cs_disasm(handle, code, sizeof(code), pointer, 25, &insn);
   ImVec2 window_size = ImGui::GetWindowSize();
+
+  // emu.emuMutex.lock();
 
   if(ImGui::Button("Step", (ImVec2){ (window_size.x / 2) - 10, 20 })) {
     core.stepping = true;
@@ -54,11 +60,15 @@ void Disasm::Disassembly(Emulator& emu, core_t& core) {
     }
   }
 
+  // emu.emuMutex.unlock();
+
   static int num_instr = 0;
 
   char run_n_instr_str[20];
   sprintf(run_n_instr_str, "Run %d instr", num_instr);
   run_n_instr_str[19] = '\0';
+
+  // emu.emuMutex.lock();
 
   if(ImGui::Button(run_n_instr_str, (ImVec2){ (window_size.x / 3) - 10, 20 })) {
     core.stepping = true;
@@ -67,6 +77,8 @@ void Disasm::Disassembly(Emulator& emu, core_t& core) {
     }
   }
   
+  // emu.emuMutex.unlock();
+
   ImGui::SameLine(window_size.x / 3, 5);
   ImGui::SetNextItemWidth(window_size.x / 10);
   ImGui::InputInt("Instruction count to run", &num_instr, 0, 0, ImGuiInputTextFlags_CharsNoBlank);
@@ -77,9 +89,13 @@ void Disasm::Disassembly(Emulator& emu, core_t& core) {
 
   ImGui::SameLine(window_size.x - (window_size.x / 4), 5);
 
+  // emu.emuMutex.lock();
+
   if(ImGui::Button("Set breakpoint", (ImVec2){(window_size.x / 4) - 10, 20})) {
     core.break_addr = addr;
   }
+
+  // emu.emuMutex.unlock();
 
   ImGui::Spacing();
 

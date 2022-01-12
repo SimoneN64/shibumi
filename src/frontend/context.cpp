@@ -1,4 +1,5 @@
 #include <context.hpp>
+#include <frontend.hpp>
 
 namespace Shibumi
 {
@@ -14,10 +15,15 @@ Context::Context() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 }
 
-void Context::UpdateTexture(core_t& core) {
+void Context::UpdateTexture(Emulator& emu, core_t& core) {
+  // emu.emuMutex.lock();
+  
   u32 w = core.mem.mmio.vi.width, h = 0.75 * w;
   u32 origin = core.mem.mmio.vi.origin & 0xFFFFFF;
   u8 format = core.mem.mmio.vi.status.format;
+
+  // emu.emuMutex.unlock();
+  
   bool reconstruct_texture = false;
   bool res_changed = old_w != w || old_h != h;
   bool format_changed = old_format != format;
@@ -47,6 +53,8 @@ void Context::UpdateTexture(core_t& core) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, glFormat, framebuffer);
   }
 
+  // emu.emuMutex.lock();
+
   if(format == f8888) {
     framebuffer[4] = 0xff;
     memcpy(framebuffer, &core.mem.rdram[origin & RDRAM_DSIZE], w * h * depth);
@@ -60,6 +68,8 @@ void Context::UpdateTexture(core_t& core) {
       framebuffer[i + 1] = core.mem.rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)] | (1 << 16);
     }
   }
+
+  // emu.emuMutex.unlock();
 
   glBindTexture(GL_TEXTURE_2D, id);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, glFormat, framebuffer);

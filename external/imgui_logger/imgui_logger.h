@@ -90,13 +90,6 @@ struct Logger
 
     void Draw(const char* title, bool* p_open)
     {
-        ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
-        if (!ImGui::Begin(title, p_open))
-        {
-            ImGui::End();
-            return;
-        }
-
         // As a specific feature guaranteed by the library, after calling Begin() the last Item represent the title bar.
         // So e.g. IsItemHovered() will return true when hovering the title bar.
         // Here we create a context menu only available from the title bar.
@@ -216,8 +209,6 @@ struct Logger
         ImGui::SetItemDefaultFocus();
         if (reclaim_focus)
             ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
-
-        ImGui::End();
     }
 
     void ExecCommand(const char* command_line)

@@ -6,6 +6,7 @@
 #include <log.h>
 #include <disasm.hpp>
 #include <thread>
+#include <mutex>
 
 namespace Shibumi
 {
@@ -14,8 +15,9 @@ using namespace ::Gui;
 static const std::string messageTypeStrings[3] = {"[INFO]", "[WARNING]", "[FATAL]"};
 
 struct Logger {
-  Logger();
+  Logger(Emulator& emu);
   void LogWindow(Emulator& emu);
+  Window logWindow;
   ImGui::Logger logger;
   std::string oldMessage = "NULL";
   message_type oldMessageType = INFO;
@@ -33,13 +35,13 @@ struct Emulator {
   bool romLoaded = false, cacheAboutWindow = false;
   std::atomic_bool emuQuit = false;
   std::thread emuThread;
+  std::mutex emuMutex;
+  bool previouslyStopped = false;
   nfdchar_t* romFile;
-  Logger logger;
-  Disasm disasm;
   core_t core;
 
   HostWindow window;
-    Window screen{"Screen"};
+    Window screen{"Screen", nullptr, {ImGuiStyleVar_WindowRounding, 10.f}};
       ImagePainter image;
     Window disassembler;
     MenuBar mainMenuBar;
@@ -50,15 +52,18 @@ struct Emulator {
       Menu help;
         MenuItem about;
   
+  Logger logger;
   Context context;
+  Disasm disasm;
   
   double frametime = 0;
   void AddEvents();
   void AddKeyHandlers();
   void CreateWindows();
   void CreateMainMenuBar();
-  void CreateFileMenu();
-  void CreateEmulationMenu();
-  void CreateHelpMenu();
+  // void CreateFileMenu();
+  // void CreateEmulationMenu();
+  // void CreateHelpMenu();
+  void CreateHelpWindow();
 };
 }
