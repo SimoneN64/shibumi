@@ -426,9 +426,8 @@ void swr(mem_t* mem, registers_t* regs, u32 instr) {
 }
 
 void ori(registers_t* regs, u32 instr) {
-  u64 rs = regs->gpr[RS(instr)];
-  u64 imm = instr & 0xffff;
-  s64 result = imm | rs;
+  s64 imm = (u16)instr;
+  s64 result = imm | regs->gpr[RS(instr)];
   regs->gpr[RT(instr)] = result;
 }
 
@@ -469,7 +468,7 @@ void sltu(registers_t* regs, u32 instr) {
 }
 
 void xori(registers_t* regs, u32 instr) {
-  s64 imm = (s16)instr;
+  s64 imm = (u16)instr;
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] ^ imm;
 }
 
@@ -478,7 +477,7 @@ void xor_(registers_t* regs, u32 instr) {
 }
 
 void andi(registers_t* regs, u32 instr) {
-  s64 imm = (s16)instr;
+  s64 imm = (u16)instr;
   regs->gpr[RT(instr)] = regs->gpr[RS(instr)] & imm;
 }
 
