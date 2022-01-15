@@ -6,6 +6,7 @@ file(GLOB HEADERS "*.hpp")
 include(FindPkgConfig)
 pkg_check_modules (CAPSTONE REQUIRED capstone)
 add_subdirectory(external/)
+add_subdirectory(../shibumi/ ../)
 
 add_library(frontend
    ${HEADERS}
@@ -27,4 +28,4 @@ target_include_directories(frontend PUBLIC
     ../shibumi/include/utils/
 )
 
-target_link_libraries(frontend PUBLIC ${CAPSTONE_LIBRARIES} dependencies)
+target_link_libraries(frontend PUBLIC ${CAPSTONE_LIBRARIES} core dependencies)

@@ -10,7 +10,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(src/shibumi/)
 add_subdirectory(src/frontend/)
 add_executable(shibumi src/main.cpp)
 
@@ -33,4 +32,4 @@ else()
   set(FLAGS dl pthread)
 endif()
 
-target_link_libraries(shibumi core frontend ${FLAGS})
+target_link_libraries(shibumi frontend ${FLAGS})
