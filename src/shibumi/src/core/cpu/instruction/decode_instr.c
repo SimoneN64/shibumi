@@ -2,6 +2,7 @@
 #include <log.h>
 #include <utils.h>
 #include <capstone.h>
+#include <access.h>
 
 void exec(registers_t* regs, mem_t* mem, u32 instr) {
   u8 row = (instr >> 29) & 7;
@@ -41,10 +42,30 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
                 case 2: cfcz(regs, instr, column); break;
                 case 4: mtcz(regs, instr, column); break;
                 case 6: ctcz(regs, instr, column); break;
-                default: log_(FATAL, "Unimplemented COPz rs column %d\n", column_cop);
+                default: {
+                  csh handle;
+                  cs_insn *insn;
+                  u8 code[4];
+                  waccess(32, code, 0, instr);
+                  size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
+                  if(count > 0) {
+                    log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+                    cs_free(insn, count);
+                  }
+                }
               } break;
-            default: log_(FATAL, "Unimplemented COPz rs row %d\n", row_cop);
-          }
+            default: {
+              csh handle;
+              cs_insn *insn;
+              u8 code[4];
+              waccess(32, code, 0, instr);
+              size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
+              if(count > 0) {
+                log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+                cs_free(insn, count);
+              }
+            }
+          } break;
         } break;
         case 4: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
         case 5: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
@@ -95,9 +116,13 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     default: {
       csh handle;
       cs_insn *insn;
-      size_t count = cs_disasm(handle, (u8*)&instr, sizeof(instr), regs->pc, 25, &insn);
-      log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-      cs_free(insn, count);
+      u8 code[4];
+      waccess(32, code, 0, instr);
+      size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
+      if(count > 0) {
+        log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+        cs_free(insn, count);
+      }
     }
   }
 }
@@ -156,9 +181,13 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     default: {
       csh handle;
       cs_insn *insn;
-      size_t count = cs_disasm(handle, (u8*)&instr, sizeof(instr), regs->pc, 25, &insn);
-      log_(FATAL, "Unimplemented special instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-      cs_free(insn, count);
+      u8 code[4];
+      waccess(32, code, 0, instr);
+      size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
+      if(count > 0) {
+        log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+        cs_free(insn, count);
+      }
     }
   }
 }
@@ -176,9 +205,13 @@ void regimm(registers_t* regs, mem_t *mem, u32 instr) {
     default: {
       csh handle;
       cs_insn *insn;
-      size_t count = cs_disasm(handle, (u8*)&instr, sizeof(instr), regs->pc, 25, &insn);
-      log_(FATAL, "Unimplemented regimm instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-      cs_free(insn, count);
+      u8 code[4];
+      waccess(32, code, 0, instr);
+      size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
+      if(count > 0) {
+        log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
+        cs_free(insn, count);
+      }
     }
   }
 }

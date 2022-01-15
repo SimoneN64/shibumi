@@ -10,25 +10,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(external/)
-
-add_executable(shibumi
-   src/main.cpp
-)
-
-include_directories(
-   src/shibumi/include/
-   src/shibumi/include/core/
-   src/shibumi/include/core/cpu/
-   src/shibumi/include/core/cpu/instruction/
-   src/shibumi/include/core/cpu/registers/
-   src/shibumi/include/core/mem/
-   src/shibumi/include/core/mem/mmio/
-   src/shibumi/include/core/rsp/
-   src/shibumi/include/utils/
-   src/frontend/
-   external/imgui_logger/
-)
+add_subdirectory(src/shibumi/)
+add_subdirectory(src/frontend/)
+add_executable(shibumi src/main.cpp)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   add_compile_options(-g)
@@ -44,9 +28,9 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resourc
 file(COPY ${CMAKE_SOURCE_DIR}/tests/ DESTINATION ${CMAKE_BINARY_DIR}/tests/)
 
 if(WIN32)
-  set(FLAGS -static dependencies gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
-  set(FLAGS dl pthread dependencies)
+  set(FLAGS dl pthread)
 endif()
 
-target_link_libraries(shibumi ${FLAGS})
+target_link_libraries(shibumi core frontend ${FLAGS})
