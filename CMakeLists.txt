@@ -63,4 +63,10 @@ add_executable(${CMAKE_PROJECT_NAME}
   src/main.cpp
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} dl pthread nfd fmt::fmt gui ${CAPSTONE_LIBRARIES})
+if(WIN32)
+  set(FLAGS -static nfd fmt::fmt gui ${CAPSTONE_LIBRARIES} gcc stdc++ winpthread winmm version Imm32 Setupapi)
+else()
+  set(FLAGS dl pthread nfd fmt::fmt gui ${CAPSTONE_LIBRARIES})
+endif()
+
+target_link_libraries(${CMAKE_PROJECT_NAME} ${FLAGS})
