@@ -24,7 +24,7 @@ typedef union {
         unsigned ip7:1;
       } PACKED;
       u8 raw;
-    } ip;
+    } PACKED ip;
     unsigned:12;
     unsigned cop_error:2;
     unsigned:1;

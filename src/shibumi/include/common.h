@@ -16,6 +16,7 @@ typedef int64_t s64;
 typedef __uint128_t u128;
 typedef __int128_t s128;
 
+#define bits(x) x + 8
 #define PACKED __attribute__((__packed__))
 #define ASSERTWORD(type) static_assert(sizeof(type) == 4, #type " must be 32 bits")
 #define ASSERTDWORD(type) static_assert(sizeof(type) == 8, #type " must be 64 bits")
