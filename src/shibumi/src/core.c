@@ -7,9 +7,3 @@ void init_core(core_t* core) {
   core->running = false;
   core->stepping = false;
 }
-
-void run_frame(core_t* core) {
-  for(int i = 0; i < 100000 && core->running && !core->stepping; i++) {
-    step(&core->cpu, &core->mem);
-  }
-}

@@ -38,8 +38,7 @@ bool load_rom(mem_t* mem, const char* path) {
   }
 
   fclose(fp);
-  u32 endianness = *(u32*)&mem->cart[0];
-  swap(endianness, rom_size, mem->cart);
+  swap(mem->cart[0], rom_size, mem->cart);
   memcpy(mem->dmem, mem->cart, 0x1000);
   return true;
 }

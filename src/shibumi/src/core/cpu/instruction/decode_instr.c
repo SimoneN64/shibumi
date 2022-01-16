@@ -53,7 +53,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
         case 4: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
         case 5: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
         case 6: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
-        case 7: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
+        case 7: bl(regs, instr, regs->gpr[RS(instr)] > 0); break;
       } break;
     case 3:
       switch(column) {
@@ -161,14 +161,27 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
 
 void regimm(registers_t* regs, mem_t *mem, u32 instr) {
   u8 mask = ((instr >> 16) & 0x1F);
-
+  // 000r_rccc
   switch (mask) { // TODO: named constants for clearer code
     case 0x00: b(regs, instr, regs->gpr[RS(instr)] < 0); break;
     case 0x01: b(regs, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x02: bl(regs, instr, regs->gpr[RS(instr)] < 0); break;
     case 0x03: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x10:
+      regs->gpr[31] = regs->pc + 4;
+      b(regs, instr, regs->gpr[RS(instr)] < 0);
+      break;
     case 0x11:
       regs->gpr[31] = regs->pc + 4;
       b(regs, instr, regs->gpr[RS(instr)] >= 0);
+      break;
+    case 0x12:
+      regs->gpr[31] = regs->pc + 4;
+      bl(regs, instr, regs->gpr[RS(instr)] < 0);
+      break;
+    case 0x13:
+      regs->gpr[31] = regs->pc + 4;
+      bl(regs, instr, regs->gpr[RS(instr)] >= 0);
       break;
     default:
       logfatal("Unimplemented regimm %d %d\n", (instr >> 19) & 3, (instr >> 16) & 7);

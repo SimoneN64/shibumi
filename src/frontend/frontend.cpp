@@ -29,7 +29,7 @@ void Logger::LogWindow(Emulator& emu) {
 }
 
 Emulator::Emulator(int w, int h, const std::string& title) 
-    : window(w, h, title), context(), logger(*this) {
+    : window(w, h, title), context(), logger(*this), disassembler(core) {
   NFD_Init();
   init_core(&core);
   AddKeyHandlers();
@@ -195,7 +195,6 @@ void Emulator::AddEvents() {
   });
 
   window.AddEvent([this]() {
-    run_frame(&core);
     context.UpdateTexture(*this, core);
   });
 
@@ -207,6 +206,7 @@ void Emulator::AddEvents() {
 void Emulator::CreateWindows() {
   screen.AddChild(&image);
   window.AddWidget(&screen);
+  window.AddWidget(&disassembler.window);
 }
 
 void Emulator::Run() {

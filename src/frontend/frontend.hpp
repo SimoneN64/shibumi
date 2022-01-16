@@ -6,6 +6,7 @@
 #include <log.h>
 #include <thread>
 #include <mutex>
+#include <disassembler.hpp>
 
 namespace Shibumi
 {
@@ -51,6 +52,7 @@ struct Emulator {
         MenuItem about;
   
   Logger logger;
+  Disassembler disassembler;
   Context context;
   
   double frametime = 0;
