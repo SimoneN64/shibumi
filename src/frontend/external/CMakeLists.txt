@@ -14,9 +14,11 @@ FetchContent_MakeAvailable(fmt)
 add_library(dependencies
   imgui_logger/imgui_logger.h
   imgui_memory_editor/imgui_memory_editor/imgui_memory_editor.h
+  stb_image.h
 )
 
 target_include_directories(dependencies PUBLIC
+    .
     Gui/
     imgui_logger/
     imgui_memory_editor/imgui_memory_editor/

@@ -13,3 +13,9 @@
 [submodule "external/Gui"]
 	path = external/Gui
 	url = https://github.com/CocoSimone/Gui
+[submodule "src/frontend/external/Gui"]
+	path = src/frontend/external/Gui
+	url = https://github.com/CocoSimone/Gui
+[submodule "src/frontend/external/nativefiledialog-extended"]
+	path = src/frontend/external/nativefiledialog-extended
+	url = https://github.com/btzy/nativefiledialog-extended

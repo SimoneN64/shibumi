@@ -10,6 +10,8 @@ struct Disassembler {
   void Show(core_t&);
   Gui::Window window;
 private:
+  unsigned int arrowDownID, arrowRightID;
+  bool followPC = false;
   std::set<u32> breakpoints;
 };
 }
