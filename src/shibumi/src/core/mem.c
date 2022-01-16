@@ -15,7 +15,6 @@ void init_mem(mem_t* mem) {
   memset(mem->pif_ram, 0, PIF_RAM_SIZE);
   memset(mem->pif_bootrom, 0, PIF_BOOTROM_SIZE);
   init_mmio(&mem->mmio);
-  mem->addr_sa = 0;
 }
 
 bool load_rom(mem_t* mem, const char* path) {

@@ -4,7 +4,6 @@
 #include <atomic>
 #include <nfd.hpp>
 #include <log.h>
-#include <disasm.hpp>
 #include <thread>
 #include <mutex>
 
@@ -43,7 +42,6 @@ struct Emulator {
   HostWindow window;
     Window screen{"Screen", nullptr, {ImGuiStyleVar_WindowRounding, 10.f}};
       ImagePainter image;
-    Window disassembler;
     MenuBar mainMenuBar;
       Menu file;
         MenuItem open, exit;
@@ -54,7 +52,6 @@ struct Emulator {
   
   Logger logger;
   Context context;
-  Disasm disasm;
   
   double frametime = 0;
   void AddEvents();

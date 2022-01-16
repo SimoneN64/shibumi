@@ -8,7 +8,6 @@ extern "C" {
 typedef struct core_t {
   cpu_t cpu;
   mem_t mem;
-  u32 break_addr;
 	bool running, stepping;
 } core_t;
 

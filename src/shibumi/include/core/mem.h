@@ -11,7 +11,6 @@ typedef struct mem_t {
   u8 pif_bootrom[PIF_BOOTROM_SIZE];
   size_t rom_mask;
   mmio_t mmio;
-  u8 addr_sa;
 } mem_t;
 
 void init_mem(mem_t* mem);

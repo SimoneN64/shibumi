@@ -10,6 +10,15 @@ void step(cpu_t *cpu, mem_t *mem) {
   registers_t* regs = &cpu->regs;
   regs->gpr[0] = 0;
   u32 instruction = read32(mem, regs->pc);
+
+  /* for(int i = 0; i < 32; i+=4) {
+    printf("R%d=%016lX  R%d=%016lX   R%d=%016lX   R%d=%016lX\n",
+           i,     cpu->regs.gpr[i],     i + 1, cpu->regs.gpr[i + 1],
+           i + 2, cpu->regs.gpr[i + 2], i + 3, cpu->regs.gpr[i + 3]);
+  }
+
+  printf("PC=%016lX\n", cpu->regs.pc); */
+
   regs->old_pc = regs->pc;
   regs->pc = regs->next_pc;
   regs->next_pc += 4;

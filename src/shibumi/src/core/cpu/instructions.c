@@ -552,7 +552,7 @@ void dsrl32(registers_t* regs, u32 instr) {
 }
 
 void sra(registers_t* regs, u32 instr) {
-  s32 rt = regs->gpr[RT(instr)];
+  s64 rt = regs->gpr[RT(instr)];
   u8 sa = ((instr >> 6) & 0x1f);
   s32 result = rt >> sa;
   regs->gpr[RD(instr)] = result;

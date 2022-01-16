@@ -17,7 +17,7 @@ void Logger::LogWindow(Emulator& emu) {
   std::string finalMessage{};
   if(last_message != nullptr && strcmp(last_message, "") && strcmp(last_message, oldMessage.c_str())) {
     if(last_message_type == FATAL) {
-      emu.core.running = false;
+      emu.Stop();
     }
 
     oldMessage = std::string(last_message);
@@ -205,13 +205,8 @@ void Emulator::AddEvents() {
 }
 
 void Emulator::CreateWindows() {
-  disassembler = Window("Disassembly", [this]() {
-    disasm.Disassembly(*this, core);
-  }, {ImGuiStyleVar_WindowRounding, 10.f});
-
   screen.AddChild(&image);
   window.AddWidget(&screen);
-  window.AddWidget(&disassembler);
 }
 
 void Emulator::Run() {

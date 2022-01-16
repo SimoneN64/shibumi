@@ -1,7 +1,6 @@
 #include <instruction/decode_instr.h>
 #include <log.h>
 #include <utils.h>
-#include <capstone.h>
 #include <access.h>
 
 void exec(registers_t* regs, mem_t* mem, u32 instr) {
@@ -42,29 +41,13 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
                 case 2: cfcz(regs, instr, column); break;
                 case 4: mtcz(regs, instr, column); break;
                 case 6: ctcz(regs, instr, column); break;
-                default: {
-                  csh handle;
-                  cs_insn *insn;
-                  u8 code[4];
-                  waccess(32, code, 0, instr);
-                  size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
-                  if(count > 0) {
-                    log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-                    cs_free(insn, count);
-                  }
-                }
+                default:
+                  logfatal("Unimplemented COP column %02X\n", column_cop);
+                  break;
               } break;
-            default: {
-              csh handle;
-              cs_insn *insn;
-              u8 code[4];
-              waccess(32, code, 0, instr);
-              size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
-              if(count > 0) {
-                log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-                cs_free(insn, count);
-              }
-            }
+            default:
+              logfatal("Unimplemented COP row %02X\n", row_cop);
+              break;
           } break;
         } break;
         case 4: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
@@ -113,17 +96,9 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
         case 4: scd(mem, regs, instr); break;
         case 7: sd(mem, regs, instr); break;
       } break;
-    default: {
-      csh handle;
-      cs_insn *insn;
-      u8 code[4];
-      waccess(32, code, 0, instr);
-      size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
-      if(count > 0) {
-        log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-        cs_free(insn, count);
-      }
-    }
+    default:
+      logfatal("Unimplemented row %02X\n", row);
+      break;
   }
 }
 
@@ -178,17 +153,9 @@ void special(registers_t* regs, mem_t *mem, u32 instr) {
     case 0x3C: dsll32(regs, instr); break;
     case 0x3E: dsrl32(regs, instr); break;
     case 0x3F: dsra32(regs, instr); break;
-    default: {
-      csh handle;
-      cs_insn *insn;
-      u8 code[4];
-      waccess(32, code, 0, instr);
-      size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
-      if(count > 0) {
-        log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-        cs_free(insn, count);
-      }
-    }
+    default:
+      logfatal("Unimplemented special %08X\n", instr);
+      break;
   }
 }
 
@@ -196,22 +163,15 @@ void regimm(registers_t* regs, mem_t *mem, u32 instr) {
   u8 mask = ((instr >> 16) & 0x1F);
 
   switch (mask) { // TODO: named constants for clearer code
+    case 0x00: b(regs, instr, regs->gpr[RS(instr)] < 0); break;
     case 0x01: b(regs, instr, regs->gpr[RS(instr)] >= 0); break;
     case 0x03: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
     case 0x11:
       regs->gpr[31] = regs->pc + 4;
       b(regs, instr, regs->gpr[RS(instr)] >= 0);
       break;
-    default: {
-      csh handle;
-      cs_insn *insn;
-      u8 code[4];
-      waccess(32, code, 0, instr);
-      size_t count = cs_disasm(handle, code, sizeof(u32), regs->pc, 0, &insn);
-      if(count > 0) {
-        log_(FATAL, "Unimplemented instruction %s, PC: %016lX\n", insn[0].op_str, regs->old_pc);
-        cs_free(insn, count);
-      }
-    }
+    default:
+      logfatal("Unimplemented regimm %d %d\n", (instr >> 19) & 3, (instr >> 16) & 7);
+      break;
   }
 }

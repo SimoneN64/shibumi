@@ -177,7 +177,7 @@ struct Logger
             else if (strncmp(item, "# ", 2) == 0) { color = ImVec4(1.0f, 0.8f, 0.6f, 1.0f); has_color = true; }
             if (has_color)
                 ImGui::PushStyleColor(ImGuiCol_Text, color);
-            ImGui::TextUnformatted(item);
+            ImGui::TextWrapped(item);
             if (has_color)
                 ImGui::PopStyleColor();
         }
