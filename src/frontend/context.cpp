@@ -1,18 +1,13 @@
 #include <context.hpp>
 #include <frontend.hpp>
+#include <util.hpp>
 
 namespace Shibumi
 {
 Context::Context() {
   framebuffer = (u8*)malloc(320 * 240 * 4);
   memset(framebuffer, 0, 320 * 240 * 4);
-  glGenTextures(1, &id);
-  glBindTexture(GL_TEXTURE_2D, id);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, framebuffer);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  id = CreateIDFromBuffer(framebuffer, 320, 240);
 }
 
 void Context::UpdateTexture(Emulator& emu, core_t& core) {
