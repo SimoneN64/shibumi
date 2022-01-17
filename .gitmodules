@@ -1,21 +1,6 @@
-[submodule "external/nativefiledialog-extended"]
-	path = external/nativefiledialog-extended
-	url = https://github.com/btzy/nativefiledialog-extended
 [submodule "tests/Dillon"]
 	path = tests/Dillon
 	url = https://github.com/Dillonb/n64-tests
-[submodule "external/imgui"]
-	path = external/imgui
-	url = https://github.com/ocornut/imgui
-[submodule "external/imgui_memory_editor"]
-	path = external/imgui_memory_editor
-	url = https://github.com/ocornut/imgui_club
-[submodule "external/Gui"]
-	path = external/Gui
-	url = https://github.com/CocoSimone/Gui
-[submodule "src/frontend/external/Gui"]
-	path = src/frontend/external/Gui
-	url = https://github.com/CocoSimone/Gui
-[submodule "src/frontend/external/nativefiledialog-extended"]
-	path = src/frontend/external/nativefiledialog-extended
+[submodule "external/nativefiledialog-extended"]
+	path = external/nativefiledialog-extended
 	url = https://github.com/btzy/nativefiledialog-extended
