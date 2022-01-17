@@ -60,16 +60,11 @@ void Context::Present(mem_t& mem) {
   }
 
   if(format == f8888) {
-    framebuffer[4] = 0xff;
     memcpy(framebuffer, &mem.rdram[origin & RDRAM_DSIZE], currentW * currentH * depth);
-    for(int i = 0; i < currentW * currentH * depth; i += depth) {
-      framebuffer[i + 4] |= 0xff;
-    }
   } else if (format == f5553) {
-    framebuffer[1] |= 1;
     for(int i = 0; i < currentW * currentH * depth; i += depth) {
       framebuffer[i] = mem.rdram[HALF_ADDR((i + origin) & RDRAM_DSIZE)];
-      framebuffer[i + 1] = mem.rdram[HALF_ADDR((i + 1 + origin) & RDRAM_DSIZE)] | (1 << 16);
+      framebuffer[i + 1] = mem.rdram[HALF_ADDR((i + 1 + origin) & RDRAM_DSIZE)];
     }
   }
 
