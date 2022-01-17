@@ -1,17 +1,19 @@
-cmake_minimum_required(VERSION 3.7.0)
+cmake_minimum_required(VERSION 3.21)
 project(shibumi)
 
-if(CMAKE_VERSION VERSION_LESS "3.7.0")
-  set(CMAKE_INCLUDE_CURRENT_DIR ON)
-endif()
+find_package(SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(src/frontend/)
+add_subdirectory(src/)
+add_subdirectory(external/)
 add_executable(shibumi src/main.cpp)
+
+include_directories(${SDL2_INCLUDE_DIRECTORIES})
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   add_compile_options(-g)
@@ -27,9 +29,9 @@ file(COPY ${CMAKE_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_BINARY_DIR}/resourc
 file(COPY ${CMAKE_SOURCE_DIR}/tests/ DESTINATION ${CMAKE_BINARY_DIR}/tests/)
 
 if(WIN32)
-  set(FLAGS -static gcc stdc++ winpthread winmm version Imm32 Setupapi)
+  set(FLAGS -static SDL2main SDL2 gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
-  set(FLAGS dl pthread)
+  set(FLAGS dl SDL2 pthread)
 endif()
 
-target_link_libraries(shibumi frontend ${FLAGS})
+target_link_libraries(shibumi core nfd OpenGL::GL ${FLAGS})
