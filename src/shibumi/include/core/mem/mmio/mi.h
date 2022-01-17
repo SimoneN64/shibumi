@@ -24,7 +24,5 @@ typedef struct mi_t {
 } mi_t;
 
 void init_mi(mi_t* mi);
-void mi_write8(mi_t* mi, u8 val, u32 paddr);
-u8 mi_read8(mi_t* mi, u32 paddr);
 u32 mi_read(mi_t* mi, u32 paddr);
 void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val);

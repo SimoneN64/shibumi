@@ -32,6 +32,7 @@ void dsrlv(registers_t* regs, u32 instr);
 void dsrl32(registers_t* regs, u32 instr);
 void dsub(registers_t* regs, u32 instr);
 void dsubu(registers_t* regs, u32 instr);
+void eret(registers_t* regs);
 void j(registers_t* regs, u32 instr);
 void jr(registers_t* regs, u32 instr);
 void jal(registers_t* regs, u32 instr);

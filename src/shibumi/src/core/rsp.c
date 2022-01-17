@@ -11,14 +11,14 @@ u32 sp_read(rsp_t* rsp, u32 addr) {
   switch (addr) {
     case 0x04040010: return rsp->sp_status.raw;
     case 0x04080000: return rsp->pc;
-    default: log_(FATAL, "Unimplemented SP register read %08X\n", addr);
+    default: logfatal("Unimplemented SP register read %08X\n", addr);
   }
 
   return 0;
 }
 
 #define CLEAR_SET(val, clear, set) do { \
-  if(clear && set) log_(FATAL, "Can't be both clear and set\n"); \
+  if(clear && set) logfatal("Can't be both clear and set\n"); \
   if(clear) val = 0; \
   if(set) val = 1; \
 } while(0)
@@ -44,6 +44,6 @@ void sp_write(rsp_t* rsp, mi_t* mi, registers_t* regs, u32 addr, u32 value) {
     } break;
     case 0x04080000:
       break;
-    default: log_(FATAL, "Unimplemented SP register write %08X, val: %08X\n\n", addr, value);
+    default: logfatal("Unimplemented SP register write %08X, val: %08X\n\n", addr, value);
   }
 }

@@ -25,6 +25,6 @@ INLINE void swap(u8 endianness, size_t size, u8* rom) {
     case Z64:
       break;
     default:
-      log_(FATAL, "Unrecognized rom format! Make sure this is a valid Nintendo 64 ROM dump!\n");
+      logfatal("Unrecognized rom format! Make sure this is a valid Nintendo 64 ROM dump!\n");
   }
 }

@@ -6,6 +6,7 @@ Context::~Context() {
   SDL_DestroyRenderer(renderer);
   SDL_DestroyWindow(window);
   SDL_Quit();
+  free(framebuffer);
 }
 
 Context::Context() {
@@ -20,9 +21,8 @@ Context::Context() {
   );
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
   SDL_RenderSetLogicalSize(renderer, currentW, currentH);
-  SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
   texture = SDL_CreateTexture(renderer, sdlFormat, SDL_TEXTUREACCESS_STREAMING, currentW, currentH);
-  framebuffer = (unsigned char*)calloc(currentW * currentH, depth);
+  framebuffer = (u8*)calloc(currentW * currentH, depth);
 }
 
 void Context::Present(mem_t& mem) {
@@ -41,11 +41,11 @@ void Context::Present(mem_t& mem) {
 
   if(formatChanged) {
     currentFormat = format;
-    if(format == f5553) {
+    if(currentFormat == f5553) {
       sdlFormat = SDL_PIXELFORMAT_RGBA5551;
       depth = 2;
-    } else if(format == f8888) {
-      sdlFormat = SDL_PIXELFORMAT_RGBA32;
+    } else if(currentFormat == f8888) {
+      sdlFormat = SDL_PIXELFORMAT_RGBA8888;
       depth = 4;
     }
 
@@ -54,21 +54,24 @@ void Context::Present(mem_t& mem) {
 
   if(reconstructTexture) {
     SDL_DestroyTexture(texture);
-    framebuffer = (u8*)realloc(framebuffer, w * h * depth);
-    texture = SDL_CreateTexture(renderer, sdlFormat, SDL_TEXTUREACCESS_STREAMING, w, h);
-    SDL_RenderSetLogicalSize(renderer, w, h);
+    framebuffer = (u8*)realloc(framebuffer, currentW * currentH * depth);
+    SDL_RenderSetLogicalSize(renderer, currentW, currentH);
+    texture = SDL_CreateTexture(renderer, sdlFormat, SDL_TEXTUREACCESS_STREAMING, currentW, currentH);
   }
 
   if(format == f8888) {
+    framebuffer[4] = 0xff;
     memcpy(framebuffer, &mem.rdram[origin & RDRAM_DSIZE], currentW * currentH * depth);
-  } else if (format == f5553) {
     for(int i = 0; i < currentW * currentH * depth; i += depth) {
-      framebuffer[i] = mem.rdram[HALF_ADDR(origin + i & RDRAM_DSIZE)];
-      framebuffer[i + 1] = mem.rdram[HALF_ADDR(origin + 1 + i & RDRAM_DSIZE)] | (1 << 16);
+      framebuffer[i + 4] |= 0xff;
+    }
+  } else if (format == f5553) {
+    framebuffer[1] |= 1;
+    for(int i = 0; i < currentW * currentH * depth; i += depth) {
+      framebuffer[i] = mem.rdram[HALF_ADDR((i + origin) & RDRAM_DSIZE)];
+      framebuffer[i + 1] = mem.rdram[HALF_ADDR((i + 1 + origin) & RDRAM_DSIZE)] | (1 << 16);
     }
   }
 
   SDL_UpdateTexture(texture, nullptr, framebuffer, currentW * depth);
-  SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-  SDL_RenderPresent(renderer);
 }

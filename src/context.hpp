@@ -15,6 +15,6 @@ struct Context {
   SDL_Texture* texture;
   unsigned char currentFormat = 3;
   int currentW = 320, currentH = 240, depth = 4;
-  unsigned char* framebuffer;
+  u8 *framebuffer;
   SDL_PixelFormatEnum sdlFormat = SDL_PIXELFORMAT_RGBA32;
 };
