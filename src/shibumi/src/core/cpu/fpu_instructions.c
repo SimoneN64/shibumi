@@ -25,8 +25,99 @@ void ctc1(registers_t* regs, u32 instr) {
   }
 }
 
+void cvtds(registers_t* regs, u32 instr) {
+  set_cop1_reg_double(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_float(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void cvtsd(registers_t* regs, u32 instr) {
+  set_cop1_reg_float(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_double(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void cvtwd(registers_t* regs, u32 instr) {
+  set_cop1_reg_word(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_double(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void cvtws(registers_t* regs, u32 instr) {
+  set_cop1_reg_word(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_float(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void cvtls(registers_t* regs, u32 instr) {
+  set_cop1_reg_dword(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_float(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void cvtsl(registers_t* regs, u32 instr) {
+  set_cop1_reg_float(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_dword(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
 void cvtdw(registers_t* regs, u32 instr) {
-  set_cop1_register_double(
+  set_cop1_reg_double(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_word(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void cvtsw(registers_t* regs, u32 instr) {
+  set_cop1_reg_float(
     &regs->cp1,
     &regs->cp0,
     FD(instr),
@@ -39,7 +130,7 @@ void cvtdw(registers_t* regs, u32 instr) {
 }
 
 void cvtdl(registers_t* regs, u32 instr) {
-  set_cop1_register_double(
+  set_cop1_reg_double(
     &regs->cp1,
     &regs->cp0,
     FD(instr),
@@ -49,6 +140,30 @@ void cvtdl(registers_t* regs, u32 instr) {
       FS(instr)
     )
   );
+}
+
+void cvtld(registers_t* regs, u32 instr) {
+  set_cop1_reg_dword(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_double(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void lwc1(registers_t* regs, mem_t* mem, u32 instr) {
+  u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
+  u32 data = read32(mem, addr);
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FT(instr), data);
+}
+
+void swc1(registers_t* regs, mem_t* mem, u32 instr) {
+  u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
+  write32(mem, regs, addr, get_cop1_reg_word(&regs->cp1, &regs->cp0, FT(instr)));
 }
 
 void ldc1(registers_t* regs, mem_t* mem, u32 instr) {

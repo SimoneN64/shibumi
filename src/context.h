@@ -10,8 +10,8 @@ typedef struct {
   SDL_Window* window;
   SDL_Renderer* renderer;
   SDL_Texture* texture;
-  unsigned char currentFormat;
-  int currentW, currentH, depth;
+  u8 currentFormat;
+  u32 currentW, currentH;
   u8 *framebuffer;
   SDL_PixelFormatEnum sdlFormat;
 } context_t;

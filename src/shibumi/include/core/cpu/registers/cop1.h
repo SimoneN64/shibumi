@@ -96,26 +96,26 @@ INLINE void set_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index, u64 value) 
   cop1->fgr[index].raw = value;
 }
 
-INLINE void set_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index, double value) {
+INLINE void set_cop1_reg_double(cop1_t *cop1, cop0_t *cop0, u8 index, double value) {
   u64 raw;
   memcpy(&raw, &value, sizeof(double));
   set_cop1_reg_dword(cop1, cop0, index, raw);
 }
 
-INLINE double get_cop1_register_double(cop1_t *cop1, cop0_t *cop0, u8 index) {
+INLINE double get_cop1_reg_double(cop1_t *cop1, cop0_t *cop0, u8 index) {
   double doublevalue;
   u64 raw = get_cop1_reg_dword(cop1, cop0, index);
   memcpy(&doublevalue, &raw, sizeof(double));
   return doublevalue;
 }
 
-INLINE void set_cop1_register_float(cop1_t *cop1, cop0_t *cop0, u8 index, float value) {
+INLINE void set_cop1_reg_float(cop1_t *cop1, cop0_t *cop0, u8 index, float value) {
   u32 raw;
   memcpy(&raw, &value, sizeof(float));
   set_cop1_reg_word(cop1, cop0, index, raw);
 }
 
-INLINE float get_cop1_register_float(cop1_t *cop1, cop0_t *cop0, u8 index) {
+INLINE float get_cop1_reg_float(cop1_t *cop1, cop0_t *cop0, u8 index) {
   u32 raw = get_cop1_reg_word(cop1, cop0, index);
   float floatvalue;
   memcpy(&floatvalue, &raw, sizeof(float));
