@@ -1,72 +1,7 @@
 #include <instructions.h>
-#include <instruction/decode_instr.h>
 #include <utils.h>
-#include <assert.h>
 
-#define ze_imm(x) ((x) & 0xffff)
 #define se_imm(x) ((s16)((x) & 0xFFFF))
-
-void mtcz(registers_t* regs, u32 instr, u8 index) {
-  switch(index) {
-  case 0:
-    set_cop0_reg_word(&regs->cp0, RD(instr), regs->gpr[RT(instr)]);
-    break;
-  case 1:
-    set_cop1_reg_word(&regs->cp1, &regs->cp0, RD(instr), regs->gpr[RT(instr)]);
-    break;
-  default:
-    logfatal("Invalid MTC%d", index);
-  }
-}
-
-void mfcz(registers_t* regs, u32 instr, u8 index) {
-  switch(index) {
-  case 0:
-    regs->gpr[RT(instr)] = (s32)get_cop0_reg_word(&regs->cp0, RD(instr));
-    break;
-  case 1:
-    regs->gpr[RT(instr)] = (s32)get_cop1_reg_word(&regs->cp1, &regs->cp0, RD(instr));
-    break;
-  default:
-    logfatal("Invalid MFC%d", index);
-  }
-}
-
-void cfcz(registers_t* regs, u32 instr, u8 index) {
-  switch(index) {
-  case 1: {
-    u8 rd = RD(instr);
-    s32 val = 0;
-    switch(rd) {
-      case 0: val = regs->cp1.fcr0; break;
-      case 31: val = regs->cp1.fcr31.raw; break;
-      default: logfatal("Undefined CFC1 with rd != 0 or 31\n");
-    }
-    regs->gpr[RT(instr)] = val;
-  } break;
-  default:
-    logfatal("Invalid CFC%d", index);
-  }
-}
-
-void ctcz(registers_t* regs, u32 instr, u8 index) {
-  switch(index) {
-  case 1: {
-    u8 rd = RD(instr);
-    u32 val = regs->gpr[RT(instr)];
-    switch(rd) {
-      case 0: logfatal("CTC1 attempt to write to FCR0 which is read only!\n");
-      case 31: {
-        val &= 0x183ffff;
-        regs->cp1.fcr31.raw = val;
-      } break;
-      default: logfatal("Undefined CTC1 with rd != 0 or 31\n");
-    }
-  } break;
-  default:
-    logfatal("Invalid CTC%d", index);
-  }
-}
 
 void add(registers_t* regs, u32 instr) {
   s32 rs = regs->gpr[RS(instr)];

@@ -1,4 +1,6 @@
 #include <instruction/decode_instr.h>
+#include <instruction/fpu_decode_instr.h>
+#include <instruction/cop0_decode_instr.h>
 #include <log.h>
 #include <access.h>
 
@@ -22,56 +24,8 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     case 0x0D: ori(regs, instr); break;
     case 0x0E: xori(regs, instr); break;
     case 0x0F: lui(regs, instr); break;
-    case 0x10: {
-      u8 mask_cop = (instr >> 21) & 0x1F;
-      u8 mask_cop2 = instr & 0x3F;
-      switch(mask_cop) {
-        case 0x00: mfcz(regs, instr, mask & 3); break;
-        case 0x02: cfcz(regs, instr, mask & 3); break;
-        case 0x04: mtcz(regs, instr, mask & 3); break;
-        case 0x06: ctcz(regs, instr, mask & 3); break;
-        case 0x10 ... 0x1F: {
-          switch(mask_cop2) {
-            case 0x02: break;
-            case 0x18: eret(regs); break;
-            default: logfatal("Unimplemented COP0 CO instruction %d %d (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
-          }
-        } break;
-        default: logfatal("Unimplemented COP0 instruction %d %d", mask_cop >> 4, mask_cop & 7);
-      }
-    } break;
-    case 0x11: {
-      u8 mask_cop = (instr >> 21) & 0x1F;
-      u8 mask_cop2 = instr & 0x3F;
-      switch(mask_cop) {
-        case 0x00: mfcz(regs, instr, mask & 3); break;
-        case 0x02: cfcz(regs, instr, mask & 3); break;
-        case 0x04: mtcz(regs, instr, mask & 3); break;
-        case 0x06: ctcz(regs, instr, mask & 3); break;
-        case 0x10: {
-          switch(mask_cop2) {
-            default: logfatal("Unimplemented COP1 CO instruction S[%d %d] (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
-          }
-        } break;
-        case 0x11: {
-          switch(mask_cop2) {
-            default: logfatal("Unimplemented COP1 CO instruction D[%d %d] (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
-          }
-        } break;
-        case 0x14: {
-          switch(mask_cop2) {
-            case 0x21: cvtdw(regs, instr); break;
-            default: logfatal("Unimplemented COP1 CO instruction W[%d %d] (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
-          }
-        } break;
-        case 0x15: {
-          switch(mask_cop2) {
-            default: logfatal("Unimplemented COP1 CO instruction L[%d %d] (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
-          }
-        } break;
-        default: logfatal("Unimplemented COP1 instruction %d %d", mask_cop >> 4, mask_cop & 7);
-      }
-    } break;
+    case 0x10: cop0_decode(regs, instr); break;
+    case 0x11: fpu_decode(regs, instr); break;
     case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
     case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
     case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
@@ -98,12 +52,14 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     case 0x2F: break; // cache
     case 0x30: ll(mem, regs, instr); break;
     case 0x34: lld(mem, regs, instr); break;
+    case 0x35: ldc1(regs, mem, instr); break;
     case 0x37: ld(mem, regs, instr); break;
     case 0x38: sc(mem, regs, instr); break;
     case 0x3C: scd(mem, regs, instr); break;
+    case 0x3D: sdc1(regs, mem, instr); break;
     case 0x3F: sd(mem, regs, instr); break;
     default:
-      logfatal("Unimplemented instruction %02X %d\n", mask, mask & 7);
+      logfatal("Unimplemented instruction %d %d\n", (mask >> 3) & 7, mask & 7);
   }
 }
 
@@ -189,6 +145,6 @@ void regimm(registers_t* regs, u32 instr) {
       bl(regs, instr, regs->gpr[RS(instr)] >= 0);
       break;
     default:
-      logfatal("Unimplemented regimm %d %d\n", (instr >> 19) & 3, (instr >> 16) & 7);
+      logfatal("Unimplemented regimm %d %d\n", (mask >> 3) & 3, mask & 7);
   }
 }

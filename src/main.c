@@ -1,6 +1,6 @@
 #include <core.h>
-#include <context.hpp>
-#include <nfd.hpp>
+#include <context.h>
+#include <nfd.h>
 
 int main(int argc, char* argv[]) {
   core_t core;
@@ -10,8 +10,9 @@ int main(int argc, char* argv[]) {
     core.running = load_rom(&core.mem, argv[1]);
   }
 
-  Context context;
-  NFD::Init();
+  context_t context;
+  init_context(&context);
+  NFD_Init();
   nfdchar_t* romFile;
 
   bool running = true;
@@ -19,8 +20,8 @@ int main(int argc, char* argv[]) {
   while(running) {
     if(core.running) {
       run_frame(&core);
-      context.Present(core.mem);
-      SDL_RenderCopy(context.renderer, context.texture, nullptr, nullptr);
+      context_present(&context, &core.mem);
+      SDL_RenderCopy(context.renderer, context.texture, NULL, NULL);
       SDL_RenderPresent(context.renderer);
     } else {
       SDL_SetRenderDrawColor(context.renderer, 0, 0, 0, 0);
@@ -50,7 +51,8 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  NFD::Quit();
+  NFD_Quit();
+  destroy_context(&context);
 
   return 0;
 }

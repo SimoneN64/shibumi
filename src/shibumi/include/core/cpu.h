@@ -1,7 +1,6 @@
 #pragma once
 #include <registers.h>
 #include <mem.h>
-#include <capstone.h>
 
 typedef struct {
   registers_t regs;

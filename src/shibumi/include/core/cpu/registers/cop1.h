@@ -41,11 +41,11 @@ ASSERTWORD(fcr31_t);
 
 typedef union {
   struct {
-    u32 lo:32;
-    u32 hi:32;
+    s32 lo:32;
+    s32 hi:32;
   } PACKED;
 
-  u64 raw;
+  s64 raw;
 } fgr_t;
 
 ASSERTDWORD(fgr_t);

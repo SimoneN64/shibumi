@@ -1,16 +1,71 @@
 #include <fpu_instructions.h>
-#define FD(x) (((x) >> 6) & 0x1F)
-#define FS(x) (((x) >> 11) & 0x1F)
+#include <log.h>
+
+void cfc1(registers_t* regs, u32 instr) {
+  u8 fd = FD(instr);
+  s32 val = 0;
+  switch(fd) {
+    case 0: val = (s32)regs->cp1.fcr0; break;
+    case 31: val = (s32)regs->cp1.fcr31.raw; break;
+    default: logfatal("Undefined CFC1 with rd != 0 or 31\n");
+  }
+  regs->gpr[RT(instr)] = val;
+}
+
+void ctc1(registers_t* regs, u32 instr) {
+  u8 fs = FS(instr);
+  u32 val = regs->gpr[RT(instr)];
+  switch(fs) {
+    case 0: logfatal("CTC1 attempt to write to FCR0 which is read only!\n");
+    case 31: {
+      val &= 0x183ffff;
+      regs->cp1.fcr31.raw = val;
+    } break;
+    default: logfatal("Undefined CTC1 with rd != 0 or 31\n");
+  }
+}
 
 void cvtdw(registers_t* regs, u32 instr) {
   set_cop1_register_double(
     &regs->cp1,
     &regs->cp0,
     FD(instr),
-    get_cop1_register_double(
+    get_cop1_reg_word(
       &regs->cp1,
       &regs->cp0,
       FS(instr)
     )
   );
+}
+
+void cvtdl(registers_t* regs, u32 instr) {
+  set_cop1_register_double(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_dword(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void ldc1(registers_t* regs, mem_t* mem, u32 instr) {
+  u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
+  u64 data = read64(mem, addr);
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr), data);
+}
+
+void sdc1(registers_t* regs, mem_t* mem, u32 instr) {
+  u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
+  write64(mem, addr, get_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr)));
+}
+
+void mfc1(registers_t* regs, u32 instr) {
+  regs->gpr[RT(instr)] = (s32)get_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr));
+}
+
+void mtc1(registers_t* regs, u32 instr) {
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr), regs->gpr[RT(instr)]);
 }

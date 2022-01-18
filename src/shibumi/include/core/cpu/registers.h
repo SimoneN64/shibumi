@@ -6,6 +6,10 @@
 #define RD(x) (((x) >> 11) & 0x1F)
 #define RT(x) (((x) >> 16) & 0x1F)
 #define RS(x) (((x) >> 21) & 0x1F)
+#define FD(x) (((x) >>  6) & 0x1F)
+#define FT(x) RT(x)
+#define FS(x) RD(x)
+#define base(x) RS(x)
 
 static const char* regs_str[32] = {
   "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3",

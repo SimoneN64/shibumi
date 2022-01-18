@@ -1,6 +1,7 @@
 #pragma once
 #include <registers.h>
 #include <mem.h>
+#include <cop0_instructions.h>
 
 void add(registers_t* regs, u32 instr);
 void addu(registers_t* regs, u32 instr);
@@ -11,8 +12,6 @@ void branch(registers_t* regs, bool cond, s64 address);
 void branch_likely(registers_t* regs, bool cond, s64 address);
 void b(registers_t* regs, u32 instr, bool cond);
 void bl(registers_t* regs, u32 instr, bool cond);
-void cfcz(registers_t* regs, u32 instr, u8 index);
-void ctcz(registers_t* regs, u32 instr, u8 index);
 void daddu(registers_t* regs, u32 instr);
 void daddiu(registers_t* regs, u32 instr);
 void ddiv(registers_t* regs, u32 instr);
@@ -51,12 +50,10 @@ void lw(mem_t* mem, registers_t* regs, u32 instr);
 void lwl(mem_t* mem, registers_t* regs, u32 instr);
 void lwu(mem_t* mem, registers_t* regs, u32 instr);
 void lwr(mem_t* mem, registers_t* regs, u32 instr);
-void mfcz(registers_t* regs, u32 instr, u8 index);
 void mfhi(registers_t* regs, u32 instr);
 void mflo(registers_t* regs, u32 instr);
 void mult(registers_t* regs, u32 instr);
 void multu(registers_t* regs, u32 instr);
-void mtcz(registers_t* regs, u32 instr, u8 index);
 void mthi(registers_t* regs, u32 instr);
 void mtlo(registers_t* regs, u32 instr);
 void nor(registers_t* regs, u32 instr);

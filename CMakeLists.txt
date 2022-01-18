@@ -2,16 +2,13 @@ cmake_minimum_required(VERSION 3.21)
 project(shibumi)
 
 find_package(SDL2 REQUIRED)
-find_package(OpenGL REQUIRED)
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(src/)
 add_subdirectory(external/)
-add_executable(shibumi src/main.cpp)
+add_executable(shibumi src/main.c)
 
 include_directories(${SDL2_INCLUDE_DIRECTORIES})
 
@@ -34,4 +31,4 @@ else()
   set(FLAGS dl SDL2 pthread)
 endif()
 
-target_link_libraries(shibumi core nfd OpenGL::GL ${FLAGS})
+target_link_libraries(shibumi core nfd ${FLAGS})
