@@ -1,5 +1,26 @@
 #include <fpu_instructions.h>
 #include <log.h>
+#include <math.h>
+
+void absd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), fabs(fs));
+}
+
+void abss(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_float(&regs->cp1, &regs->cp0, FD(instr), fabsf(fs));
+}
+
+void absw(registers_t* regs, u32 instr) {
+  s32 fs = (s32)get_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), abs(fs));
+}
+
+void absl(registers_t* regs, u32 instr) {
+  s64 fs = (s64)get_cop1_reg_dword(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), labs(fs));
+}
 
 void cfc1(registers_t* regs, u32 instr) {
   u8 fd = FD(instr);
@@ -95,7 +116,7 @@ void cvtsl(registers_t* regs, u32 instr) {
     &regs->cp1,
     &regs->cp0,
     FD(instr),
-    get_cop1_reg_dword(
+    (s64)get_cop1_reg_dword(
       &regs->cp1,
       &regs->cp0,
       FS(instr)
@@ -108,7 +129,7 @@ void cvtdw(registers_t* regs, u32 instr) {
     &regs->cp1,
     &regs->cp0,
     FD(instr),
-    get_cop1_reg_word(
+    (s32)get_cop1_reg_word(
       &regs->cp1,
       &regs->cp0,
       FS(instr)
@@ -121,7 +142,7 @@ void cvtsw(registers_t* regs, u32 instr) {
     &regs->cp1,
     &regs->cp0,
     FD(instr),
-    get_cop1_reg_word(
+    (s32)get_cop1_reg_word(
       &regs->cp1,
       &regs->cp0,
       FS(instr)
@@ -134,7 +155,7 @@ void cvtdl(registers_t* regs, u32 instr) {
     &regs->cp1,
     &regs->cp0,
     FD(instr),
-    get_cop1_reg_dword(
+    (s64)get_cop1_reg_dword(
       &regs->cp1,
       &regs->cp0,
       FS(instr)

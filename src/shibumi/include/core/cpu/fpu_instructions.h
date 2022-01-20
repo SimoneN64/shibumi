@@ -2,6 +2,10 @@
 #include <registers.h>
 #include <mem.h>
 
+void absd(registers_t* regs, u32 instr);
+void abss(registers_t* regs, u32 instr);
+void absw(registers_t* regs, u32 instr);
+void absl(registers_t* regs, u32 instr);
 void cfc1(registers_t* regs, u32 instr);
 void ctc1(registers_t* regs, u32 instr);
 void cvtls(registers_t* regs, u32 instr);
