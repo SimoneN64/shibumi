@@ -14,10 +14,9 @@ INLINE bool get_cond_double(double fs, double ft, comp_conds cond) {
   switch(cond) {
     case T: case GLE: return true;
     case EQ: return fs == ft;
-    case NGLE: case LE: case NGL: case LT:
+    case NGT: case NGL: case NGLE: case LE:
       return fs <= ft;
-    case NGE: return fs < ft;
-    case NGT: return fs <= ft;
+    case NGE: case LT: return fs < ft;
     case NEQ: return fs != ft;
     case GL: return fs > ft || fs < ft;
     case NLT: case GE: return fs >= ft;
@@ -30,10 +29,9 @@ INLINE bool get_cond_float(float fs, float ft, comp_conds cond) {
   switch(cond) {
     case T: case GLE: return true;
     case EQ: return fs == ft;
-    case NGLE: case LE: case NGL: case LT:
+    case NGT: case NGL: case NGLE: case LE:
       return fs <= ft;
-    case NGE: return fs < ft;
-    case NGT: return fs <= ft;
+    case NGE: case LT: return fs < ft;
     case NEQ: return fs != ft;
     case GL: return fs > ft || fs < ft;
     case NLT: case GE: return fs >= ft;
