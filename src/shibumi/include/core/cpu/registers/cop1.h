@@ -56,18 +56,6 @@ typedef struct {
   fgr_t fgr[32];
 } cop1_t;
 
-INLINE u32 get_cop1_reg_word(cop1_t* cop1, cop0_t* cop0, u8 index) {
-  if(cop0->Status.fr) {
-    return cop1->fgr[index].lo;
-  } else {
-    if(index & 1) {
-      return cop1->fgr[index & ~1].hi;
-    } else {
-      return cop1->fgr[index].lo;
-    }
-  }
-}
-
 INLINE void set_cop1_reg_word(cop1_t* cop1, cop0_t* cop0, u8 index, u32 value) {
   if(cop0->Status.fr) {
     cop1->fgr[index].lo = value;
@@ -80,20 +68,32 @@ INLINE void set_cop1_reg_word(cop1_t* cop1, cop0_t* cop0, u8 index, u32 value) {
   }
 }
 
+INLINE u32 get_cop1_reg_word(cop1_t* cop1, cop0_t* cop0, u8 index) {
+  if(cop0->Status.fr) {
+    return cop1->fgr[index].lo;
+  } else {
+    if(index & 1) {
+      return cop1->fgr[index & ~1].hi;
+    } else {
+      return cop1->fgr[index].lo;
+    }
+  }
+}
+
+INLINE void set_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index, u64 value) {
+  if(!cop0->Status.fr) {
+    index &= ~1;
+  }
+
+  cop1->fgr[index].raw = value;
+}
+
 INLINE u64 get_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index) {
   if(!cop0->Status.fr) {
     index &= ~1;
   }
   
   return cop1->fgr[index].raw;
-}
-
-INLINE void set_cop1_reg_dword(cop1_t* cop1, cop0_t* cop0, u8 index, u64 value) {
-  if(!cop0->Status.fr) {
-    index &= ~1;
-  } 
-  
-  cop1->fgr[index].raw = value;
 }
 
 INLINE void set_cop1_reg_double(cop1_t *cop1, cop0_t *cop0, u8 index, double value) {

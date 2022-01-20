@@ -4,3 +4,4 @@
 
 void mtc0(registers_t* regs, u32 instr);
 void mfc0(registers_t* regs, u32 instr);
+void eret(registers_t* regs);

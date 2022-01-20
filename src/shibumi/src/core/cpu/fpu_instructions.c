@@ -1,6 +1,46 @@
 #include <fpu_instructions.h>
 #include <log.h>
 #include <math.h>
+#include <fenv.h>
+
+#define push_rounding_mode(x) \
+  const int original_rounding_mode = fegetround(); \
+  fesetround(x)
+
+#define pop_rounding_mode \
+  fesetround(original_rounding_mode)
+
+INLINE bool get_cond_double(double fs, double ft, comp_conds cond) {
+  switch(cond) {
+    case T: case GLE: return true;
+    case EQ: return fs == ft;
+    case NGLE: case LE: case NGL: case LT:
+      return fs <= ft;
+    case NGE: return fs < ft;
+    case NGT: return fs <= ft;
+    case NEQ: return fs != ft;
+    case GL: return fs > ft || fs < ft;
+    case NLT: case GE: return fs >= ft;
+    case NLE: case GT: return fs > ft;
+    default: logfatal("Unhandled compare condition %d\n", cond);
+  }
+}
+
+INLINE bool get_cond_float(float fs, float ft, comp_conds cond) {
+  switch(cond) {
+    case T: case GLE: return true;
+    case EQ: return fs == ft;
+    case NGLE: case LE: case NGL: case LT:
+      return fs <= ft;
+    case NGE: return fs < ft;
+    case NGT: return fs <= ft;
+    case NEQ: return fs != ft;
+    case GL: return fs > ft || fs < ft;
+    case NLT: case GE: return fs >= ft;
+    case NLE: case GT: return fs > ft;
+    default: logfatal("Unhandled compare condition %d\n", cond);
+  }
+}
 
 void absd(registers_t* regs, u32 instr) {
   double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
@@ -20,6 +60,44 @@ void absw(registers_t* regs, u32 instr) {
 void absl(registers_t* regs, u32 instr) {
   s64 fs = (s64)get_cop1_reg_dword(&regs->cp1, &regs->cp0, FS(instr));
   set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), labs(fs));
+}
+
+void adds(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  float ft = get_cop1_reg_float(&regs->cp1, &regs->cp0, FT(instr));
+  float result = fs + ft;
+  set_cop1_reg_float(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void addd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
+  double result = fs + ft;
+  set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void ceills(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  s64 result = ceilf(fs);
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void ceilws(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  s32 result = ceilf(fs);
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void ceilld(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  s64 result = ceil(fs);
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void ceilwd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  s32 result = ceil(fs);
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), result);
 }
 
 void cfc1(registers_t* regs, u32 instr) {
@@ -176,6 +254,30 @@ void cvtld(registers_t* regs, u32 instr) {
   );
 }
 
+void ccondd(registers_t* regs, u32 instr, comp_conds cond) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
+  regs->cp1.fcr31.compare = get_cond_double(fs, ft, cond);
+}
+
+void cconds(registers_t* regs, u32 instr, comp_conds cond) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  float ft = get_cop1_reg_float(&regs->cp1, &regs->cp0, FT(instr));
+  regs->cp1.fcr31.compare = get_cond_float(fs, ft, cond);
+}
+
+void divs(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  float ft = get_cop1_reg_float(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_float(&regs->cp1, &regs->cp0, FD(instr), fs / ft);
+}
+
+void divd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), fs / ft);
+}
+
 void lwc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
   u32 data = read32(mem, addr);
@@ -191,6 +293,30 @@ void ldc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
   u64 data = read64(mem, addr);
   set_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr), data);
+}
+
+void truncws(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  s32 result = (s32)truncf(fs);
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void truncwd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  s32 result = (s32)trunc(fs);
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void truncls(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  s64 result = (s64)truncf(fs);
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), result);
+}
+
+void truncld(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  s64 result = (s64)trunc(fs);
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), result);
 }
 
 void sdc1(registers_t* regs, mem_t* mem, u32 instr) {

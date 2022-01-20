@@ -24,7 +24,7 @@ typedef union {
         unsigned ip7:1;
       } PACKED;
       u8 raw;
-    } PACKED ip;
+    } ip;
     unsigned:12;
     unsigned cop_error:2;
     unsigned:1;
@@ -120,10 +120,8 @@ INLINE u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
     case 29: return cop0->TagHi;
     case 30: return cop0->ErrorEPC;
     case 31: return cop0->r31;
+    default: return 0;
   }
-
-  //silence warning
-  return 0;
 }
 
 INLINE void set_cop0_reg_word(cop0_t* cop0, u8 index, u32 value) {
@@ -160,5 +158,6 @@ INLINE void set_cop0_reg_word(cop0_t* cop0, u8 index, u32 value) {
     case 29: cop0->TagHi = value; break;
     case 30: cop0->ErrorEPC = value; break;
     case 31: cop0->r31 = value; break;
+    default: break;
   }
 }

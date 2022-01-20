@@ -1,6 +1,7 @@
 #include <cpu.h>
 #include <instruction/decode_instr.h>
 #include <utils.h>
+#include <fenv.h>
 
 void init_cpu(cpu_t *cpu) {
   init_registers(&cpu->regs);

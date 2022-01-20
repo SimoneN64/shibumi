@@ -104,20 +104,6 @@ void ddivu(registers_t* regs, u32 instr) {
   }
 }
 
-void eret(registers_t* regs) {
-  printf("PC before ERET = %016lX\n", regs->pc);
-
-  if(regs->cp0.Status.erl) {
-    set_pc(regs, regs->cp0.ErrorEPC);
-    regs->cp0.Status.erl = false;
-  } else {
-    set_pc(regs, regs->cp0.EPC);
-    regs->cp0.Status.exl = false;
-  }
-
-  printf("PC after ERET = %016lX\n", regs->pc);
-}
-
 void branch(registers_t* regs, bool cond, s64 address) {
   if (cond) {
     regs->next_pc = address;
@@ -133,13 +119,13 @@ void branch_likely(registers_t* regs, bool cond, s64 address) {
 }
 
 void b(registers_t* regs, u32 instr, bool cond) {
-  s64 offset = se_imm((s64)instr) << 2;
+  s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
   branch(regs, cond, address);
 }
 
 void bl(registers_t* regs, u32 instr, bool cond) {
-  s64 offset = se_imm((s64)instr) << 2;
+  s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
   branch_likely(regs, cond, address);
 }
