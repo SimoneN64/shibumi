@@ -9,7 +9,7 @@ void cop0_decode(registers_t* regs, u32 instr) {
     case 0x04: mtc0(regs, instr); break;
     case 0x10 ... 0x1F:
       switch(mask_cop2) {
-        case 0x02: break;
+        case 0x02: break; // TLBWI
         case 0x18: eret(regs); break;
         default: logfatal("Unimplemented COP0 CO instruction %d %d (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
       }

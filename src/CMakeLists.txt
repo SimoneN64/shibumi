@@ -3,11 +3,13 @@ project(core)
 file(GLOB_RECURSE SOURCES "shibumi/src/*.c")
 file(GLOB_RECURSE HEADERS "shibumi/include/*.h")
 
+add_subdirectory(../external temp)
+
 add_library(core
   ${SOURCES}
   ${HEADERS}
-  context.c
-  context.h
+  emu.c
+  emu.h
 )
 
 target_include_directories(core PUBLIC
@@ -23,3 +25,5 @@ target_include_directories(core PUBLIC
   shibumi/include/core/rsp/
   shibumi/include/utils/
 )
+
+target_link_libraries(core PUBLIC nfd)

@@ -4,36 +4,36 @@
 #define se_imm(x) ((s16)((x) & 0xFFFF))
 
 void add(registers_t* regs, u32 instr) {
-  s32 rs = regs->gpr[RS(instr)];
-  s32 rt = regs->gpr[RT(instr)];
+  s32 rs = (s32)regs->gpr[RS(instr)];
+  s32 rt = (s32)regs->gpr[RT(instr)];
   s32 result = rs + rt;
   regs->gpr[RD(instr)] = result;
 }
 
 void addu(registers_t* regs, u32 instr) {
-  s32 rs = regs->gpr[RS(instr)];
-  s32 rt = regs->gpr[RT(instr)];
+  s32 rs = (s32)regs->gpr[RS(instr)];
+  s32 rt = (s32)regs->gpr[RT(instr)];
   s32 result = rs + rt;
   regs->gpr[RD(instr)] = result;
 }
 
 void addiu(registers_t* regs, u32 instr) {
-  u32 reg = regs->gpr[RS(instr)];
-  s16 imm = instr;
-  s32 result = reg + imm;
+  s32 rs = (s32)regs->gpr[RS(instr)];
+  s16 imm = (s16)(instr);
+  s32 result = rs + imm;
   regs->gpr[RT(instr)] = result;
 }
 
 void daddiu(registers_t* regs, u32 instr) {
-  s16 addend1 = instr;
-  s64 addend2 = regs->gpr[RS(instr)];
-  regs->gpr[RT(instr)] = addend1 + addend2;
+  s16 imm = (s16)(instr);
+  s64 rs = regs->gpr[RS(instr)];
+  regs->gpr[RT(instr)] = rs + imm;
 }
 
 void daddu(registers_t* regs, u32 instr) {
-  s64 addend1 = regs->gpr[RS(instr)];
-  s64 addend2 = regs->gpr[RT(instr)];
-  regs->gpr[RD(instr)] = addend1 + addend2;
+  s64 rs = regs->gpr[RS(instr)];
+  s64 rt = regs->gpr[RT(instr)];
+  regs->gpr[RD(instr)] = rs + rt;
 }
 
 void div_(registers_t* regs, u32 instr) {
@@ -62,8 +62,8 @@ void divu(registers_t* regs, u32 instr) {
     regs->lo = -1;
     regs->hi = (s32)dividend;
   } else {
-    s32 quotient = dividend / divisor;
-    s32 remainder = dividend % divisor;
+    s32 quotient = (s32)(dividend / divisor);
+    s32 remainder = (s32)(dividend % divisor);
     regs->lo = quotient;
     regs->hi = remainder;
   }
@@ -95,12 +95,12 @@ void ddivu(registers_t* regs, u32 instr) {
   u64 divisor = regs->gpr[RT(instr)];
   if(divisor == 0) {
     regs->lo = -1;
-    regs->hi = dividend;
+    regs->hi = (s64)dividend;
   } else {
     u64 quotient = dividend / divisor;
     u64 remainder = dividend % divisor;
-    regs->lo = quotient;
-    regs->hi = remainder;
+    regs->lo = (s64)quotient;
+    regs->hi = (s64)remainder;
   }
 }
 
@@ -138,8 +138,7 @@ void lui(registers_t* regs, u32 instr) {
 
 void lb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
-  s8 value = read8(mem, address);
-  regs->gpr[RT(instr)] = (s64)value;
+  regs->gpr[RT(instr)] = (s64)(s8)read8(mem, address);
 }
 
 void lh(mem_t* mem, registers_t* regs, u32 instr) {
@@ -148,8 +147,7 @@ void lh(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened\n");
   }
 
-  s16 value = read16(mem, address);
-  regs->gpr[RT(instr)] = (s64)value;
+  regs->gpr[RT(instr)] = (s64)(s16)read16(mem, address);
 }
 
 void lw(mem_t* mem, registers_t* regs, u32 instr) {
@@ -158,7 +156,7 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened\n");
   }
 
-  s32 value = read32(mem, address);
+  s32 value = read32(mem, address, regs->pc);
   regs->gpr[RT(instr)] = value;
 }
 
@@ -171,7 +169,7 @@ void ll(mem_t* mem, registers_t* regs, u32 instr) {
   regs->LLBit = true;
   regs->cp0.LLAddr = address;
 
-  s32 value = read32(mem, address);
+  s32 value = read32(mem, address, regs->pc);
   regs->gpr[RT(instr)] = value;
 }
 
@@ -179,7 +177,7 @@ void lwl(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 0) & 3);
   u32 mask = 0xFFFFFFFF << shift;
-  u32 data = read32(mem, address & ~3);
+  u32 data = read32(mem, address & ~3, regs->pc);
   s64 rt = regs->gpr[RT(instr)];
   s32 result = (rt & ~mask) | (data << shift);
   regs->gpr[RT(instr)] = result;
@@ -189,7 +187,7 @@ void lwr(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 3) & 3);
   u32 mask = 0xFFFFFFFF >> shift;
-  u32 data = read32(mem, address & ~3);
+  u32 data = read32(mem, address & ~3, regs->pc);
   s64 rt = regs->gpr[RT(instr)];
   s32 result = (rt & ~mask) | (data >> shift);
   regs->gpr[RT(instr)] = result;
@@ -260,7 +258,7 @@ void lwu(mem_t* mem, registers_t* regs, u32 instr) {
     logfatal("Unaligned access that shouldn't have happened\n");
   }
 
-  u32 value = read32(mem, address);
+  u32 value = read32(mem, address, regs->pc);
   regs->gpr[RT(instr)] = value;
 }
 
@@ -346,7 +344,7 @@ void swl(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 0) & 3);
   u32 mask = 0xFFFFFFFF >> shift;
-  u32 data = read32(mem, address & ~3);
+  u32 data = read32(mem, address & ~3, regs->pc);
   u32 rt = regs->gpr[RT(instr)];
   write32(mem, regs, address & ~3, (data & ~mask) | (rt >> shift));
 }
@@ -355,7 +353,7 @@ void swr(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 3) & 3);
   u32 mask = 0xFFFFFFFF << shift;
-  u32 data = read32(mem, address & ~3);
+  u32 data = read32(mem, address & ~3, regs->pc);
   u32 rt = regs->gpr[RT(instr)];
   write32(mem, regs, address & ~3, (data & ~mask) | (rt << shift));
 }

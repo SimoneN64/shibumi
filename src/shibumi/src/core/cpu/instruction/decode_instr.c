@@ -49,7 +49,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     case 0x2C: sdl(mem, regs, instr); break;
     case 0x2D: sdr(mem, regs, instr); break;
     case 0x2E: swr(mem, regs, instr); break;
-    case 0x2F: break; // cache
+    case 0x2F: break; // CACHE
     case 0x30: ll(mem, regs, instr); break;
     case 0x31: lwc1(regs, mem, instr); break;
     case 0x34: lld(mem, regs, instr); break;

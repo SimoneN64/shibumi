@@ -1,10 +1,9 @@
 #pragma once
 #include <SDL2/SDL.h>
-#include <vi.h>
+#include <core.h>
+#include <nfd.h>
 #define W 1024
 #define H 768
-
-typedef struct mem_t mem_t;
 
 typedef struct {
   SDL_Window* window;
@@ -14,8 +13,11 @@ typedef struct {
   u32 currentW, currentH;
   u8 *framebuffer;
   SDL_PixelFormatEnum sdlFormat;
-} context_t;
+  core_t core;
+  nfdchar_t* romFile;
+} emu_t;
 
-void destroy_context(context_t* context);
-void init_context(context_t* context);
-void context_present(context_t* context, mem_t* mem);
+void destroy_emu(emu_t* emu);
+void init_emu(emu_t* emu);
+void emu_run(emu_t* emu);
+void emu_present(emu_t* emu);

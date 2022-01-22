@@ -7,7 +7,6 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_subdirectory(src/)
-add_subdirectory(external/)
 add_executable(shibumi src/main.c)
 
 include_directories(${SDL2_INCLUDE_DIRECTORIES})
@@ -31,4 +30,4 @@ else()
   set(FLAGS dl SDL2 pthread)
 endif()
 
-target_link_libraries(shibumi core nfd ${FLAGS})
+target_link_libraries(shibumi core ${FLAGS})

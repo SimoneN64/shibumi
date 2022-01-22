@@ -79,7 +79,7 @@ u8 read8(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return mem->rdram[BYTE_ADDR(paddr)];
     case 0x04001000 ... 0x04001FFF: return mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE];
-    default: logfatal("Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr); return 0;
+    default: logfatal("Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr);
   }
 }
 
@@ -89,11 +89,11 @@ u16 read16(mem_t* mem, u32 vaddr) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(16, mem->rdram, HALF_ADDR(paddr));
     case 0x04001000 ... 0x04001FFF: return raccess(16, mem->imem, HALF_ADDR(paddr) & IMEM_DSIZE);
-    default: logfatal("Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr); return 0;
+    default: logfatal("Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr);
   }
 }
 
-u32 read32(mem_t* mem, u32 vaddr) {
+u32 read32(mem_t* mem, u32 vaddr, s64 pc) {
   u32 paddr = vtp(vaddr);
   
   switch(paddr) {
@@ -104,7 +104,9 @@ u32 read32(mem_t* mem, u32 vaddr) {
     case 0x04600000 ... 0x048FFFFF: return read_mmio(&mem->mmio, paddr);
     case 0x10000000 ... 0x1FBFFFFF: return raccess(32, mem->cart, paddr & mem->rom_mask);
     case 0x1FC00000 ... 0x1FC007BF: return raccess(32, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
-    case 0x1FC007C0 ... 0x1FC007FF: return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
+    case 0x1FC007C0 ... 0x1FC007FF:
+      logdebug("PC = %016lX\n", pc);
+      return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
@@ -117,9 +119,9 @@ u64 read64(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: return raccess(64, mem->rdram, paddr); break;
-    case 0x04001000 ... 0x04001FFF: return raccess(64, mem->imem, paddr & IMEM_DSIZE); break;
-    default: logfatal("Unimplemented %s[%08X] 64-bit read\n", regions_str(paddr), paddr); return 0;
+    case 0x00000000 ... 0x007FFFFF: return raccess(64, mem->rdram, paddr);
+    case 0x04001000 ... 0x04001FFF: return raccess(64, mem->imem, paddr & IMEM_DSIZE);
+    default: logfatal("Unimplemented %s[%08X] 64-bit read\n", regions_str(paddr), paddr);
   }
 }
 

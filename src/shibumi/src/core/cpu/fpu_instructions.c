@@ -278,7 +278,7 @@ void divd(registers_t* regs, u32 instr) {
 
 void lwc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
-  u32 data = read32(mem, addr);
+  u32 data = read32(mem, addr, regs->pc);
   set_cop1_reg_word(&regs->cp1, &regs->cp0, FT(instr), data);
 }
 
