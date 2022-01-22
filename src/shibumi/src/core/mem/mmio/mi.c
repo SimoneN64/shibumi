@@ -42,7 +42,7 @@ void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
       }
 
       if (val & (1 << 11)) {
-        mi->mi_intr.dp = false;
+        interrupt_lower(mi, regs, DP);
       }
 
       if (val & (1 << 12)) {
@@ -68,9 +68,7 @@ void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
         }
       }
 
-      if(mi->mi_intr_mask.raw != 0) {
-        process_interrupt(mi, regs);
-      }
+      process_interrupt(mi, regs);
       break;
     default: logfatal("Unhandled MI[%08X] write (%08X)\n", val, paddr);
   }

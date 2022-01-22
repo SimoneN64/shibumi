@@ -114,7 +114,7 @@ void branch_likely(registers_t* regs, bool cond, s64 address) {
   if (cond) {
     regs->next_pc = address;
   } else {
-    set_pc(regs, regs->pc + 4);
+    set_pc(regs, regs->next_pc);
   }
 }
 
@@ -124,7 +124,21 @@ void b(registers_t* regs, u32 instr, bool cond) {
   branch(regs, cond, address);
 }
 
+void blink(registers_t* regs, u32 instr, bool cond) {
+  regs->gpr[31] = regs->next_pc;
+  s64 offset = (s64)se_imm(instr) << 2;
+  s64 address = regs->pc + offset;
+  branch(regs, cond, address);
+}
+
 void bl(registers_t* regs, u32 instr, bool cond) {
+  s64 offset = (s64)se_imm(instr) << 2;
+  s64 address = regs->pc + offset;
+  branch_likely(regs, cond, address);
+}
+
+void bllink(registers_t* regs, u32 instr, bool cond) {
+  regs->gpr[31] = regs->next_pc;
   s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
   branch_likely(regs, cond, address);
@@ -373,14 +387,17 @@ void nor(registers_t* regs, u32 instr) {
 }
 
 void jal(registers_t* regs, u32 instr) {
-  regs->gpr[31] = regs->pc + 4;
+  regs->gpr[31] = regs->next_pc;
   s64 target = (instr & 0x3ffffff) << 2;
   s64 combined = (regs->old_pc & ~0xfffffff) | target;
   branch(regs, true, combined);
 }
 
 void jalr(registers_t* regs, u32 instr) {
-  regs->gpr[RD(instr)] = regs->pc + 4;
+  if(RD(instr) == RS(instr)) {
+    logfatal("JALR with RS == RD!\n");
+  }
+  regs->gpr[RD(instr)] = regs->next_pc;
   branch(regs, true, regs->gpr[RS(instr)]);
 }
 

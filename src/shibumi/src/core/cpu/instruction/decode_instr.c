@@ -130,22 +130,10 @@ void regimm(registers_t* regs, u32 instr) {
     case 0x01: b(regs, instr, regs->gpr[RS(instr)] >= 0); break;
     case 0x02: bl(regs, instr, regs->gpr[RS(instr)] < 0); break;
     case 0x03: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
-    case 0x10:
-      regs->gpr[31] = regs->pc + 4;
-      b(regs, instr, regs->gpr[RS(instr)] < 0);
-      break;
-    case 0x11:
-      regs->gpr[31] = regs->pc + 4;
-      b(regs, instr, regs->gpr[RS(instr)] >= 0);
-      break;
-    case 0x12:
-      regs->gpr[31] = regs->pc + 4;
-      bl(regs, instr, regs->gpr[RS(instr)] < 0);
-      break;
-    case 0x13:
-      regs->gpr[31] = regs->pc + 4;
-      bl(regs, instr, regs->gpr[RS(instr)] >= 0);
-      break;
+    case 0x10: blink(regs, instr, regs->gpr[RS(instr)] < 0); break;
+    case 0x11: blink(regs, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x12: bllink(regs, instr, regs->gpr[RS(instr)] < 0); break;
+    case 0x13: bllink(regs, instr, regs->gpr[RS(instr)] >= 0); break;
     default:
       logfatal("Unimplemented regimm %d %d\n", (mask >> 3) & 3, mask & 7);
   }

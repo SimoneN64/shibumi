@@ -9,6 +9,7 @@ void init_mmio(mmio_t *mmio) {
   init_ri(&mmio->ri);
   init_vi(&mmio->vi);
   init_si(&mmio->si);
+  init_rsp(&mmio->rsp);
 }
 
 u32 read_mmio(mmio_t* mmio, u32 addr) {
