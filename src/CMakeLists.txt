@@ -10,7 +10,7 @@ add_library(core
   ${HEADERS}
   emu.c
   emu.h
-)
+  shibumi/src/core/cpu/registers/cop0.c)
 
 target_include_directories(core PUBLIC
   .

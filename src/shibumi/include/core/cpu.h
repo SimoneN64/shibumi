@@ -2,7 +2,7 @@
 #include <registers.h>
 #include <mem.h>
 
-typedef struct {
+typedef struct cpu_t {
   registers_t regs;
 } cpu_t;
 

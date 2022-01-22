@@ -3,9 +3,11 @@
 #include <instruction/cop0_decode_instr.h>
 #include <log.h>
 #include <access.h>
+#include <cpu.h>
 
-void exec(registers_t* regs, mem_t* mem, u32 instr) {
+void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   u8 mask = (instr >> 26) & 0x3f;
+  registers_t* regs = &cpu->regs;
   // 00rr_rccc
   switch(mask) { // TODO: named constants for clearer code
     case 0x00: special(regs, instr); break;
@@ -24,7 +26,7 @@ void exec(registers_t* regs, mem_t* mem, u32 instr) {
     case 0x0D: ori(regs, instr); break;
     case 0x0E: xori(regs, instr); break;
     case 0x0F: lui(regs, instr); break;
-    case 0x10: cop0_decode(regs, instr); break;
+    case 0x10: cop0_decode(cpu, mem, instr); break;
     case 0x11: fpu_decode(regs, instr); break;
     case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
     case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;

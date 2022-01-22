@@ -1,7 +1,8 @@
 #include <cop0_instructions.h>
+#include <cpu.h>
 
-void mtc0(registers_t* regs, u32 instr) {
-  set_cop0_reg_word(&regs->cp0, RD(instr), regs->gpr[RT(instr)]);
+void mtc0(cpu_t* cpu, mem_t* mem, u32 instr) {
+  set_cop0_reg_word(cpu, mem, RD(instr), cpu->regs.gpr[RT(instr)]);
 }
 
 void mfc0(registers_t* regs, u32 instr) {

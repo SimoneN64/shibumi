@@ -1,12 +1,14 @@
 #include <cop0_decode_instr.h>
 #include <log.h>
+#include <cpu.h>
 
-void cop0_decode(registers_t* regs, u32 instr) {
+void cop0_decode(cpu_t* cpu, mem_t* mem, u32 instr) {
   u8 mask_cop = (instr >> 21) & 0x1F;
   u8 mask_cop2 = instr & 0x3F;
+  registers_t* regs = &cpu->regs;
   switch(mask_cop) {
     case 0x00: mfc0(regs, instr); break;
-    case 0x04: mtc0(regs, instr); break;
+    case 0x04: mtc0(cpu, mem, instr); break;
     case 0x10 ... 0x1F:
       switch(mask_cop2) {
         case 0x02: break; // TLBWI
