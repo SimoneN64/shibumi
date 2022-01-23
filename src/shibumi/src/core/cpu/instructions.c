@@ -394,11 +394,8 @@ void jal(registers_t* regs, u32 instr) {
 }
 
 void jalr(registers_t* regs, u32 instr) {
-  if(RD(instr) == RS(instr)) {
-    logfatal("JALR with RS == RD!\n");
-  }
-  regs->gpr[RD(instr)] = regs->next_pc;
   branch(regs, true, regs->gpr[RS(instr)]);
+  regs->gpr[RD(instr)] = regs->pc + 4;
 }
 
 void slti(registers_t* regs, u32 instr) {
