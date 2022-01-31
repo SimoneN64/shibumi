@@ -18,7 +18,7 @@ void step(cpu_t *cpu, mem_t *mem) {
 }
 
 INLINE bool should_service_interrupt(registers_t* regs) {
-  bool interrupts_pending = (regs->cp0.Status.im & regs->cp0.Cause.ip.ip2) != 0;
+  bool interrupts_pending = (regs->cp0.Status.im & regs->cp0.Cause.ip.raw) != 0;
   bool interrupts_enabled = regs->cp0.Status.ie == 1;
   bool currently_handling_exception = regs->cp0.Status.exl == 1;
   bool currently_handling_error = regs->cp0.Status.erl == 1;

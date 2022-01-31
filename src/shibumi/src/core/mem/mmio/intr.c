@@ -56,6 +56,7 @@ void interrupt_lower(mi_t* mi, registers_t* regs, interrupt_t intr) {
 void process_interrupt(mi_t* mi, registers_t* regs) {
   bool interrupt = mi->mi_intr.raw & mi->mi_intr_mask.raw;
   regs->cp0.Cause.ip.ip2 |= (interrupt << 2);
-  if(interrupt)
+  if(interrupt) {
     logfatal("Process interrupts\n");
+  }
 }
