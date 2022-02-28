@@ -11,7 +11,6 @@ typedef struct {
   SDL_Texture* texture;
   u8 currentFormat;
   u32 currentW, currentH;
-  u8 *framebuffer;
   SDL_PixelFormatEnum sdlFormat;
   core_t core;
   nfdchar_t* romFile;

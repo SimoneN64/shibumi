@@ -8,4 +8,4 @@ typedef struct cpu_t {
 
 void init_cpu(cpu_t* cpu);
 void step(cpu_t* cpu, mem_t* mem);
-void handle_interrupt(cpu_t* cpu, mem_t* mem);
+void handle_exception(cpu_t* cpu, mem_t* mem);

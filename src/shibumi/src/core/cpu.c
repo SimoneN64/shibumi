@@ -14,7 +14,6 @@ void step(cpu_t *cpu, mem_t *mem) {
   regs->pc = regs->next_pc;
   regs->next_pc += 4;
   exec(cpu, mem, instruction);
-  handle_interrupt(cpu, mem);
 }
 
 INLINE bool should_service_interrupt(registers_t* regs) {
@@ -27,7 +26,7 @@ INLINE bool should_service_interrupt(registers_t* regs) {
          !currently_handling_exception && !currently_handling_error;
 }
 
-void handle_interrupt(cpu_t* cpu, mem_t* mem) {
+void handle_exception(cpu_t* cpu, mem_t* mem) {
   if(should_service_interrupt(&cpu->regs)) {
     logfatal("Should service interrupt!");
   }

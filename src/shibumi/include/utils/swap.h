@@ -5,8 +5,6 @@
 #define Z64 0x80
 #define N64 0x40
 #define V64 0x37
-#define bswap_16(x) (((x) << 8) | ((x) >> 8))
-#define bswap_32(x) ((((x) << 24) | ((x) >> 24)) | (((x & 0xFF00) << 8) | ((x & 0xFF0000) >> 8)))
 
 INLINE void swap(u8 endianness, size_t size, u8* rom) {
   switch(endianness) {

@@ -2,19 +2,15 @@
 #include <mem.h>
 
 void destroy_emu(emu_t* emu) {
-  free(emu->framebuffer);
   SDL_DestroyTexture(emu->texture);
   SDL_DestroyRenderer(emu->renderer);
   SDL_DestroyWindow(emu->window);
   SDL_Quit();
+  NFD_Quit();
 }
 
 void init_emu(emu_t* emu) {
   init_core(&emu->core);
-  emu->currentW = 320;
-  emu->currentH = 240;
-  emu->sdlFormat = SDL_PIXELFORMAT_RGBA32;
-  emu->currentFormat = f8888;
 
   SDL_Init(SDL_INIT_VIDEO);
   emu->window = SDL_CreateWindow(
@@ -26,15 +22,14 @@ void init_emu(emu_t* emu) {
     SDL_WINDOW_RESIZABLE
   );
   emu->renderer = SDL_CreateRenderer(emu->window, -1, SDL_RENDERER_ACCELERATED);
-  SDL_RenderSetLogicalSize(emu->renderer, (int)emu->currentW, (int)emu->currentH);
   emu->texture = SDL_CreateTexture(
     emu->renderer,
-    emu->sdlFormat,
+    SDL_PIXELFORMAT_RGBA32,
     SDL_TEXTUREACCESS_STREAMING,
-    (int)emu->currentW,
-    (int)emu->currentH
- );
-  emu->framebuffer = (u8*)calloc(emu->currentW * emu->currentH, 4);
+    320,
+    240
+  );
+  SDL_RenderSetLogicalSize(emu->renderer, 320, 240);
   NFD_Init();
 }
 
@@ -44,23 +39,32 @@ void emu_present(emu_t* emu) {
   const u32 origin = mem->mmio.vi.origin & 0xFFFFFF;
   const u8 format = mem->mmio.vi.status.format;
   u8 depth = format == f8888 ? 4 : format == f5553 ? 2 : 0;
+  u8* temp = calloc(RDRAM_SIZE - origin, 1);
+
+  if(format == f8888) {
+    memcpy(temp, &mem->rdram[origin], w * h * depth);
+  } else if (format == f5553) {
+    for(int i = 0; i < w * h * depth; i += (int)depth) {
+      temp[i] = mem->rdram[HALF_ADDR((i + origin) & RDRAM_DSIZE)];
+      temp[i + 1] = mem->rdram[HALF_ADDR((i + 1 + origin) & RDRAM_DSIZE)];
+    }
+  }
+
   bool reconstructTexture = false;
-  const bool resChanged = emu->currentW != w || emu->currentH != h;
-  const bool formatChanged = emu->currentFormat != format;
-  if(resChanged) {
+  if(emu->currentW != w || emu->currentH != h) {
     emu->currentW = w;
     emu->currentH = h;
 
     reconstructTexture = true;
   }
 
-  if(formatChanged) {
+  if(emu->currentFormat != format) {
     emu->currentFormat = format;
     if(format == f5553) {
       emu->sdlFormat = SDL_PIXELFORMAT_RGBA5551;
       depth = 2;
     } else if(format == f8888) {
-      emu->sdlFormat = SDL_PIXELFORMAT_RGBA32;
+      emu->sdlFormat = SDL_PIXELFORMAT_RGBA8888;
       depth = 4;
     }
 
@@ -69,46 +73,17 @@ void emu_present(emu_t* emu) {
 
   if(reconstructTexture) {
     SDL_DestroyTexture(emu->texture);
-    free(emu->framebuffer);
-    emu->framebuffer = (u8*)calloc(w * h, depth);
-
-    SDL_RenderSetLogicalSize(
-      emu->renderer,
-      (int)w,
-      (int)h
-    );
-    emu->texture = SDL_CreateTexture(
-      emu->renderer,
-      emu->sdlFormat,
-      SDL_TEXTUREACCESS_STREAMING,
-      (int)w,
-      (int)h
-    );
+    SDL_RenderSetLogicalSize(emu->renderer, (int)w, (int)h);
+    emu->texture = SDL_CreateTexture(emu->renderer, emu->sdlFormat, SDL_TEXTUREACCESS_STREAMING, (int)w, (int)h);
   }
 
-  if(format == f8888) {
-    for(int i = 0; i < w * h * depth; i += (int)depth) {
-      emu->framebuffer[i] = mem->rdram[BYTE_ADDR((i + origin) & RDRAM_DSIZE)];
-      emu->framebuffer[i + 1] = mem->rdram[BYTE_ADDR((i + 1 + origin) & RDRAM_DSIZE)];
-      emu->framebuffer[i + 2] = mem->rdram[BYTE_ADDR((i + 2 + origin) & RDRAM_DSIZE)];
-      emu->framebuffer[i + 3] = mem->rdram[BYTE_ADDR((i + 3 + origin) & RDRAM_DSIZE)];
-    }
-  } else if (format == f5553) {
-    for(int i = 0; i < w * h * depth; i += (int)depth) {
-      emu->framebuffer[i] = mem->rdram[HALF_ADDR((i + origin) & RDRAM_DSIZE)];
-      emu->framebuffer[i + 1] = mem->rdram[HALF_ADDR((i + 1 + origin) & RDRAM_DSIZE)];
-    }
-  }
-
-  SDL_UpdateTexture(
-    emu->texture,
-    NULL,
-    emu->framebuffer,
-    (int)w * depth
-  );
+  int pitch = 0;
+  void *pixels = NULL;
+  SDL_LockTexture(emu->texture, NULL, &pixels, &pitch);
+  SDL_ConvertPixels(w, h, emu->sdlFormat, temp, w * depth, emu->sdlFormat, pixels, pitch);
+  SDL_UnlockTexture(emu->texture);
 
   SDL_RenderCopy(emu->renderer, emu->texture, NULL, NULL);
-  SDL_RenderPresent(emu->renderer);
 }
 
 void emu_run(emu_t* emu) {
@@ -119,11 +94,9 @@ void emu_run(emu_t* emu) {
     if(core->running) {
       run_frame(core);
       emu_present(emu);
-    } else {
-      SDL_SetRenderDrawColor(emu->renderer, 0, 0, 0, 0);
-      SDL_RenderClear(emu->renderer);
-      SDL_RenderPresent(emu->renderer);
     }
+
+    SDL_RenderPresent(emu->renderer);
 
     SDL_Event e;
     SDL_PollEvent(&e);
@@ -146,7 +119,4 @@ void emu_run(emu_t* emu) {
       break;
     }
   }
-
-  NFD_Quit();
-  destroy_emu(emu);
 }

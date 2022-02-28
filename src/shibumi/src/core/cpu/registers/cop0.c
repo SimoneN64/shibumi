@@ -65,7 +65,7 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
       printf("Write status %08X\n", value & STATUS_MASK);
       cop0->Status.raw &= ~STATUS_MASK;
       cop0->Status.raw |= value & STATUS_MASK;
-      handle_interrupt(cpu, mem);
+      handle_exception(cpu, mem);
     } break;
     case 13: cop0->Cause.raw = value; break;
     case 14: cop0->EPC = value; break;
