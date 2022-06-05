@@ -38,7 +38,7 @@ bool load_rom(mem_t* mem, const char* path) {
   }
 
   fclose(fp);
-  swap(mem->cart[3], rom_size, mem->cart);
+  swap(rom_size, mem->cart);
   memcpy(mem->dmem, mem->cart, 0x1000);
   return true;
 }
@@ -77,8 +77,8 @@ const char* regions_str(u32 paddr) {
 u8 read8(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: return mem->rdram[BYTE_ADDR(paddr)];
-    case 0x04001000 ... 0x04001FFF: return mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE];
+    case 0x00000000 ... 0x007FFFFF: return mem->rdram[paddr];
+    case 0x04001000 ... 0x04001FFF: return mem->imem[paddr & IMEM_DSIZE];
     default: logfatal("Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr);
   }
 }
@@ -87,8 +87,8 @@ u16 read16(mem_t* mem, u32 vaddr) {
   u32 paddr = vtp(vaddr);
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: return raccess(16, mem->rdram, HALF_ADDR(paddr));
-    case 0x04001000 ... 0x04001FFF: return raccess(16, mem->imem, HALF_ADDR(paddr) & IMEM_DSIZE);
+    case 0x00000000 ... 0x007FFFFF: return raccess(16, mem->rdram, paddr);
+    case 0x04001000 ... 0x04001FFF: return raccess(16, mem->imem, paddr & IMEM_DSIZE);
     default: logfatal("Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr);
   }
 }
@@ -128,8 +128,8 @@ u64 read64(mem_t* mem, u32 vaddr) {
 void write8(mem_t* mem, u32 vaddr, u8 val) {
   u32 paddr = vtp(vaddr);
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: mem->rdram[BYTE_ADDR(paddr)] = val; break;
-    case 0x04001000 ... 0x04001FFF: mem->imem[BYTE_ADDR(paddr) & IMEM_DSIZE] = val; break;
+    case 0x00000000 ... 0x007FFFFF: mem->rdram[paddr] = val; break;
+    case 0x04001000 ... 0x04001FFF: mem->imem[paddr & IMEM_DSIZE] = val; break;
     default: logfatal("Unimplemented %s[%08X] 8-bit write (%02X)\n", regions_str(paddr), paddr, val);
   }
 }
@@ -138,8 +138,8 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   u32 paddr = vtp(vaddr);
         
   switch(paddr) {
-    case 0x00000000 ... 0x007FFFFF: waccess(16, mem->rdram, HALF_ADDR(paddr), val); break;
-    case 0x04001000 ... 0x04001FFF: waccess(16, mem->imem, HALF_ADDR(paddr) & IMEM_DSIZE, val); break;
+    case 0x00000000 ... 0x007FFFFF: waccess(16, mem->rdram, paddr, val); break;
+    case 0x04001000 ... 0x04001FFF: waccess(16, mem->imem, paddr & IMEM_DSIZE, val); break;
     default: logfatal("Unimplemented %s[%08X] 16-bit write (%04X)\n", regions_str(paddr), paddr, val);
   }
 }

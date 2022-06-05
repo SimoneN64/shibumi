@@ -45,8 +45,8 @@ void emu_present(emu_t* emu) {
     memcpy(temp, &mem->rdram[origin], w * h * depth);
   } else if (format == f5553) {
     for(int i = 0; i < w * h * depth; i += (int)depth) {
-      temp[i] = mem->rdram[HALF_ADDR((i + origin) & RDRAM_DSIZE)];
-      temp[i + 1] = mem->rdram[HALF_ADDR((i + 1 + origin) & RDRAM_DSIZE)];
+      temp[i] = mem->rdram[(i + origin) & RDRAM_DSIZE];
+      temp[i + 1] = mem->rdram[(i + 1 + origin) & RDRAM_DSIZE];
     }
   }
 

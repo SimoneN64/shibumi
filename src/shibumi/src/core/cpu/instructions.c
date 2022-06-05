@@ -158,7 +158,7 @@ void lb(mem_t* mem, registers_t* regs, u32 instr) {
 void lh(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 1) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   regs->gpr[RT(instr)] = (s64)(s16)read16(mem, address);
@@ -167,7 +167,7 @@ void lh(mem_t* mem, registers_t* regs, u32 instr) {
 void lw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   s32 value = read32(mem, address, regs->pc);
@@ -177,7 +177,7 @@ void lw(mem_t* mem, registers_t* regs, u32 instr) {
 void ll(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   regs->LLBit = true;
@@ -210,7 +210,7 @@ void lwr(mem_t* mem, registers_t* regs, u32 instr) {
 void ld(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   s64 value = read64(mem, address);
@@ -220,7 +220,7 @@ void ld(mem_t* mem, registers_t* regs, u32 instr) {
 void lld(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   regs->LLBit = true;
@@ -259,7 +259,7 @@ void lbu(mem_t* mem, registers_t* regs, u32 instr) {
 void lhu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 1) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   u16 value = read16(mem, address);
@@ -269,7 +269,7 @@ void lhu(mem_t* mem, registers_t* regs, u32 instr) {
 void lwu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   u32 value = read32(mem, address, regs->pc);
@@ -284,7 +284,7 @@ void sb(mem_t* mem, registers_t* regs, u32 instr) {
 void sc(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
   if(regs->LLBit) {
@@ -298,7 +298,7 @@ void sc(mem_t* mem, registers_t* regs, u32 instr) {
 void scd(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
   if(regs->LLBit) {
@@ -312,7 +312,7 @@ void scd(mem_t* mem, registers_t* regs, u32 instr) {
 void sh(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 1) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
 
   write16(mem, address, regs->gpr[RT(instr)]);
@@ -321,7 +321,7 @@ void sh(mem_t* mem, registers_t* regs, u32 instr) {
 void sw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
   write32(mem, regs, address, regs->gpr[RT(instr)]);
@@ -330,7 +330,7 @@ void sw(mem_t* mem, registers_t* regs, u32 instr) {
 void sd(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened\n");
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
   write64(mem, address, regs->gpr[RT(instr)]);
@@ -539,7 +539,7 @@ void j(registers_t* regs, u32 instr) {
   u32 target = (instr & 0x3ffffff) << 2;
   u32 address = (regs->old_pc & ~0xfffffff) | target;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr: %08X) (addr: %08X)\n", instr, address);
+    logfatal("Unaligned access that shouldn't have happened (instr: %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
   branch(regs, true, address);
@@ -548,7 +548,7 @@ void j(registers_t* regs, u32 instr) {
 void jr(registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)];
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %08X)\n", instr, address);
+    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
   branch(regs, true, address);
