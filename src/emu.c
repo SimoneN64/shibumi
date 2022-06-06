@@ -24,7 +24,8 @@ void init_emu(emu_t* emu) {
     H,
     SDL_WINDOW_RESIZABLE
   );
-  emu->renderer = SDL_CreateRenderer(emu->window, -1, SDL_RENDERER_ACCELERATED);
+ 
+  emu->renderer = SDL_CreateRenderer(emu->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   emu->texture = SDL_CreateTexture(
     emu->renderer,
     SDL_PIXELFORMAT_RGBA32,
