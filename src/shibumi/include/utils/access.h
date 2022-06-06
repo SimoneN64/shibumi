@@ -1,6 +1,7 @@
 #pragma once
 #include <common.h>
 #include <memory.h>
+#include <portable_endian.h>
 
 INLINE u16 raccess_16(u8* data, u32 index) {
   u16 result = 0;

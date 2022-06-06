@@ -13,10 +13,10 @@ typedef struct mem_t {
 
 void init_mem(mem_t* mem);
 bool load_rom(mem_t* mem, const char* path);
-u8 read8(mem_t* mem, u32 vaddr);
-u16 read16(mem_t* mem, u32 vaddr);
-u32 read32(mem_t* mem, u32 vaddr, s64 pc);
-u64 read64(mem_t* mem, u32 vaddr);
+extern inline u8 read8(mem_t* mem, u32 vaddr);
+extern inline u16 read16(mem_t* mem, u32 vaddr);
+extern inline u32 read32(mem_t* mem, u32 vaddr, s64 pc);
+extern inline u64 read64(mem_t* mem, u32 vaddr);
 void write8(mem_t* mem, u32 vaddr, u8 val);
 void write16(mem_t* mem, u32 vaddr, u16 val);
 void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val);

@@ -1,3 +1,4 @@
+#include "vi.h"
 #include <emu.h>
 #include <mem.h>
 
@@ -11,7 +12,9 @@ void destroy_emu(emu_t* emu) {
 
 void init_emu(emu_t* emu) {
   init_core(&emu->core);
-
+  emu->currentW = 640;
+  emu->currentH = 480;
+  emu->currentFormat = f5553;
   SDL_Init(SDL_INIT_VIDEO);
   emu->window = SDL_CreateWindow(
     "shibumi",
@@ -82,7 +85,7 @@ void emu_present(emu_t* emu) {
   SDL_LockTexture(emu->texture, NULL, &pixels, &pitch);
   SDL_ConvertPixels(w, h, emu->sdlFormat, temp, w * depth, emu->sdlFormat, pixels, pitch);
   SDL_UnlockTexture(emu->texture);
-
+  free(temp);
   SDL_RenderCopy(emu->renderer, emu->texture, NULL, NULL);
 }
 
