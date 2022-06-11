@@ -1,6 +1,6 @@
-#include "vi.h"
 #include <emu.h>
 #include <mem.h>
+#include <access.h>
 
 void destroy_emu(emu_t* emu) {
   SDL_DestroyTexture(emu->texture);
@@ -8,13 +8,16 @@ void destroy_emu(emu_t* emu) {
   SDL_DestroyWindow(emu->window);
   SDL_Quit();
   NFD_Quit();
+  destroy_core(&emu->core);
 }
 
 void init_emu(emu_t* emu) {
   init_core(&emu->core);
-  emu->currentW = 640;
-  emu->currentH = 480;
+  emu->currentW = 320;
+  emu->currentH = 240;
+  emu->sdlFormat = SDL_PIXELFORMAT_RGBA5551;
   emu->currentFormat = f5553;
+
   SDL_Init(SDL_INIT_VIDEO);
   emu->window = SDL_CreateWindow(
     "shibumi",
@@ -26,14 +29,15 @@ void init_emu(emu_t* emu) {
   );
  
   emu->renderer = SDL_CreateRenderer(emu->window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  SDL_RenderSetLogicalSize(emu->renderer, emu->currentW, emu->currentH);
   emu->texture = SDL_CreateTexture(
     emu->renderer,
-    SDL_PIXELFORMAT_RGBA32,
+    emu->sdlFormat,
     SDL_TEXTUREACCESS_STREAMING,
-    320,
-    240
+    emu->currentW,
+    emu->currentH
   );
-  SDL_RenderSetLogicalSize(emu->renderer, 320, 240);
+
   NFD_Init();
 }
 
@@ -43,26 +47,19 @@ void emu_present(emu_t* emu) {
   const u32 origin = mem->mmio.vi.origin & 0xFFFFFF;
   const u8 format = mem->mmio.vi.status.format;
   u8 depth = format == f8888 ? 4 : format == f5553 ? 2 : 0;
-  u8* temp = calloc(RDRAM_SIZE - origin, 1);
-
-  if(format == f8888) {
-    memcpy(temp, &mem->rdram[origin], w * h * depth);
-  } else if (format == f5553) {
-    for(int i = 0; i < w * h * depth; i += (int)depth) {
-      temp[i] = mem->rdram[(i + origin) & RDRAM_DSIZE];
-      temp[i + 1] = mem->rdram[(i + 1 + origin) & RDRAM_DSIZE];
-    }
-  }
-
   bool reconstructTexture = false;
-  if(emu->currentW != w || emu->currentH != h) {
+
+  const bool resChanged = emu->currentW != w || emu->currentH != h;
+  const bool formatChanged = emu->currentFormat != format;
+
+  if(resChanged) {
     emu->currentW = w;
     emu->currentH = h;
 
     reconstructTexture = true;
   }
 
-  if(emu->currentFormat != format) {
+  if(formatChanged) {
     emu->currentFormat = format;
     if(format == f5553) {
       emu->sdlFormat = SDL_PIXELFORMAT_RGBA5551;
@@ -81,12 +78,7 @@ void emu_present(emu_t* emu) {
     emu->texture = SDL_CreateTexture(emu->renderer, emu->sdlFormat, SDL_TEXTUREACCESS_STREAMING, (int)w, (int)h);
   }
 
-  int pitch = 0;
-  void *pixels = NULL;
-  SDL_LockTexture(emu->texture, NULL, &pixels, &pitch);
-  SDL_ConvertPixels(w, h, emu->sdlFormat, temp, w * depth, emu->sdlFormat, pixels, pitch);
-  SDL_UnlockTexture(emu->texture);
-  free(temp);
+  SDL_UpdateTexture(emu->texture, NULL, &mem->rdram[origin], (int) w * depth);
   SDL_RenderCopy(emu->renderer, emu->texture, NULL, NULL);
 }
 

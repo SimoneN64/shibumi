@@ -11,16 +11,6 @@ add_executable(shibumi src/main.c)
 
 include_directories(${SDL2_INCLUDE_DIRECTORIES})
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-  add_compile_options(-g)
-  add_compile_definitions(DEBUG)
-  #add_link_options(-fsanitize=address)
-elseif(CMAKE_BUILD_TYPE MATCHES Release)
-  add_compile_options(-O3)
-endif()
-
-add_compile_options(-mno-ms-bitfields)
-
 if(WIN32)
   set(FLAGS -static SDL2main SDL2 gcc stdc++ winpthread winmm version Imm32 Setupapi)
 else()
@@ -28,3 +18,14 @@ else()
 endif()
 
 target_link_libraries(shibumi core ${FLAGS})
+target_compile_options(shibumi PUBLIC -mno-ms-bitfields)
+
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  target_compile_options(shibumi PUBLIC -g
+    #-fsanitize=address -fsanitize=leak -fsanitize=undefined
+    -Wall -Wextra -Werror -Wfatal-errors
+  )
+  #target_link_options(shibumi PUBLIC -fsanitize=address -fsanitize=leak -fsanitize=undefined)
+elseif(CMAKE_BUILD_TYPE MATCHES Release)
+  target_compile_options(shibumi PUBLIC -O3)
+endif()

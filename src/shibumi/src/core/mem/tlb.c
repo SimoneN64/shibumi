@@ -2,10 +2,8 @@
 #include <log.h>
 
 u32 vtp(u32 addr) {
-  switch(addr) {
-    case 0x80000000 ... 0xBFFFFFFF:  return addr & 0x1FFFFFFF;
-    default:
-      logfatal("Unimplemented TLB region %08X!", addr);
-      return 0;
+  if(addr >= 0x80000000 && addr <= 0xBFFFFFFF) {
+    return addr & 0x1FFFFFFF;
   }
+  logfatal("Unimplemented TLB region %08X!", addr);
 }

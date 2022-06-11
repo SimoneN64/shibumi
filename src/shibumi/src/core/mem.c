@@ -17,6 +17,11 @@ void init_mem(mem_t* mem) {
   init_mmio(&mem->mmio);
 }
 
+void destroy_mem(mem_t* mem) {
+  free(mem->rdram);
+  free(mem->sram);
+}
+
 bool load_rom(mem_t* mem, const char* path) {
   FILE* fp = fopen(path, "rb");
   if(fp == NULL) {
@@ -104,9 +109,7 @@ u32 read32(mem_t* mem, u32 vaddr, s64 pc) {
     case 0x04600000 ... 0x048FFFFF: return read_mmio(&mem->mmio, paddr);
     case 0x10000000 ... 0x1FBFFFFF: return raccess(32, mem->cart, paddr & mem->rom_mask);
     case 0x1FC00000 ... 0x1FC007BF: return raccess(32, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
-    case 0x1FC007C0 ... 0x1FC007FF:
-      logdebug("PC = %016lX\n", pc);
-      return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
+    case 0x1FC007C0 ... 0x1FC007FF: return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
     case 0x04500000 ... 0x045FFFFF: case 0x04900000 ... 0x07FFFFFF:
     case 0x08000000 ... 0x0FFFFFFF: case 0x80000000 ... 0xFFFFFFFF:
