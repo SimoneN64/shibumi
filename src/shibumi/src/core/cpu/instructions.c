@@ -1,5 +1,6 @@
 #include <instructions.h>
 #include <utils.h>
+#include <cpu.h>
 
 #define se_imm(x) ((s16)((x) & 0xFFFF))
 
@@ -104,44 +105,52 @@ void ddivu(registers_t* regs, u32 instr) {
   }
 }
 
-void branch(registers_t* regs, bool cond, s64 address) {
+void branch(cpu_t* cpu, bool cond, s64 address) {
+  registers_t* regs = &cpu->regs;
   if (cond) {
     regs->next_pc = address;
   }
+  cpu->in_delay_slot = true;
 }
 
-void branch_likely(registers_t* regs, bool cond, s64 address) {
+void branch_likely(cpu_t* cpu, bool cond, s64 address) {
+  registers_t* regs = &cpu->regs;
   if (cond) {
     regs->next_pc = address;
+    cpu->in_delay_slot = true;
   } else {
     set_pc(regs, regs->next_pc);
   }
 }
 
-void b(registers_t* regs, u32 instr, bool cond) {
+void b(cpu_t* cpu, u32 instr, bool cond) {
+  registers_t* regs = &cpu->regs;
   s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
-  branch(regs, cond, address);
+  branch(cpu, cond, address);
 }
 
-void blink(registers_t* regs, u32 instr, bool cond) {
+void blink(cpu_t* cpu, u32 instr, bool cond) {
+  registers_t* regs = &cpu->regs;
   regs->gpr[31] = regs->next_pc;
   s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
-  branch(regs, cond, address);
+  branch(cpu, cond, address);
 }
 
-void bl(registers_t* regs, u32 instr, bool cond) {
+void bl(cpu_t* cpu, u32 instr, bool cond) {
+  registers_t* regs = &cpu->regs;
   s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
-  branch_likely(regs, cond, address);
+  branch_likely(cpu, cond, address);
 }
 
-void bllink(registers_t* regs, u32 instr, bool cond) {
+void bllink(cpu_t* cpu, u32 instr, bool cond) {
+  registers_t* regs = &cpu->regs;
   regs->gpr[31] = regs->next_pc;
   s64 offset = (s64)se_imm(instr) << 2;
   s64 address = regs->pc + offset;
-  branch_likely(regs, cond, address);
+  branch_likely(cpu, cond, address);
 }
 
 void lui(registers_t* regs, u32 instr) {
@@ -386,15 +395,17 @@ void nor(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = ~(regs->gpr[RS(instr)] | regs->gpr[RT(instr)]);
 }
 
-void jal(registers_t* regs, u32 instr) {
+void jal(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
   regs->gpr[31] = regs->next_pc;
   s64 target = (instr & 0x3ffffff) << 2;
   s64 combined = (regs->old_pc & ~0xfffffff) | target;
-  branch(regs, true, combined);
+  branch(cpu, true, combined);
 }
 
-void jalr(registers_t* regs, u32 instr) {
-  branch(regs, true, regs->gpr[RS(instr)]);
+void jalr(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
+  branch(cpu, true, regs->gpr[RS(instr)]);
   regs->gpr[RD(instr)] = regs->pc + 4;
 }
 
@@ -535,23 +546,25 @@ void dsra32(registers_t* regs, u32 instr) {
   regs->gpr[RD(instr)] = result;
 }
 
-void j(registers_t* regs, u32 instr) {
+void j(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
   u32 target = (instr & 0x3ffffff) << 2;
   u32 address = (regs->old_pc & ~0xfffffff) | target;
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened (instr: %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
-  branch(regs, true, address);
+  branch(cpu, true, address);
 }
 
-void jr(registers_t* regs, u32 instr) {
+void jr(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
   u32 address = regs->gpr[RS(instr)];
   if ((address & 3) != 0) {
     logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
   }
   
-  branch(regs, true, address);
+  branch(cpu, true, address);
 }
 
 void dsub(registers_t* regs, u32 instr) {

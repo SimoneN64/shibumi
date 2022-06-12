@@ -3,17 +3,19 @@
 #include <mem.h>
 #include <cop0_instructions.h>
 
+typedef struct cpu_t cpu_t;
+
 void add(registers_t* regs, u32 instr);
 void addu(registers_t* regs, u32 instr);
 void addiu(registers_t* regs, u32 instr);
 void andi(registers_t* regs, u32 instr);
 void and_(registers_t* regs, u32 instr);
-void branch(registers_t* regs, bool cond, s64 address);
-void branch_likely(registers_t* regs, bool cond, s64 address);
-void b(registers_t* regs, u32 instr, bool cond);
-void blink(registers_t* regs, u32 instr, bool cond);
-void bl(registers_t* regs, u32 instr, bool cond);
-void bllink(registers_t* regs, u32 instr, bool cond);
+void branch(cpu_t* cpu, bool cond, s64 address);
+void branch_likely(cpu_t* cpu, bool cond, s64 address);
+void b(cpu_t* cpu, u32 instr, bool cond);
+void blink(cpu_t* cpu, u32 instr, bool cond);
+void bl(cpu_t* cpu, u32 instr, bool cond);
+void bllink(cpu_t* cpu, u32 instr, bool cond);
 void daddu(registers_t* regs, u32 instr);
 void daddiu(registers_t* regs, u32 instr);
 void ddiv(registers_t* regs, u32 instr);
@@ -33,10 +35,10 @@ void dsrlv(registers_t* regs, u32 instr);
 void dsrl32(registers_t* regs, u32 instr);
 void dsub(registers_t* regs, u32 instr);
 void dsubu(registers_t* regs, u32 instr);
-void j(registers_t* regs, u32 instr);
-void jr(registers_t* regs, u32 instr);
-void jal(registers_t* regs, u32 instr);
-void jalr(registers_t* regs, u32 instr);
+void j(cpu_t* cpu, u32 instr);
+void jr(cpu_t* cpu, u32 instr);
+void jal(cpu_t* cpu, u32 instr);
+void jalr(cpu_t* cpu, u32 instr);
 void lui(registers_t* regs, u32 instr);
 void lbu(mem_t* mem, registers_t* regs, u32 instr);
 void lb(mem_t* mem, registers_t* regs, u32 instr);

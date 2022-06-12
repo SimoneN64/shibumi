@@ -16,10 +16,7 @@ u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
     case 9: return cop0->Count >> 1;
     case 10: return cop0->EntryHi;
     case 11: return cop0->Compare;
-    case 12: {
-      printf("Read status\n");
-      return cop0->Status.raw;
-    }
+    case 12: return cop0->Status.raw;
     case 13: return cop0->Cause.raw;
     case 14: return cop0->EPC;
     case 15: return cop0->PRId;
@@ -62,10 +59,8 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
       cop0->Compare = value;
     } break;
     case 12: {
-      printf("Write status %08X\n", value & STATUS_MASK);
       cop0->Status.raw &= ~STATUS_MASK;
       cop0->Status.raw |= value & STATUS_MASK;
-      handle_exception(cpu, mem);
     } break;
     case 13: cop0->Cause.raw = value; break;
     case 14: cop0->EPC = value; break;

@@ -33,8 +33,8 @@ u32 pi_read(mi_t* mi, pi_t* pi, u32 paddr) {
 }
 
 void pi_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
-  pi_t* pi = &mem->mmio.pi;
-  mi_t* mi = &mem->mmio.mi;
+  pi_t* pi = &mem->mmio->pi;
+  mi_t* mi = &mem->mmio->mi;
   switch(paddr) {
     case 0x04600000: pi->dram_addr = val; break;
     case 0x04600004: pi->cart_addr = val; break;

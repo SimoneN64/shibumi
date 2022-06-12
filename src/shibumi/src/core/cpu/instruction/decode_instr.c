@@ -10,14 +10,14 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   registers_t* regs = &cpu->regs;
   // 00rr_rccc
   switch(mask) { // TODO: named constants for clearer code
-    case 0x00: special(regs, instr); break;
-    case 0x01: regimm(regs, instr); break;
-    case 0x02: j(regs, instr); break;
-    case 0x03: jal(regs, instr); break;
-    case 0x04: b(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
-    case 0x05: b(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
-    case 0x06: b(regs, instr, regs->gpr[RS(instr)] <= 0); break;
-    case 0x07: b(regs, instr, regs->gpr[RS(instr)] > 0); break;
+    case 0x00: special(cpu, instr); break;
+    case 0x01: regimm(cpu, instr); break;
+    case 0x02: j(cpu, instr); break;
+    case 0x03: jal(cpu, instr); break;
+    case 0x04: b(cpu, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
+    case 0x05: b(cpu, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
+    case 0x06: b(cpu, instr, regs->gpr[RS(instr)] <= 0); break;
+    case 0x07: b(cpu, instr, regs->gpr[RS(instr)] > 0); break;
     case 0x08: addiu(regs, instr); break;
     case 0x09: addiu(regs, instr); break;
     case 0x0A: slti(regs, instr); break;
@@ -27,11 +27,11 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
     case 0x0E: xori(regs, instr); break;
     case 0x0F: lui(regs, instr); break;
     case 0x10: cop0_decode(cpu, mem, instr); break;
-    case 0x11: fpu_decode(regs, instr); break;
-    case 0x14: bl(regs, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
-    case 0x15: bl(regs, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
-    case 0x16: bl(regs, instr, regs->gpr[RS(instr)] <= 0); break;
-    case 0x17: bl(regs, instr, regs->gpr[RS(instr)] > 0); break;
+    case 0x11: fpu_decode(cpu, instr); break;
+    case 0x14: bl(cpu, instr, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
+    case 0x15: bl(cpu, instr, regs->gpr[RS(instr)] != regs->gpr[RT(instr)]); break;
+    case 0x16: bl(cpu, instr, regs->gpr[RS(instr)] <= 0); break;
+    case 0x17: bl(cpu, instr, regs->gpr[RS(instr)] > 0); break;
     case 0x18: daddiu(regs, instr); break;
     case 0x19: daddiu(regs, instr); break;
     case 0x1A: ldl(mem, regs, instr); break;
@@ -67,7 +67,8 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   }
 }
 
-void special(registers_t* regs, u32 instr) {
+void special(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
   u8 mask = (instr & 0x3F);
   // 00rr_rccc
   switch (mask) { // TODO: named constants for clearer code
@@ -81,8 +82,8 @@ void special(registers_t* regs, u32 instr) {
     case 0x04: sllv(regs, instr); break;
     case 0x06: srlv(regs, instr); break;
     case 0x07: srav(regs, instr); break;
-    case 0x08: jr(regs, instr); break;
-    case 0x09: jalr(regs, instr); break;
+    case 0x08: jr(cpu, instr); break;
+    case 0x09: jalr(cpu, instr); break;
     case 0x0F: break;
     case 0x10: mfhi(regs, instr); break;
     case 0x11: mthi(regs, instr); break;
@@ -124,18 +125,19 @@ void special(registers_t* regs, u32 instr) {
   }
 }
 
-void regimm(registers_t* regs, u32 instr) {
+void regimm(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
   u8 mask = ((instr >> 16) & 0x1F);
   // 000r_rccc
   switch (mask) { // TODO: named constants for clearer code
-    case 0x00: b(regs, instr, regs->gpr[RS(instr)] < 0); break;
-    case 0x01: b(regs, instr, regs->gpr[RS(instr)] >= 0); break;
-    case 0x02: bl(regs, instr, regs->gpr[RS(instr)] < 0); break;
-    case 0x03: bl(regs, instr, regs->gpr[RS(instr)] >= 0); break;
-    case 0x10: blink(regs, instr, regs->gpr[RS(instr)] < 0); break;
-    case 0x11: blink(regs, instr, regs->gpr[RS(instr)] >= 0); break;
-    case 0x12: bllink(regs, instr, regs->gpr[RS(instr)] < 0); break;
-    case 0x13: bllink(regs, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x00: b(cpu, instr, regs->gpr[RS(instr)] < 0); break;
+    case 0x01: b(cpu, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x02: bl(cpu, instr, regs->gpr[RS(instr)] < 0); break;
+    case 0x03: bl(cpu, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x10: blink(cpu, instr, regs->gpr[RS(instr)] < 0); break;
+    case 0x11: blink(cpu, instr, regs->gpr[RS(instr)] >= 0); break;
+    case 0x12: bllink(cpu, instr, regs->gpr[RS(instr)] < 0); break;
+    case 0x13: bllink(cpu, instr, regs->gpr[RS(instr)] >= 0); break;
     default:
       logfatal("Unimplemented regimm %d %d\n", (mask >> 3) & 3, mask & 7);
   }

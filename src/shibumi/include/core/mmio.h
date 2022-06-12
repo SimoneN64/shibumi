@@ -1,5 +1,6 @@
 #pragma once
 #include <mi.h>
+#include <ai.h>
 #include <pi.h>
 #include <ri.h>
 #include <vi.h>
@@ -15,6 +16,7 @@ typedef struct {
   ri_t ri;
   vi_t vi;
   si_t si;
+  ai_t ai;
   rsp_t rsp;
 } mmio_t;
 

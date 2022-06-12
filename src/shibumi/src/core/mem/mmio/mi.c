@@ -1,6 +1,5 @@
 #include <mi.h>
 #include <log.h>
-#include <assert.h>
 #include <intr.h>
 #include <registers.h>
 
@@ -16,7 +15,7 @@ u32 mi_read(mi_t* mi, u32 paddr) {
     case 0x04300004: return MI_VERSION_REG;
     case 0x04300008: return mi->mi_intr.raw & 0x3F;
     case 0x0430000C: return mi->mi_intr_mask.raw & 0x3F;
-    default: logfatal("Unhandled MI[%08X] read\n", paddr); return 0;
+    default: logfatal("Unhandled MI[%08X] read\n", paddr);
   }
 }
 

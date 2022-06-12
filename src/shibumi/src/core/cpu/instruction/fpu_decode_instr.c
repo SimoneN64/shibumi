@@ -1,8 +1,10 @@
 #include <fpu_decode_instr.h>
 #include <log.h>
 #include <instructions.h>
+#include <cpu.h>
 
-void fpu_decode(registers_t* regs, u32 instr) {
+void fpu_decode(cpu_t* cpu, u32 instr) {
+  registers_t* regs = &cpu->regs;
   u8 mask_cop = (instr >> 21) & 0x1F;
   u8 mask_cop2 = instr & 0x3F;
   u8 mask_branch = (instr >> 16) & 0x1F;
@@ -14,10 +16,10 @@ void fpu_decode(registers_t* regs, u32 instr) {
     case 0x06: ctc1(regs, instr); break;
     case 0x08:
       switch(mask_branch) {
-        case 0: b(regs, instr, !regs->cp1.fcr31.compare); break;
-        case 1: b(regs, instr, regs->cp1.fcr31.compare); break;
-        case 2: bl(regs, instr, !regs->cp1.fcr31.compare); break;
-        case 3: bl(regs, instr, regs->cp1.fcr31.compare); break;
+        case 0: b(cpu, instr, !regs->cp1.fcr31.compare); break;
+        case 1: b(cpu, instr, regs->cp1.fcr31.compare); break;
+        case 2: bl(cpu, instr, !regs->cp1.fcr31.compare); break;
+        case 3: bl(cpu, instr, regs->cp1.fcr31.compare); break;
         default: logfatal("Undefined BC COP1 %02X\n", mask_branch);
       }
       break;

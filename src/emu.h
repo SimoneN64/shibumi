@@ -14,6 +14,7 @@ typedef struct {
   SDL_PixelFormatEnum sdlFormat;
   core_t core;
   nfdchar_t* romFile;
+  u8* framebuffer;
 } emu_t;
 
 void destroy_emu(emu_t* emu);

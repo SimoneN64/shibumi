@@ -38,14 +38,16 @@ void init_emu(emu_t* emu) {
     emu->currentH
   );
 
+  emu->framebuffer = (u8*)calloc(emu->currentW * emu->currentH, 2);
+
   NFD_Init();
 }
 
 void emu_present(emu_t* emu) {
   mem_t* mem = &emu->core.mem;
-  const u32 w = mem->mmio.vi.width, h = 0.75 * w;
-  const u32 origin = mem->mmio.vi.origin & 0xFFFFFF;
-  const u8 format = mem->mmio.vi.status.format;
+  const u32 w = mem->mmio->vi.width, h = 0.75 * w;
+  const u32 origin = mem->mmio->vi.origin & 0xFFFFFF;
+  const u8 format = mem->mmio->vi.status.format;
   u8 depth = format == f8888 ? 4 : format == f5553 ? 2 : 0;
   bool reconstructTexture = false;
 
@@ -73,12 +75,24 @@ void emu_present(emu_t* emu) {
   }
 
   if(reconstructTexture) {
+    emu->framebuffer = realloc(emu->framebuffer, w * h * depth);
     SDL_DestroyTexture(emu->texture);
     SDL_RenderSetLogicalSize(emu->renderer, (int)w, (int)h);
     emu->texture = SDL_CreateTexture(emu->renderer, emu->sdlFormat, SDL_TEXTUREACCESS_STREAMING, (int)w, (int)h);
   }
 
-  SDL_UpdateTexture(emu->texture, NULL, &mem->rdram[origin], (int) w * depth);
+  if(format == f5553) {
+    for(int i = 0; i < w * h * 2; i+=2) {
+      u16 val = raccess_16(mem->rdram, (i + origin) & RDRAM_DSIZE);
+      memcpy(&emu->framebuffer[i], &val, 2);
+    }
+  } else {
+    for(int i = 0; i < w * h * 4; i+=4) {
+      u32 val = raccess_32(mem->rdram, (i + origin) & RDRAM_DSIZE);
+      memcpy(&emu->framebuffer[i], &val, 4);
+    }
+  }
+  SDL_UpdateTexture(emu->texture, NULL, emu->framebuffer, (int) w * depth);
   SDL_RenderCopy(emu->renderer, emu->texture, NULL, NULL);
 }
 

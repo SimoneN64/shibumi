@@ -1,5 +1,6 @@
 #include <vi.h>
 #include <log.h>
+#include <intr.h>
 
 void init_vi(vi_t* vi) {
   vi->status.raw = 0xF;
@@ -15,7 +16,8 @@ u32 vi_read(vi_t* vi, u32 paddr) {
     case 0x04400000: return vi->status.raw;
     case 0x04400004: return vi->origin;
     case 0x04400008: return vi->width;
-    case 0x04400010: return vi->current;
+    case 0x0440000C: return vi->intr;
+    case 0x04400010: return vi->current << 1;
     case 0x04400018: return vi->vsync;
     case 0x0440001C: return vi->hsync;
     default:
@@ -24,12 +26,15 @@ u32 vi_read(vi_t* vi, u32 paddr) {
   }
 }
 
-void vi_write(vi_t* vi, u32 paddr, u32 val) {
+void vi_write(mi_t* mi, registers_t* regs, vi_t* vi, u32 paddr, u32 val) {
   switch(paddr) {
     case 0x04400000: vi->status.raw = val; break;
     case 0x04400004: vi->origin = val; break;
     case 0x04400008: vi->width = val; break;
-    case 0x04400010: vi->current = val; break;
+    case 0x0440000C: vi->intr = val; break;
+    case 0x04400010:
+      interrupt_lower(mi, regs, VI);
+      break;
     case 0x04400018: vi->vsync = val; break;
     case 0x0440001C: vi->hsync = val; break;
     default:

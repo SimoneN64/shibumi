@@ -1,4 +1,6 @@
 #pragma once
 #include <fpu_instructions.h>
 
-void fpu_decode(registers_t* regs, u32 instr);
+typedef struct cpu_t cpu_t;
+
+void fpu_decode(cpu_t* cpu, u32 instr);

@@ -24,6 +24,8 @@ typedef __int128_t s128;
 #define ASSERTDWORD(type) static_assert(sizeof(type) == 8, #type " must be 64 bits")
 #define INLINE static inline __attribute__((always_inline))
 
+#define CPU_FREQ 93750000
+#define CYCLES_PER_FRAME (CPU_FREQ / 60)
 #define RDRAM_SIZE 0x800000
 #define RDRAM_DSIZE (RDRAM_SIZE - 1)
 #define SRAM_SIZE 0x8000000
