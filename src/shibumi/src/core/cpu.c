@@ -12,7 +12,16 @@ INLINE bool should_service_interrupt(registers_t* regs) {
          !currently_handling_exception && !currently_handling_error;
 }
 
-void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
+INLINE void check_compare_interrupt(mi_t* mi, registers_t* regs) {
+  regs->cp0.Count++;
+  regs->cp0.Count &= 0x1FFFFFFFF;
+  if(regs->cp0.Count == (u64)regs->cp0.Compare << 1) {
+    regs->cp0.Cause.ip.ip7 = 1;
+    process_interrupt(mi, regs);
+  }
+}
+
+INLINE void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
   registers_t* regs = &cpu->regs;
   s64 pc = regs->pc;
   if(cpu->in_delay_slot) {
@@ -50,7 +59,7 @@ void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
   }
 }
 
-void handle_interrupt(cpu_t* cpu, mem_t* mem) {
+INLINE void handle_interrupt(cpu_t* cpu, mem_t* mem) {
   if(should_service_interrupt(&cpu->regs)) {
     fire_exception(cpu, Int, 0);
   }
@@ -62,8 +71,9 @@ void init_cpu(cpu_t *cpu) {
 }
 
 void step(cpu_t *cpu, mem_t *mem) {
-  handle_interrupt(cpu, mem);
   registers_t* regs = &cpu->regs;
+  check_compare_interrupt(&mem->mmio->mi, regs);
+  handle_interrupt(cpu, mem);
   regs->gpr[0] = 0;
   u32 instruction = read32(mem, regs->pc, regs->pc);
   regs->old_pc = regs->pc;

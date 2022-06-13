@@ -2,6 +2,14 @@
 #include <cop0.h>
 #include <cpu.h>
 
+void init_cop0(cop0_t* cop0) {
+  cop0->Cause.raw = 0xB000007C;
+  cop0->Random = 0x0000001F;
+  cop0->Status.raw = 0x70400004;
+  cop0->PRId = 0x00000B00;
+  cop0->Config = 0x0006E463;
+}
+
 u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
   switch(index) {
     case 0: return cop0->Index;
@@ -62,7 +70,12 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
       cop0->Status.raw &= ~STATUS_MASK;
       cop0->Status.raw |= value & STATUS_MASK;
     } break;
-    case 13: cop0->Cause.raw = value; break;
+    case 13: {
+      cop0_cause_t tmp;
+      tmp.raw = value;
+      cop0->Cause.ip.ip0 = tmp.ip.ip0;
+      cop0->Cause.ip.ip1 = tmp.ip.ip1;
+    } break;
     case 14: cop0->EPC = value; break;
     case 15: cop0->PRId = value; break;
     case 16: cop0->Config = value; break;

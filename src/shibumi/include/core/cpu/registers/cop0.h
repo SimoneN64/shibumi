@@ -90,5 +90,6 @@ typedef struct {
   u32 r31;
 } cop0_t;
 
+void init_cop0(cop0_t* cop0);
 u32 get_cop0_reg_word(cop0_t* cop0, u8 index);
 void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value);
