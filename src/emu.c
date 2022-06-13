@@ -109,24 +109,26 @@ void emu_run(emu_t* emu) {
     SDL_RenderPresent(emu->renderer);
 
     SDL_Event e;
-    SDL_PollEvent(&e);
-    switch(e.type) {
-    case SDL_QUIT:
-      running = false;
-      break;
-    case SDL_KEYDOWN:
-      switch(e.key.keysym.sym) {
-      case SDLK_o: {
-        nfdfilteritem_t filter = { "Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64" };
-        nfdresult_t result = NFD_OpenDialog(&emu->romFile, &filter, 1, ".");
-        if(result == NFD_OKAY) {
-          core->running = false;
-          init_core(core);
-          core->running = load_rom(&core->mem, emu->romFile);
-        }
-      } break;
+    while(SDL_PollEvent(&e)) {
+      switch (e.type) {
+        case SDL_QUIT:
+          running = false;
+          break;
+        case SDL_KEYDOWN:
+          switch (e.key.keysym.sym) {
+            case SDLK_o: {
+              nfdfilteritem_t filter = {"Nintendo 64 roms", "n64,z64,v64,N64,Z64,V64"};
+              nfdresult_t result = NFD_OpenDialog(&emu->romFile, &filter, 1, ".");
+              if (result == NFD_OKAY) {
+                core->running = false;
+                init_core(core);
+                core->running = load_rom(&core->mem, emu->romFile);
+              }
+            }
+              break;
+          }
+          break;
       }
-      break;
     }
   }
 }

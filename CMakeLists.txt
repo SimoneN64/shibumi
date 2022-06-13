@@ -17,15 +17,12 @@ else()
   set(FLAGS dl SDL2 pthread)
 endif()
 
-target_link_libraries(shibumi core ${FLAGS})
-target_compile_options(shibumi PUBLIC -mno-ms-bitfields)
-
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-  target_compile_options(shibumi PUBLIC -g
-    #-fsanitize=address -fsanitize=leak -fsanitize=undefined
-    -Wall -Wextra -Werror -Wfatal-errors
-  )
-  #target_link_options(shibumi PUBLIC -fsanitize=address -fsanitize=leak -fsanitize=undefined)
+  set(OPTIMIZATIONS -g)
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
-  target_compile_options(shibumi PUBLIC -O3)
+  set(OPTIMIZATIONS -O3)
 endif()
+
+
+target_link_libraries(shibumi core ${FLAGS})
+target_compile_options(shibumi PUBLIC ${OPTIMIZATIONS} -mno-ms-bitfields -Wall -Wextra -Werror -Wfatal-errors)
