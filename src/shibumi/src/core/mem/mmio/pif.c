@@ -52,6 +52,7 @@ void process_pif_commands(mem_t* mem) {
             res[1] = mem->mmio->si.controller.b2;
             res[2] = mem->mmio->si.controller.b3;
             res[3] = mem->mmio->si.controller.b4;
+            printf("%02X %02X %02X %02X\n", res[0], res[1], res[2], res[3]);
             break;
           case 2: case 3: break;
           default: logfatal("Unimplemented PIF command %d\n", cmd[2]);

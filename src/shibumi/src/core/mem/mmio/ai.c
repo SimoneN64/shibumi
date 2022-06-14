@@ -24,13 +24,13 @@ u32 ai_read(ai_t* ai, u32 paddr) {
   switch(paddr) {
     case 0x04500004:
       return ai->dma_length[0];
-    case 0x0450000C: {
+    case 0x0450000C: { // STATUS
       u32 val = 0;
       val |= (ai->dma_count > 1);
       val |= 1 << 20;
       val |= 1 << 24;
       val |= (ai->dma_count > 0) << 30;
-      val |= (ai->dma_count > 1) << 31;
+      val |= 1 << 31; //(ai->dma_count > 1) << 31;
       return val;
     }
     default: logfatal("Unhandled AI read at addr %08X\n", paddr);

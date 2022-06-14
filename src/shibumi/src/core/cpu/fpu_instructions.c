@@ -277,6 +277,106 @@ void divd(registers_t* regs, u32 instr) {
   set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), fs / ft);
 }
 
+void muls(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  float ft = get_cop1_reg_float(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_float(&regs->cp1, &regs->cp0, FD(instr), fs * ft);
+}
+
+void muld(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), fs * ft);
+}
+
+void mulw(registers_t* regs, u32 instr) {
+  u32 fs = get_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr));
+  u32 ft = get_cop1_reg_word(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), fs * ft);
+}
+
+void mull(registers_t* regs, u32 instr) {
+  u64 fs = get_cop1_reg_dword(&regs->cp1, &regs->cp0, FS(instr));
+  u64 ft = get_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), fs * ft);
+}
+
+void subs(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  float ft = get_cop1_reg_float(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_float(&regs->cp1, &regs->cp0, FD(instr), fs - ft);
+}
+
+void subd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), fs - ft);
+}
+
+void subw(registers_t* regs, u32 instr) {
+  u32 fs = get_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr));
+  u32 ft = get_cop1_reg_word(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), fs - ft);
+}
+
+void subl(registers_t* regs, u32 instr) {
+  u64 fs = get_cop1_reg_dword(&regs->cp1, &regs->cp0, FS(instr));
+  u64 ft = get_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), fs - ft);
+}
+
+void movs(registers_t* regs, u32 instr) {
+  set_cop1_reg_float(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_float(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void movd(registers_t* regs, u32 instr) {
+  set_cop1_reg_double(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_double(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void movw(registers_t* regs, u32 instr) {
+  set_cop1_reg_word(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_word(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void movl(registers_t* regs, u32 instr) {
+  set_cop1_reg_dword(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    get_cop1_reg_dword(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
 void lwc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
   u32 data = read32(mem, addr, regs->pc);

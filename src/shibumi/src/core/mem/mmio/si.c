@@ -7,6 +7,7 @@
 void init_si(si_t* si) {
   si->status.raw = 0;
   si->dram_addr = 0;
+  si->controller.raw = 0;
 }
 
 u32 si_read(si_t* si, mi_t* mi, u32 addr) {

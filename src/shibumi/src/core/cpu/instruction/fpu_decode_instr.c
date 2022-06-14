@@ -26,8 +26,11 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
     case 0x10: // s
       switch(mask_cop2) {
         case 0x00: adds(regs, instr); break;
+        case 0x01: subs(regs, instr); break;
+        case 0x02: muls(regs, instr); break;
         case 0x03: divs(regs, instr); break;
         case 0x05: abss(regs, instr); break;
+        case 0x06: movs(regs, instr); break;
         case 0x09: truncls(regs, instr); break;
         case 0x0A: ceills(regs, instr); break;
         case 0x0D: truncws(regs, instr); break;
@@ -48,8 +51,11 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
     case 0x11: // d
       switch(mask_cop2) {
         case 0x00: addd(regs, instr); break;
+        case 0x01: subd(regs, instr); break;
+        case 0x02: muld(regs, instr); break;
         case 0x03: divd(regs, instr); break;
         case 0x05: absd(regs, instr); break;
+        case 0x06: movd(regs, instr); break;
         case 0x09: truncld(regs, instr); break;
         case 0x0A: ceilld(regs, instr); break;
         case 0x0D: truncwd(regs, instr); break;
@@ -69,7 +75,10 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
       break;
     case 0x14: // w
       switch(mask_cop2) {
+        case 0x01: subw(regs, instr); break;
         case 0x05: absw(regs, instr); break;
+        case 0x02: mulw(regs, instr); break;
+        case 0x06: movw(regs, instr); break;
         case 0x20: cvtsw(regs, instr); break;
         case 0x21: cvtdw(regs, instr); break;
         default: logfatal("Unimplemented COP1 CO instruction W[%d %d] (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
@@ -77,7 +86,10 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
       break;
     case 0x15: // l
       switch(mask_cop2) {
+        case 0x01: subl(regs, instr); break;
         case 0x05: absl(regs, instr); break;
+        case 0x02: mull(regs, instr); break;
+        case 0x06: movl(regs, instr); break;
         case 0x20: cvtsl(regs, instr); break;
         case 0x21: cvtdl(regs, instr); break;
         default: logfatal("Unimplemented COP1 CO instruction L[%d %d] (%08X) (%016lX)", mask_cop2 >> 3, mask_cop2 & 7, instr, regs->old_pc);
