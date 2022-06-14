@@ -9,4 +9,4 @@ typedef enum {
 
 void interrupt_raise(mi_t* mi, registers_t* regs, interrupt_t intr);
 void interrupt_lower(mi_t* mi, registers_t* regs, interrupt_t intr);
-void process_interrupt(mi_t* mi, registers_t* regs);
+void update_interrupt(mi_t* mi, registers_t* regs);

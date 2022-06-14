@@ -96,9 +96,31 @@ void emu_present(emu_t* emu) {
   SDL_RenderCopy(emu->renderer, emu->texture, NULL, NULL);
 }
 
+void poll_controller(si_t* si) {
+  const u8* state = SDL_GetKeyboardState(NULL);
+  si->controller.cU = state[SDL_SCANCODE_I];
+  si->controller.cL = state[SDL_SCANCODE_J];
+  si->controller.cD = state[SDL_SCANCODE_K];
+  si->controller.cR = state[SDL_SCANCODE_L];
+  si->controller.dU = state[SDL_SCANCODE_KP_8];
+  si->controller.dL = state[SDL_SCANCODE_KP_4];
+  si->controller.dD = state[SDL_SCANCODE_KP_5];
+  si->controller.dR = state[SDL_SCANCODE_KP_6];
+  si->controller.a  = state[SDL_SCANCODE_X];
+  si->controller.z = state[SDL_SCANCODE_Z];
+  si->controller.b = state[SDL_SCANCODE_C];
+  si->controller.s = state[SDL_SCANCODE_RETURN];
+  si->controller.LT = state[SDL_SCANCODE_A];
+  si->controller.RT = state[SDL_SCANCODE_S];
+  si->controller.RST = si->controller.s && si->controller.LT && si->controller.RT;
+  si->controller.xaxis = state[SDL_SCANCODE_LEFT] ? 127 : state[SDL_SCANCODE_RIGHT] ? -128 : 0;
+  si->controller.yaxis = state[SDL_SCANCODE_UP] ? 127 : state[SDL_SCANCODE_DOWN] ? -128 : 0;
+}
+
 void emu_run(emu_t* emu) {
   core_t* core = &emu->core;
   bool running = true;
+  si_t* si = &core->mem.mmio->si;
 
   while(running) {
     if(core->running) {
@@ -107,9 +129,11 @@ void emu_run(emu_t* emu) {
     }
 
     SDL_RenderPresent(emu->renderer);
-
     SDL_Event e;
+
     while(SDL_PollEvent(&e)) {
+      poll_controller(si);
+
       switch (e.type) {
         case SDL_QUIT:
           running = false;
@@ -124,10 +148,8 @@ void emu_run(emu_t* emu) {
                 init_core(core);
                 core->running = load_rom(&core->mem, emu->romFile);
               }
-            }
-              break;
-          }
-          break;
+            } break;
+          } break;
       }
     }
   }

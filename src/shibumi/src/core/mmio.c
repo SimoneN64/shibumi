@@ -34,7 +34,7 @@ void write_mmio(mem_t* mem, registers_t* regs, si_t* si, u32 addr, u32 val) {
     case 0x04500000 ... 0x045FFFFF: ai_write(mem, regs, addr, val); break;
     case 0x04600000 ... 0x046FFFFF: pi_write(mem, regs, addr, val); break;
     case 0x04700000 ... 0x047FFFFF: ri_write(&mem->mmio->ri, addr, val); break;
-    case 0x04800000 ... 0x048FFFFF: si_write(&mem->mmio->si, &mem->mmio->mi, regs, addr, val); break;
+    case 0x04800000 ... 0x048FFFFF: si_write(&mem->mmio->si, mem, regs, addr, val); break;
     default: logfatal("Unhandled mmio write at addr %08X with val %08X\n", addr, val);
   }
 }

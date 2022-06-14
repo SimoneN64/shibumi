@@ -17,7 +17,7 @@ INLINE void check_compare_interrupt(mi_t* mi, registers_t* regs) {
   regs->cp0.Count &= 0x1FFFFFFFF;
   if(regs->cp0.Count == (u64)regs->cp0.Compare << 1) {
     regs->cp0.Cause.ip.ip7 = 1;
-    process_interrupt(mi, regs);
+    update_interrupt(mi, regs);
   }
 }
 
@@ -53,8 +53,8 @@ INLINE void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
         logdebug("Exception fired! EPC = %016lX\n", regs->cp0.EPC);
         set_pc(regs, (s64)0xFFFFFFFF80000180);
         break;
-      case TLBL: case TLBS:
-        logfatal("TLB Exception!\n");
+      case TLBL: case TLBS: logfatal("TLB Exception!\n");
+      default: logfatal("Unhandled exception! %d\n", code);
     }
   }
 }

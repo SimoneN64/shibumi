@@ -9,6 +9,7 @@ set(SOURCES
   mmio/si.c
   mmio/vi.c
   mmio/ai.c
+  mmio/pif.c
 )
 
 add_library(mem

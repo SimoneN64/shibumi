@@ -70,6 +70,7 @@ void adds(registers_t* regs, u32 instr) {
 void addd(registers_t* regs, u32 instr) {
   double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
   double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
+  //printf("fs = %f ft = %f\n", fs, ft);
   double result = fs + ft;
   set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), result);
 }

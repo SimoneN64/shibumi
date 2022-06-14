@@ -67,7 +67,7 @@ void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
         }
       }
 
-      process_interrupt(mi, regs);
+      update_interrupt(mi, regs);
       break;
     default: logfatal("Unhandled MI[%08X] write (%08X)\n", val, paddr);
   }

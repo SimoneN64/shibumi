@@ -5,7 +5,7 @@
 void init_cop0(cop0_t* cop0) {
   cop0->Cause.raw = 0xB000007C;
   cop0->Random = 0x0000001F;
-  cop0->Status.raw = 0x70400004;
+  cop0->Status.raw = 0x34000000;
   cop0->PRId = 0x00000B00;
   cop0->Config = 0x0006E463;
 }
