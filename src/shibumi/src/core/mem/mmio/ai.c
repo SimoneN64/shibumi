@@ -3,6 +3,7 @@
 #include <string.h>
 #include <mem.h>
 #include <registers.h>
+#include <audio.h>
 
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
@@ -30,7 +31,7 @@ u32 ai_read(ai_t* ai, u32 paddr) {
       val |= 1 << 20;
       val |= 1 << 24;
       val |= (ai->dma_count > 0) << 30;
-      val |= 1 << 31; //(ai->dma_count > 1) << 31;
+      val |= (ai->dma_count > 1) << 31;
       return val;
     }
     default: logfatal("Unhandled AI read at addr %08X\n", paddr);
@@ -46,8 +47,8 @@ void ai_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       }
       break;
     case 0x04500004: {
-      u32 len = val & 0x3FFFF & ~7;
-      if(ai->dma_count < 2 && len) {
+      u32 len = (val & 0x3FFFF) & ~7;
+      if((ai->dma_count < 2) && len) {
         ai->dma_length[ai->dma_count] = len;
         ai->dma_count++;
       }
@@ -64,7 +65,7 @@ void ai_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       ai->dac.frequency = max(1, CPU_FREQ / 2 / (ai->dac_rate + 1)) * 1.037;
       ai->dac.period = CPU_FREQ / ai->dac.frequency;
       if(old_dac_freq != ai->dac.frequency) {
-        logdebug("New audio sample rate!\n");
+        adjust_sample_rate(ai->dac.frequency);
       }
     } break;
     case 0x04500014:
@@ -78,6 +79,18 @@ void ai_step(mem_t* mem, registers_t* regs, int cycles) {
   ai_t* ai = &mem->mmio.ai;
   ai->cycles += cycles;
   while(ai->cycles > ai->dac.period) {
+    if (ai->dma_count == 0) {
+      return;
+    }
+
+    u32 address_hi = ((ai->dma_address[0] >> 13) + ai->dma_address_carry) & 0x7ff;
+    ai->dma_address[0] = (address_hi << 13) | ai->dma_address[0] & 0x1fff;
+    u32 data = read32_physical(mem, ai->dma_address[0], regs->pc);
+
+    s16 left  = (s16)(data >> 16);
+    s16 right = (s16)data;
+    push_sample(left, right);
+
     u32 address_lo = (ai->dma_address[0] + 4) & 0x1fff;
     ai->dma_address[0] = (ai->dma_address[0] & ~0x1fff) | address_lo;
     ai->dma_address_carry = (address_lo == 0);

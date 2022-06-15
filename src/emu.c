@@ -1,6 +1,7 @@
 #include <emu.h>
 #include <mem.h>
 #include <access.h>
+#include <audio.h>
 
 void destroy_emu(emu_t* emu) {
   SDL_DestroyTexture(emu->texture);
@@ -18,7 +19,9 @@ void init_emu(emu_t* emu) {
   emu->sdlFormat = SDL_PIXELFORMAT_RGBA5551;
   emu->currentFormat = f5553;
 
-  SDL_Init(SDL_INIT_VIDEO);
+  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+  init_audio();
+
   emu->window = SDL_CreateWindow(
     "shibumi",
     SDL_WINDOWPOS_CENTERED,

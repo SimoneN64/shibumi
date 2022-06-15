@@ -21,7 +21,7 @@ INLINE void check_compare_interrupt(mi_t* mi, registers_t* regs) {
   }
 }
 
-INLINE void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
+void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
   registers_t* regs = &cpu->regs;
   s64 pc = regs->pc;
   if(cpu->in_delay_slot) {

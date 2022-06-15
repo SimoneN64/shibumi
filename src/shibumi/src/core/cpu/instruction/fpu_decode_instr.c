@@ -5,6 +5,12 @@
 
 void fpu_decode(cpu_t* cpu, u32 instr) {
   registers_t* regs = &cpu->regs;
+
+  if(!regs->cp0.Status.cu1) {
+    fire_exception(cpu, CpU, 1);
+    return;
+  }
+
   u8 mask_cop = (instr >> 21) & 0x1F;
   u8 mask_cop2 = instr & 0x3F;
   u8 mask_branch = (instr >> 16) & 0x1F;

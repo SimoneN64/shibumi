@@ -21,11 +21,11 @@ void run_frame(core_t* core) {
       frame_cycles++;
     }
 
-    int missed = CYCLES_PER_FRAME - frame_cycles;
-    ai_step(&core->mem, &core->cpu.regs, missed);
-
     if((mmio->vi.current << 1) == mmio->vi.intr) {
       interrupt_raise(&mmio->mi, &core->cpu.regs, VI);
     }
+
+    int missed = CYCLES_PER_FRAME - frame_cycles;
+    ai_step(&core->mem, &core->cpu.regs, missed);
   }
 }

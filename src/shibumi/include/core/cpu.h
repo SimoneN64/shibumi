@@ -28,3 +28,4 @@ typedef enum exception_code_t {
 
 void init_cpu(cpu_t* cpu);
 void step(cpu_t* cpu, mem_t* mem);
+void fire_exception(cpu_t* cpu, exception_code_t code, int cop);

@@ -19,9 +19,9 @@ endif()
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
   set(OPTIMIZATIONS -g
-    -fsanitize=address -fsanitize=undefined
+   # -fsanitize=address -fsanitize=undefined
   )
-  target_link_libraries(shibumi -fsanitize=address -fsanitize=undefined)
+  #target_link_libraries(shibumi -fsanitize=address -fsanitize=undefined)
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
   set(OPTIMIZATIONS -O3)
 endif()

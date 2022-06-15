@@ -5,8 +5,7 @@
 
 void init_mmio(mmio_t *mmio) {
   init_mi(&mmio->mi);
-  mmio->pi = (pi_t*)calloc(1, sizeof(pi_t));
-  init_pi(mmio->pi);
+  init_pi(&mmio->pi);
   init_ri(&mmio->ri);
   init_ai(&mmio->ai);
   init_vi(&mmio->vi);
@@ -20,7 +19,7 @@ u32 read_mmio(mmio_t* mmio, u32 addr) {
     case 0x04300000 ... 0x043FFFFF: return mi_read(&mmio->mi, addr);
     case 0x04400000 ...	0x044FFFFF: return vi_read(&mmio->vi, addr);
     case 0x04500000 ... 0x045FFFFF: return ai_read(&mmio->ai, addr);
-    case 0x04600000 ... 0x046FFFFF: return pi_read(&mmio->mi, mmio->pi, addr);
+    case 0x04600000 ... 0x046FFFFF: return pi_read(&mmio->mi, &mmio->pi, addr);
     case 0x04700000 ... 0x047FFFFF: return ri_read(&mmio->ri, addr);
     case 0x04800000 ... 0x048FFFFF: return si_read(&mmio->si, &mmio->mi, addr);
     default: logfatal("Unhandled mmio read at addr %08X\n", addr);
