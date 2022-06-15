@@ -21,10 +21,10 @@ INLINE void check_compare_interrupt(mi_t* mi, registers_t* regs) {
   }
 }
 
-void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
-  registers_t* regs = &cpu->regs;
+void fire_exception(registers_t* regs, exception_code_t code, int cop) {
   s64 pc = regs->pc;
-  if(cpu->in_delay_slot) {
+  bool old_exl = regs->cp0.Status.exl;
+  if(regs->in_delay_slot) {
     regs->cp0.Cause.branch_delay = true;
     pc -= 4;
   } else {
@@ -51,9 +51,15 @@ void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
       case Ov: case Tr:
       case FPE: case WATCH:
         logdebug("Exception fired! EPC = %016lX\n", regs->cp0.EPC);
-        set_pc(regs, (s64)0xFFFFFFFF80000180);
+        set_pc(regs, (s64)0x80000180);
         break;
-      case TLBL: case TLBS: logfatal("TLB Exception!\n");
+      case TLBL: case TLBS:
+        if(old_exl || regs->cp0.TlbError == INVALID) {
+          set_pc(regs, (s64)0x80000180);
+        } else {
+          set_pc(regs, (s64)0x80000000);
+        }
+        break;
       default: logfatal("Unhandled exception! %d\n", code);
     }
   }
@@ -61,13 +67,12 @@ void fire_exception(cpu_t* cpu, exception_code_t code, int cop) {
 
 INLINE void handle_interrupt(cpu_t* cpu, mem_t* mem) {
   if(should_service_interrupt(&cpu->regs)) {
-    fire_exception(cpu, Int, 0);
+    fire_exception(&cpu->regs, Int, 0);
   }
 }
 
 void init_cpu(cpu_t *cpu) {
   init_registers(&cpu->regs);
-  cpu->in_delay_slot = false;
 }
 
 void step(cpu_t *cpu, mem_t *mem) {
@@ -75,10 +80,11 @@ void step(cpu_t *cpu, mem_t *mem) {
   check_compare_interrupt(&mem->mmio.mi, regs);
   handle_interrupt(cpu, mem);
   regs->gpr[0] = 0;
-  u32 instruction = read32(mem, regs->pc, regs->pc);
+  u32 instruction = read32(mem, regs, regs->pc);
+  // logdebug("PC: %016lX\n", regs->pc);
   regs->old_pc = regs->pc;
   regs->pc = regs->next_pc;
   regs->next_pc += 4;
-  cpu->in_delay_slot = false;
+  regs->in_delay_slot = false;
   exec(cpu, mem, instruction);
 }

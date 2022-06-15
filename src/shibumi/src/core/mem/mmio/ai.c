@@ -85,7 +85,7 @@ void ai_step(mem_t* mem, registers_t* regs, int cycles) {
 
     u32 address_hi = ((ai->dma_address[0] >> 13) + ai->dma_address_carry) & 0x7ff;
     ai->dma_address[0] = (address_hi << 13) | ai->dma_address[0] & 0x1fff;
-    u32 data = read32_physical(mem, ai->dma_address[0], regs->pc);
+    u32 data = read32_physical(mem, regs, ai->dma_address[0]);
 
     s16 left  = (s16)(data >> 16);
     s16 right = (s16)data;

@@ -67,6 +67,7 @@ void lwc1(registers_t* regs, mem_t* mem, u32 instr);
 void swc1(registers_t* regs, mem_t* mem, u32 instr);
 void ldc1(registers_t* regs, mem_t* mem, u32 instr);
 void mfc1(registers_t* regs, u32 instr);
+void dmfc1(registers_t* regs, u32 instr);
 void mtc1(registers_t* regs, u32 instr);
 void sdc1(registers_t* regs, mem_t* mem, u32 instr);
 void truncws(registers_t* regs, u32 instr);

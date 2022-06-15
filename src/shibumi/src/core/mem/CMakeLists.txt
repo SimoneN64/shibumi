@@ -1,7 +1,6 @@
 project(mem)
 
 set(SOURCES
-  tlb.c
   mmio/intr.c
   mmio/mi.c
   mmio/pi.c

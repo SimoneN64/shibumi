@@ -7,7 +7,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
   registers_t* regs = &cpu->regs;
 
   if(!regs->cp0.Status.cu1) {
-    fire_exception(cpu, CpU, 1);
+    fire_exception(&cpu->regs, CpU, 1);
     return;
   }
 
@@ -17,6 +17,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
   switch(mask_sub) {
     // 000r_rccc
     case 0x00: mfc1(regs, instr); break;
+    case 0x01: dmfc1(regs, instr); break;
     case 0x02: cfc1(regs, instr); break;
     case 0x04: mtc1(regs, instr); break;
     case 0x06: ctc1(regs, instr); break;

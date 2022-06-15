@@ -1,11 +1,11 @@
 #include <mem.h>
-#include <tlb.h>
 #include <log.h>
 #include <string.h>
 #include <stdio.h>
 #include <utils/swap.h>
 #include <utils/bit.h>
 #include <utils/access.h>
+#include <cpu.h>
 
 void init_mem(mem_t* mem) {
   mem->rdram = calloc(RDRAM_SIZE, 1);
@@ -79,28 +79,60 @@ const char* regions_str(u32 paddr) {
   }
 }
 
-u8 read8(mem_t* mem, u32 vaddr) {
-  u32 paddr = vtp(vaddr);
+INLINE bool map_vaddr(mem_t* mem, registers_t* regs, tlb_access_type_t access_type, u32 vaddr, u32* paddr, bool tlb) {
+  if(!tlb) {
+    return vaddr & 0x1FFFFFFF;
+  }
+
+  switch(vaddr >> 29) {
+    case 0 ... 3: case 7:
+      return probe_tlb(mem, regs, access_type, (s64)((s32)vaddr), paddr, NULL);
+    case 4: case 5:
+      *paddr = vaddr & 0x1FFFFFFF;
+      return true;
+    case 6: logfatal("Unimplemented virtual mapping in KSSEG! (%08X)\n", vaddr);
+    default:
+      logfatal("Should never end up in default case in map_vaddr! (%08X)\n", vaddr);
+  }
+}
+
+u8 read8_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, LOAD, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, LOAD), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return mem->rdram[paddr];
     case 0x04001000 ... 0x04001FFF: return mem->imem[paddr & IMEM_DSIZE];
+    case 0x1FC007C0 ... 0x1FC007FF: return mem->pif_ram[paddr & PIF_RAM_DSIZE];
     default: logfatal("Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr);
   }
 }
 
-u16 read16(mem_t* mem, u32 vaddr) {
-  u32 paddr = vtp(vaddr);
-        
+u16 read16_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, LOAD, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, LOAD), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(16, mem->rdram, paddr);
     case 0x04001000 ... 0x04001FFF: return raccess(16, mem->imem, paddr & IMEM_DSIZE);
+    case 0x1FC007C0 ... 0x1FC007FF: return raccess(16, mem->pif_ram, paddr & PIF_RAM_DSIZE);
     default: logfatal("Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr);
   }
 }
 
-u32 read32_(mem_t* mem, u32 vaddr, s64 pc, bool tlb) {
-  u32 paddr = tlb ? vtp(vaddr) : vaddr;
-  
+u32 read32_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, LOAD, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, LOAD), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(32, mem->rdram, paddr);
     case 0x04000000 ... 0x04000FFF: return raccess(32, mem->dmem, paddr & DMEM_DSIZE);
@@ -113,13 +145,17 @@ u32 read32_(mem_t* mem, u32 vaddr, s64 pc, bool tlb) {
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
     case 0x04900000 ... 0x07FFFFFF: case 0x08000000 ... 0x0FFFFFFF:
     case 0x80000000 ... 0xFFFFFFFF: case 0x1FC00800 ... 0x7FFFFFFF: return 0;
-    default: logfatal("Unimplemented %s[%08X] 32-bit read (PC = %016lX)\n", regions_str(paddr), paddr, pc);
+    default: logfatal("Unimplemented %s[%08X] 32-bit read (PC = %016lX)\n", regions_str(paddr), paddr, regs->pc);
   }
 }
 
-u64 read64(mem_t* mem, u32 vaddr) {
-  u32 paddr = vtp(vaddr);
-        
+u64 read64_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, LOAD, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, LOAD), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(64, mem->rdram, paddr);
     case 0x04001000 ... 0x04001FFF: return raccess(64, mem->imem, paddr & IMEM_DSIZE);
@@ -127,8 +163,13 @@ u64 read64(mem_t* mem, u32 vaddr) {
   }
 }
 
-void write8(mem_t* mem, u32 vaddr, u8 val) {
-  u32 paddr = vtp(vaddr);
+void write8_(mem_t* mem, registers_t* regs, u32 vaddr, u8 val, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, STORE, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, STORE), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: mem->rdram[paddr] = val; break;
     case 0x04001000 ... 0x04001FFF: mem->imem[paddr & IMEM_DSIZE] = val; break;
@@ -136,9 +177,13 @@ void write8(mem_t* mem, u32 vaddr, u8 val) {
   }
 }
 
-void write16(mem_t* mem, u32 vaddr, u16 val) {
-  u32 paddr = vtp(vaddr);
-        
+void write16_(mem_t* mem, registers_t* regs, u32 vaddr, u16 val, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, STORE, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, STORE), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(16, mem->rdram, paddr, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(16, mem->imem, paddr & IMEM_DSIZE, val); break;
@@ -146,9 +191,13 @@ void write16(mem_t* mem, u32 vaddr, u16 val) {
   }
 }
 
-void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
-  u32 paddr = vtp(vaddr);
-  
+void write32_(mem_t* mem, registers_t* regs, u32 vaddr, u32 val, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, STORE, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, STORE), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(32, mem->rdram, paddr, val); break;
     case 0x04000000 ... 0x04000FFF: waccess(32, mem->dmem, paddr & DMEM_DSIZE, val); break;
@@ -163,9 +212,13 @@ void write32(mem_t* mem, registers_t* regs, u32 vaddr, u32 val) {
   }
 }
 
-void write64(mem_t* mem, u32 vaddr, u64 val) {
-  u32 paddr = vtp(vaddr);
-  
+void write64_(mem_t* mem, registers_t* regs, u32 vaddr, u64 val, bool tlb) {
+  u32 paddr;
+  if(!map_vaddr(mem, regs, STORE, vaddr, &paddr, tlb)) {
+    handle_tlb_exception(regs, vaddr);
+    fire_exception(regs, get_tlb_exception_code(regs->cp0.TlbError, STORE), 0);
+  }
+
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(64, mem->rdram, paddr, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(64, mem->imem, paddr & IMEM_DSIZE, val); break;

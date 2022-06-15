@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cop0.h>
 #include <cpu.h>
+#include "log.h"
 
 void init_cop0(cop0_t* cop0) {
   cop0->Cause.raw = 0xB000007C;
@@ -14,15 +15,15 @@ u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
   switch(index) {
     case 0: return cop0->Index;
     case 1: return cop0->Random;
-    case 2: return cop0->EntryLo0;
-    case 3: return cop0->EntryLo1;
-    case 4: return cop0->Context;
-    case 5: return cop0->PageMask;
+    case 2: return cop0->EntryLo0.raw;
+    case 3: return cop0->EntryLo1.raw;
+    case 4: return cop0->Context.raw;
+    case 5: return cop0->PageMask.raw;
     case 6: return cop0->Wired;
     case 7: return cop0->r7;
     case 8: return cop0->BadVaddr;
     case 9: return cop0->Count >> 1;
-    case 10: return cop0->EntryHi;
+    case 10: return cop0->EntryHi.raw;
     case 11: return cop0->Compare;
     case 12: return cop0->Status.raw;
     case 13: return cop0->Cause.raw;
@@ -32,7 +33,7 @@ u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
     case 17: return cop0->LLAddr;
     case 18: return cop0->WatchLo;
     case 19: return cop0->WatchHi;
-    case 20: return cop0->XContext;
+    case 20: return cop0->XContext.raw;
     case 21: return cop0->r21;
     case 22: return cop0->r22;
     case 23: return cop0->r23;
@@ -53,15 +54,15 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
   switch(index) {
     case 0: cop0->Index = value; break;
     case 1: cop0->Random = value; break;
-    case 2: cop0->EntryLo0 = value; break;
-    case 3: cop0->EntryLo1 = value; break;
-    case 4: cop0->Context = value; break;
-    case 5: cop0->PageMask = value; break;
+    case 2: cop0->EntryLo0.raw = value; break;
+    case 3: cop0->EntryLo1.raw = value; break;
+    case 4: cop0->Context.raw = value; break;
+    case 5: cop0->PageMask.raw = value; break;
     case 6: cop0->Wired = value; break;
     case 7: cop0->r7 = value; break;
     case 8: cop0->BadVaddr = value; break;
     case 9: cop0->Count = (s64)value << 1; break;
-    case 10: cop0->EntryHi = value; break;
+    case 10: cop0->EntryHi.raw = value; break;
     case 11: {
       cop0->Cause.ip.ip7 = 0;
       cop0->Compare = value;
@@ -82,7 +83,7 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
     case 17: cop0->LLAddr = value; break;
     case 18: cop0->WatchLo = value; break;
     case 19: cop0->WatchHi = value; break;
-    case 20: cop0->XContext = value; break;
+    case 20: cop0->XContext.raw = value; break;
     case 21: cop0->r21 = value; break;
     case 22: cop0->r22 = value; break;
     case 23: cop0->r23 = value; break;
@@ -95,5 +96,96 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
     case 30: cop0->ErrorEPC = value; break;
     case 31: cop0->r31 = value; break;
     default: break;
+  }
+}
+
+#define vpn(addr, PageMask) (((((addr) & 0xFFFFFFFFFF) | (((addr) >> 22) & 0x30000000000)) & ~((PageMask) | 0x1FFF)))
+
+tlb_entry_t* tlb_try_match(registers_t* regs, u32 vaddr, int* match) {
+  for(int i = 0; i < 32; i++) {
+    tlb_entry_t *entry = &regs->cp0.tlb[i];
+    u64 entry_vpn = vpn(entry->EntryHi.raw, entry->PageMask.raw);
+    u64 vaddr_vpn = vpn(vaddr, entry->PageMask.raw);
+
+    bool vpn_match = entry_vpn == vaddr_vpn;
+    bool asid_match = entry->global || (regs->cp0.EntryHi.asid == entry->EntryHi.asid);
+
+    if(vpn_match && asid_match) {
+      if(match) {
+        *match = i;
+      }
+      return entry;
+    }
+  }
+
+  return NULL;
+}
+
+bool probe_tlb(mem_t* mem, registers_t* regs, tlb_access_type_t access_type, u32 vaddr, u32* paddr, int* match) {
+  tlb_entry_t* entry = tlb_try_match(regs, vaddr, match);
+  if(!entry) {
+    regs->cp0.TlbError = MISS;
+    return false;
+  }
+
+  u32 mask = (entry->PageMask.mask << 12) | 0xFFF;
+  u32 odd = vaddr & (mask + 1);
+  u32 pfn;
+
+  if(!odd) {
+    if(!(entry->EntryLo0.v)) {
+      regs->cp0.TlbError = INVALID;
+      return false;
+    }
+
+    if(access_type == STORE && !(entry->EntryLo0.d)) {
+      regs->cp0.TlbError = MODIFICATION;
+      return false;
+    }
+
+    pfn = entry->EntryLo0.pfn;
+  } else {
+    if(!(entry->EntryLo1.v)) {
+      regs->cp0.TlbError = INVALID;
+      return false;
+    }
+
+    if(access_type == STORE && !(entry->EntryLo1.d)) {
+      regs->cp0.TlbError = MODIFICATION;
+      return false;
+    }
+
+    pfn = entry->EntryLo1.pfn;
+  }
+
+  if(paddr != NULL) {
+    *paddr = (pfn << 12) | (vaddr & mask);
+  }
+
+  return true;
+}
+
+void handle_tlb_exception(registers_t* regs, u64 vaddr) {
+  u64 vpn2 = (vaddr >> 13) & 0x7FFFF;
+  u64 xvpn2 = (vaddr >> 13) & 0x7FFFFFF;
+  regs->cp0.BadVaddr = vaddr;
+  regs->cp0.Context.badvpn2 = vpn2;
+  regs->cp0.XContext.badvpn2 = xvpn2;
+  regs->cp0.XContext.r = (vaddr >> 62) & 3;
+  regs->cp0.EntryHi.vpn2 = xvpn2;
+  regs->cp0.EntryHi.r = (vaddr >> 62) & 0b11;
+}
+
+exception_code_t get_tlb_exception_code(tlb_error_t error, tlb_access_type_t access_type) {
+  switch(error) {
+    case NONE: logfatal("Getting TLB exception with error NONE\n");
+    case INVALID: case MISS:
+      return access_type == LOAD ? TLBL : TLBS;
+    case MODIFICATION:
+      return Mod;
+    case DISALLOWED_ADDRESS:
+      return access_type == LOAD ? AdEL : AdES;
+    default:
+      logfatal("Getting TLB exception for unknown error code! (%d)\n", error);
   }
 }

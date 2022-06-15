@@ -26,16 +26,6 @@ u32 sp_read(rsp_t* rsp, u32 addr) {
 void sp_write(rsp_t* rsp, mem_t* mem, registers_t* regs, u32 addr, u32 value) {
   mi_t* mi = &mem->mmio.mi;
   switch (addr) {
-    case 0x04040000: rsp->sp_mem_addr_reg = value & 0xFFF; break;
-    case 0x04040004: rsp->sp_dram_addr_reg = value & 0xFFF; break;
-    case 0x04040008: {
-      u16 len = value & 0xFFF;
-      u8 count = value >> 12;
-      memcpy((rsp->sp_mem_addr_reg >> 12) ?
-             &mem->imem[rsp->sp_mem_addr_reg & 0xff8] :
-             &mem->dmem[rsp->sp_mem_addr_reg & 0xff8],
-             &mem->rdram[rsp->sp_dram_addr_reg & RDRAM_DSIZE], len);
-    } break;
     case 0x04040010: {
       sp_status_write_t write = {.raw = value};
       CLEAR_SET(rsp->sp_status.halt, write.clear_halt, write.set_halt);

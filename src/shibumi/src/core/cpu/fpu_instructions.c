@@ -453,7 +453,7 @@ void floorwd(registers_t* regs, u32 instr) {
 
 void lwc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
-  u32 data = read32(mem, addr, regs->pc);
+  u32 data = read32(mem, regs, addr);
   set_cop1_reg_word(&regs->cp1, &regs->cp0, FT(instr), data);
 }
 
@@ -464,7 +464,7 @@ void swc1(registers_t* regs, mem_t* mem, u32 instr) {
 
 void ldc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
-  u64 data = read64(mem, addr);
+  u64 data = read64(mem, regs, addr);
   set_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr), data);
 }
 
@@ -494,11 +494,15 @@ void truncld(registers_t* regs, u32 instr) {
 
 void sdc1(registers_t* regs, mem_t* mem, u32 instr) {
   u32 addr = (s64)(s16)instr + regs->gpr[base(instr)];
-  write64(mem, addr, get_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr)));
+  write64(mem, regs, addr, get_cop1_reg_dword(&regs->cp1, &regs->cp0, FT(instr)));
 }
 
 void mfc1(registers_t* regs, u32 instr) {
   regs->gpr[RT(instr)] = (s32)get_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr));
+}
+
+void dmfc1(registers_t* regs, u32 instr) {
+  regs->gpr[RT(instr)] = (s64)get_cop1_reg_dword(&regs->cp1, &regs->cp0, FS(instr));
 }
 
 void mtc1(registers_t* regs, u32 instr) {

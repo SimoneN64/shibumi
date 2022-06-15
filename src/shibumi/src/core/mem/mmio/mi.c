@@ -2,6 +2,7 @@
 #include <log.h>
 #include <intr.h>
 #include <registers.h>
+#include <immintrin.h>
 
 void init_mi(mi_t* mi) {
   mi->mi_intr_mask.raw = 0;

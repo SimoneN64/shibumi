@@ -7,3 +7,7 @@ typedef struct cpu_t cpu_t;
 void mtc0(cpu_t* cpu, mem_t* mem, u32 instr);
 void mfc0(registers_t* regs, u32 instr);
 void eret(registers_t* regs);
+
+void tlbr(registers_t* regs);
+void tlbwi(registers_t* regs);
+void tlbp(registers_t* regs);

@@ -110,14 +110,14 @@ void branch(cpu_t* cpu, bool cond, s64 address) {
   if (cond) {
     regs->next_pc = address;
   }
-  cpu->in_delay_slot = true;
+  regs->in_delay_slot = true;
 }
 
 void branch_likely(cpu_t* cpu, bool cond, s64 address) {
   registers_t* regs = &cpu->regs;
   if (cond) {
     regs->next_pc = address;
-    cpu->in_delay_slot = true;
+    regs->in_delay_slot = true;
   } else {
     set_pc(regs, regs->next_pc);
   }
@@ -161,38 +161,38 @@ void lui(registers_t* regs, u32 instr) {
 
 void lb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
-  regs->gpr[RT(instr)] = (s64)(s8)read8(mem, address);
+  regs->gpr[RT(instr)] = (s64)(s8)read8(mem, regs, address);
 }
 
 void lh(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 1) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
-  regs->gpr[RT(instr)] = (s64)(s16)read16(mem, address);
+  regs->gpr[RT(instr)] = (s64)(s16)read16(mem, regs, address);
 }
 
 void lw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
-  s32 value = read32(mem, address, regs->pc);
+  s32 value = read32(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
 void ll(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
   regs->LLBit = true;
   regs->cp0.LLAddr = address;
 
-  s32 value = read32(mem, address, regs->pc);
+  s32 value = read32(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
@@ -200,9 +200,9 @@ void lwl(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 0) & 3);
   u32 mask = 0xFFFFFFFF << shift;
-  u32 data = read32(mem, address & ~3, regs->pc);
+  u32 data = read32(mem, regs, address & ~3);
   s64 rt = regs->gpr[RT(instr)];
-  s32 result = (rt & ~mask) | (data << shift);
+  s32 result = (s32)((rt & ~mask) | (data << shift));
   regs->gpr[RT(instr)] = result;
 }
 
@@ -210,32 +210,32 @@ void lwr(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 3) & 3);
   u32 mask = 0xFFFFFFFF >> shift;
-  u32 data = read32(mem, address & ~3, regs->pc);
+  u32 data = read32(mem, regs, address & ~3);
   s64 rt = regs->gpr[RT(instr)];
-  s32 result = (rt & ~mask) | (data >> shift);
+  s32 result = (s32)((rt & ~mask) | (data >> shift));
   regs->gpr[RT(instr)] = result;
 }
 
 void ld(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
-  s64 value = read64(mem, address);
+  s64 value = read64(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
 void lld(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
   regs->LLBit = true;
   regs->cp0.LLAddr = address;
 
-  s64 value = read64(mem, address);
+  s64 value = read64(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
@@ -243,9 +243,9 @@ void ldl(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   s32 shift = 8 * ((address ^ 0) & 7);
   u64 mask = 0xFFFFFFFFFFFFFFFF << shift;
-  u64 data = read64(mem, address & ~7);
+  u64 data = read64(mem, regs, address & ~7);
   s64 rt = regs->gpr[RT(instr)];
-  s64 result = (rt & ~mask) | (data << shift);
+  s64 result = (s64)((rt & ~mask) | (data << shift));
   regs->gpr[RT(instr)] = result;
 }
 
@@ -253,84 +253,84 @@ void ldr(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   s32 shift = 8 * ((address ^ 7) & 7);
   u64 mask = 0xFFFFFFFFFFFFFFFF >> shift;
-  u64 data = read64(mem, address & ~7);
+  u64 data = read64(mem, regs, address & ~7);
   s64 rt = regs->gpr[RT(instr)];
-  s64 result = (rt & ~mask) | (data >> shift);
+  s64 result = (s64)((rt & ~mask) | (data >> shift));
   regs->gpr[RT(instr)] = result;
 }
 
 void lbu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
-  u8 value = read8(mem, address);
+  u8 value = read8(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
 void lhu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 1) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
-  u16 value = read16(mem, address);
+  u16 value = read16(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
 void lwu(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdEL, 0);
   }
 
-  u32 value = read32(mem, address, regs->pc);
+  u32 value = read32(mem, regs, address);
   regs->gpr[RT(instr)] = value;
 }
 
 void sb(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
-  write8(mem, address, regs->gpr[RT(instr)]);
+  write8(mem, regs, address, regs->gpr[RT(instr)]);
 }
 
 void sc(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdES, 0);
   }
   
   if(regs->LLBit) {
     write32(mem, regs, address, regs->gpr[RT(instr)]);
   }
 
-  regs->gpr[RT(instr)] = (u64)regs->LLBit;
+  regs->gpr[RT(instr)] = (s64)((u64)regs->LLBit);
   regs->LLBit = false;
 }
 
 void scd(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdES, 0);
   }
   
   if(regs->LLBit) {
-    write64(mem, address, regs->gpr[RT(instr)]);
+    write64(mem, regs, address, regs->gpr[RT(instr)]);
   }
 
-  regs->gpr[RT(instr)] = (u64)regs->LLBit;
+  regs->gpr[RT(instr)] = (s64)((u64)regs->LLBit);
   regs->LLBit = false;
 }
 
 void sh(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 1) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdES, 0);
   }
 
-  write16(mem, address, regs->gpr[RT(instr)]);
+  write16(mem, regs, address, regs->gpr[RT(instr)]);
 }
 
 void sw(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdES, 0);
   }
   
   write32(mem, regs, address, regs->gpr[RT(instr)]);
@@ -339,35 +339,35 @@ void sw(mem_t* mem, registers_t* regs, u32 instr) {
 void sd(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   if ((address & 7) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdES, 0);
   }
   
-  write64(mem, address, regs->gpr[RT(instr)]);
+  write64(mem, regs, address, regs->gpr[RT(instr)]);
 }
 
 void sdl(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   s32 shift = 8 * ((address ^ 0) & 7);
   u64 mask = 0xFFFFFFFFFFFFFFFF >> shift;
-  u64 data = read64(mem, address & ~7);
+  u64 data = read64(mem, regs, address & ~7);
   s64 rt = regs->gpr[RT(instr)];
-  write64(mem, address & ~7, (data & ~mask) | (rt >> shift));
+  write64(mem, regs, address & ~7, (data & ~mask) | (rt >> shift));
 }
 
 void sdr(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   s32 shift = 8 * ((address ^ 7) & 7);
   u64 mask = 0xFFFFFFFFFFFFFFFF << shift;
-  u64 data = read64(mem, address & ~7);
+  u64 data = read64(mem, regs, address & ~7);
   s64 rt = regs->gpr[RT(instr)];
-  write64(mem, address & ~7, (data & ~mask) | (rt << shift));
+  write64(mem, regs, address & ~7, (data & ~mask) | (rt << shift));
 }
 
 void swl(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 0) & 3);
   u32 mask = 0xFFFFFFFF >> shift;
-  u32 data = read32(mem, address & ~3, regs->pc);
+  u32 data = read32(mem, regs, address & ~3);
   u32 rt = regs->gpr[RT(instr)];
   write32(mem, regs, address & ~3, (data & ~mask) | (rt >> shift));
 }
@@ -376,7 +376,7 @@ void swr(mem_t* mem, registers_t* regs, u32 instr) {
   u32 address = regs->gpr[RS(instr)] + (s16)instr;
   u32 shift = 8 * ((address ^ 3) & 3);
   u32 mask = 0xFFFFFFFF << shift;
-  u32 data = read32(mem, address & ~3, regs->pc);
+  u32 data = read32(mem, regs, address & ~3);
   u32 rt = regs->gpr[RT(instr)];
   write32(mem, regs, address & ~3, (data & ~mask) | (rt << shift));
 }
@@ -551,7 +551,7 @@ void j(cpu_t* cpu, u32 instr) {
   u32 target = (instr & 0x3ffffff) << 2;
   u32 address = (regs->old_pc & ~0xfffffff) | target;
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr: %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, DBE, 0);
   }
   
   branch(cpu, true, address);
@@ -561,7 +561,7 @@ void jr(cpu_t* cpu, u32 instr) {
   registers_t* regs = &cpu->regs;
   u32 address = regs->gpr[RS(instr)];
   if ((address & 3) != 0) {
-    logfatal("Unaligned access that shouldn't have happened (instr %08X) (addr: %016lX)\n", instr, regs->old_pc);
+    fire_exception(regs, AdES, 0);
   }
   
   branch(cpu, true, address);
