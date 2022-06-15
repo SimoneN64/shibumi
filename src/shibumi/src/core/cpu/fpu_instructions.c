@@ -10,36 +10,6 @@
 #define pop_rounding_mode \
   fesetround(original_rounding_mode)
 
-INLINE bool get_cond_double(double fs, double ft, comp_conds cond) {
-  switch(cond) {
-    case T: case GLE: return true;
-    case EQ: return fs == ft;
-    case NGT: case NGL: case NGLE: case LE:
-      return fs <= ft;
-    case NGE: case LT: return fs < ft;
-    case NEQ: return fs != ft;
-    case GL: return fs > ft || fs < ft;
-    case NLT: case GE: return fs >= ft;
-    case NLE: case GT: return fs > ft;
-    default: logfatal("Unhandled compare condition %d\n", cond);
-  }
-}
-
-INLINE bool get_cond_float(float fs, float ft, comp_conds cond) {
-  switch(cond) {
-    case T: case GLE: return true;
-    case EQ: return fs == ft;
-    case NGT: case NGL: case NGLE: case LE:
-      return fs <= ft;
-    case NGE: case LT: return fs < ft;
-    case NEQ: return fs != ft;
-    case GL: return fs > ft || fs < ft;
-    case NLT: case GE: return fs >= ft;
-    case NLE: case GT: return fs > ft;
-    default: logfatal("Unhandled compare condition %d\n", cond);
-  }
-}
-
 void absd(registers_t* regs, u32 instr) {
   double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
   set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), fabs(fs));
@@ -256,13 +226,41 @@ void cvtld(registers_t* regs, u32 instr) {
 void ccondd(registers_t* regs, u32 instr, comp_conds cond) {
   double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
   double ft = get_cop1_reg_double(&regs->cp1, &regs->cp0, FT(instr));
-  regs->cp1.fcr31.compare = get_cond_double(fs, ft, cond);
+
+  bool less, equal, unordered;
+  if(isnan(fs) || isnan(ft)) {
+    less = false;
+    equal = false;
+    unordered = true;
+  } else {
+    less = fs < ft;
+    equal = fs == ft;
+    unordered = false;
+  }
+
+  bool condition = ((cond >> 2) && less) || ((cond >> 1) && equal) || ((cond & 1) && unordered);
+
+  regs->cp1.fcr31.compare = condition;
 }
 
 void cconds(registers_t* regs, u32 instr, comp_conds cond) {
   float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
   float ft = get_cop1_reg_float(&regs->cp1, &regs->cp0, FT(instr));
-  regs->cp1.fcr31.compare = get_cond_float(fs, ft, cond);
+
+  bool less, equal, unordered;
+  if(isnan(fs) || isnan(ft)) {
+    less = false;
+    equal = false;
+    unordered = true;
+  } else {
+    less = fs < ft;
+    equal = fs == ft;
+    unordered = false;
+  }
+
+  bool condition = ((cond >> 2) && less) || ((cond >> 1) && equal) || ((cond & 1) && unordered);
+
+  regs->cp1.fcr31.compare = condition;
 }
 
 void divs(registers_t* regs, u32 instr) {
@@ -375,6 +373,82 @@ void movl(registers_t* regs, u32 instr) {
       FS(instr)
     )
   );
+}
+
+void negs(registers_t* regs, u32 instr) {
+  set_cop1_reg_float(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    -get_cop1_reg_float(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void negd(registers_t* regs, u32 instr) {
+  set_cop1_reg_double(
+    &regs->cp1,
+    &regs->cp0,
+    FD(instr),
+    -get_cop1_reg_double(
+      &regs->cp1,
+      &regs->cp0,
+      FS(instr)
+    )
+  );
+}
+
+void sqrts(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_float(&regs->cp1, &regs->cp0, FD(instr), sqrtf(fs));
+}
+
+void sqrtd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_double(&regs->cp1, &regs->cp0, FD(instr), sqrt(fs));
+}
+
+void roundls(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), (s32)roundf(fs));
+}
+
+void roundld(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), (s64)round(fs));
+}
+
+void roundws(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), (s32)roundf(fs));
+}
+
+void roundwd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), (s64)round(fs));
+}
+
+void floorls(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), (s64)floorf(fs));
+}
+
+void floorld(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FD(instr), (s64)floor(fs));
+}
+
+void floorws(registers_t* regs, u32 instr) {
+  float fs = get_cop1_reg_float(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), (s64)floorf(fs));
+}
+
+void floorwd(registers_t* regs, u32 instr) {
+  double fs = get_cop1_reg_double(&regs->cp1, &regs->cp0, FS(instr));
+  set_cop1_reg_word(&regs->cp1, &regs->cp0, FD(instr), (s64)floor(fs));
 }
 
 void lwc1(registers_t* regs, mem_t* mem, u32 instr) {

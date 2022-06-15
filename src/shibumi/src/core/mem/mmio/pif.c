@@ -42,6 +42,12 @@ void process_pif_commands(mem_t* mem) {
         u8 rlen = r & 0x3F;
         u8* res = &mem->pif_ram[i + t];
         switch(cmd[2]) {
+          case 0xff:
+            res[0] = 0x05;
+            res[1] = 0x00;
+            res[2] = 0x01;
+            channel++;
+            break;
           case 0:
             res[0] = 0x05;
             res[1] = 0x00;

@@ -1,6 +1,8 @@
 #include <rsp.h>
 #include <log.h>
 #include <intr.h>
+#include <mem.h>
+#include <string.h>
 
 void init_rsp(rsp_t* rsp) {
   rsp->sp_status.raw = 0;
@@ -13,18 +15,27 @@ u32 sp_read(rsp_t* rsp, u32 addr) {
     case 0x04080000: return rsp->pc;
     default: logfatal("Unimplemented SP register read %08X\n", addr);
   }
-
-  return 0;
 }
 
 #define CLEAR_SET(val, clear, set) do { \
-  if(clear && set) logfatal("Can't be both clear and set\n"); \
-  if(clear) val = 0; \
-  if(set) val = 1; \
+  if((clear) && (set)) logfatal("Can't be both clear and set\n"); \
+  if(clear) (val) = 0; \
+  if(set) (val) = 1; \
 } while(0)
 
-void sp_write(rsp_t* rsp, mi_t* mi, registers_t* regs, u32 addr, u32 value) {
+void sp_write(rsp_t* rsp, mem_t* mem, registers_t* regs, u32 addr, u32 value) {
+  mi_t* mi = &mem->mmio.mi;
   switch (addr) {
+    case 0x04040000: rsp->sp_mem_addr_reg = value & 0xFFF; break;
+    case 0x04040004: rsp->sp_dram_addr_reg = value & 0xFFF; break;
+    case 0x04040008: {
+      u16 len = value & 0xFFF;
+      u8 count = value >> 12;
+      memcpy((rsp->sp_mem_addr_reg >> 12) ?
+             &mem->imem[rsp->sp_mem_addr_reg & 0xff8] :
+             &mem->dmem[rsp->sp_mem_addr_reg & 0xff8],
+             &mem->rdram[rsp->sp_dram_addr_reg & RDRAM_DSIZE], len);
+    } break;
     case 0x04040010: {
       sp_status_write_t write = {.raw = value};
       CLEAR_SET(rsp->sp_status.halt, write.clear_halt, write.set_halt);
@@ -42,8 +53,7 @@ void sp_write(rsp_t* rsp, mi_t* mi, registers_t* regs, u32 addr, u32 value) {
       CLEAR_SET(rsp->sp_status.signal_6_set, write.clear_signal_6, write.set_signal_6);
       CLEAR_SET(rsp->sp_status.signal_7_set, write.clear_signal_7, write.set_signal_7);
     } break;
-    case 0x04080000:
-      break;
+    case 0x04080000: rsp->pc = value & 0xFFF; break;
     default: logfatal("Unimplemented SP register write %08X, val: %08X\n\n", addr, value);
   }
 }

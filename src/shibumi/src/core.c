@@ -17,15 +17,15 @@ void run_frame(core_t* core) {
     int frame_cycles = 0;
     for(int i = 0; i < 6000; i++) {
       step(&core->cpu, &core->mem);
-      ai_step(&core->mem, &core->cpu.regs, 1);
+      //ai_step(&core->mem, &core->cpu.regs, 1);
       frame_cycles++;
     }
 
-    if((mmio->vi.current << 1) == mmio->vi.intr) {
+    if((mmio->vi.current & 0x3FE) == mmio->vi.intr) {
       interrupt_raise(&mmio->mi, &core->cpu.regs, VI);
     }
 
-    int missed = CYCLES_PER_FRAME - frame_cycles;
-    ai_step(&core->mem, &core->cpu.regs, missed);
+    //int missed = CYCLES_PER_FRAME - frame_cycles;
+    //ai_step(&core->mem, &core->cpu.regs, missed);
   }
 }

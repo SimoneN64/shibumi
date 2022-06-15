@@ -14,8 +14,9 @@ enum VI_FORMAT {
 
 typedef union {
   struct {
-    unsigned format:2;
-    unsigned remaining:30; // TODO: This is a stub
+    u8 format:2;
+    unsigned serrate:1;
+    unsigned:29;
   };
 
   u32 raw;
@@ -25,6 +26,10 @@ typedef struct {
   status_t status;
   u32 origin, width, current;
   u32 vsync, hsync, intr;
+  int swaps;
+  int num_halflines;
+  int num_fields;
+  int cycles_per_halfline;
 } vi_t;
 
 void init_vi(vi_t* vi);

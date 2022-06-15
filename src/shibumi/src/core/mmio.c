@@ -28,7 +28,7 @@ u32 read_mmio(mmio_t* mmio, u32 addr) {
 
 void write_mmio(mem_t* mem, registers_t* regs, si_t* si, u32 addr, u32 val) {
   switch (addr) {
-    case 0x04040000 ... 0x040FFFFF: sp_write(&mem->mmio.rsp, &mem->mmio.mi, regs, addr, val); break;
+    case 0x04040000 ... 0x040FFFFF: sp_write(&mem->mmio.rsp, mem, regs, addr, val); break;
     case 0x04300000 ... 0x043FFFFF: mi_write(&mem->mmio.mi, regs, addr, val); break;
     case 0x04400000 ...	0x044FFFFF: vi_write(&mem->mmio.mi, regs, &mem->mmio.vi, addr, val); break;
     case 0x04500000 ... 0x045FFFFF: ai_write(mem, regs, addr, val); break;
