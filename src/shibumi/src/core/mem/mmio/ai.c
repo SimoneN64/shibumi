@@ -38,7 +38,7 @@ u32 ai_read(ai_t* ai, u32 paddr) {
 }
 
 void ai_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
-  ai_t* ai = &mem->mmio->ai;
+  ai_t* ai = &mem->mmio.ai;
   switch(paddr) {
     case 0x04500000:
       if(ai->dma_count < 2) {
@@ -56,7 +56,7 @@ void ai_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
       ai->dma_enable = val & 1;
       break;
     case 0x0450000C:
-      interrupt_lower(&mem->mmio->mi, regs, AI);
+      interrupt_lower(&mem->mmio.mi, regs, AI);
       break;
     case 0x04500010: {
       u32 old_dac_freq = ai->dac.frequency;
@@ -75,7 +75,7 @@ void ai_write(mem_t* mem, registers_t* regs, u32 paddr, u32 val) {
 }
 
 void ai_step(mem_t* mem, registers_t* regs, int cycles) {
-  ai_t* ai = &mem->mmio->ai;
+  ai_t* ai = &mem->mmio.ai;
   ai->cycles += cycles;
   while(ai->cycles > ai->dac.period) {
     u32 address_lo = (ai->dma_address[0] + 4) & 0x1fff;
@@ -84,7 +84,7 @@ void ai_step(mem_t* mem, registers_t* regs, int cycles) {
     ai->dma_length[0] -= 4;
 
     if(!ai->dma_length[0]) {
-      interrupt_raise(&mem->mmio->mi, regs, AI);
+      interrupt_raise(&mem->mmio.mi, regs, AI);
       if(--ai->dma_count > 0) { // If we have another DMA pending, start on that one.
         ai->dma_address[0] = ai->dma_address[1];
         ai->dma_length[0]  = ai->dma_length[1];

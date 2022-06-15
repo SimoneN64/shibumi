@@ -12,7 +12,7 @@ void destroy_core(core_t* core) {
 }
 
 void run_frame(core_t* core) {
-  mmio_t* mmio = core->mem.mmio;
+  mmio_t* mmio = &core->mem.mmio;
   for (mmio->vi.current = 0; mmio->vi.current < 262; mmio->vi.current++) {
     int frame_cycles = 0;
     for(int i = 0; i < 6000; i++) {

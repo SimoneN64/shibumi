@@ -45,9 +45,9 @@ void init_emu(emu_t* emu) {
 
 void emu_present(emu_t* emu) {
   mem_t* mem = &emu->core.mem;
-  const u32 w = mem->mmio->vi.width, h = 0.75 * w;
-  const u32 origin = mem->mmio->vi.origin & 0xFFFFFF;
-  const u8 format = mem->mmio->vi.status.format;
+  const u32 w = mem->mmio.vi.width, h = 0.75 * w;
+  const u32 origin = mem->mmio.vi.origin & 0xFFFFFF;
+  const u8 format = mem->mmio.vi.status.format;
   u8 depth = format == f8888 ? 4 : format == f5553 ? 2 : 0;
   bool reconstructTexture = false;
 
@@ -105,13 +105,13 @@ void poll_controller(controller_t* controller, const u8* state) {
     (state[SDL_SCANCODE_X] << 7) |
     (state[SDL_SCANCODE_C] << 6) |
     (state[SDL_SCANCODE_Z] << 5) |
-    (state[SDL_SCANCODE_F] << 4) |
+    (state[SDL_SCANCODE_RETURN] << 4) |
     (state[SDL_SCANCODE_KP_8] << 3) |
     (state[SDL_SCANCODE_KP_5] << 2) |
     (state[SDL_SCANCODE_KP_4] << 1) |
     (state[SDL_SCANCODE_KP_6]);
   controller->b2 =
-    ((state[SDL_SCANCODE_F] && state[SDL_SCANCODE_A] && state[SDL_SCANCODE_S]) << 7) |
+    ((state[SDL_SCANCODE_RETURN] && state[SDL_SCANCODE_A] && state[SDL_SCANCODE_S]) << 7) |
     (0 << 6) |
     (state[SDL_SCANCODE_A] << 5) |
     (state[SDL_SCANCODE_S] << 4) |
@@ -120,24 +120,13 @@ void poll_controller(controller_t* controller, const u8* state) {
     (state[SDL_SCANCODE_K] << 1) |
     (state[SDL_SCANCODE_L]);
 
-  s8 xaxis = 0, yaxis = 0;
-
-  if(state[SDL_SCANCODE_LEFT]) {
-    xaxis = -128;
-  } else if (state[SDL_SCANCODE_RIGHT]) {
-    xaxis = 127;
-  }
-
-  if(state[SDL_SCANCODE_DOWN]) {
-    yaxis = -128;
-  } else if (state[SDL_SCANCODE_UP]) {
-    yaxis = 127;
-  }
+  s8 xaxis = state[SDL_SCANCODE_LEFT] ? -128 : (state[SDL_SCANCODE_RIGHT] ? 127 : 0);
+  s8 yaxis = state[SDL_SCANCODE_DOWN] ? -128 : (state[SDL_SCANCODE_UP] ? 127 : 0);
 
   controller->b3 = xaxis;
   controller->b4 = yaxis;
 
-  if(state[SDL_SCANCODE_F] && state[SDL_SCANCODE_A] && state[SDL_SCANCODE_S]) {
+  if((controller->b2 >> 7) & 1) {
     controller->b1 &= ~0x10;
     controller->b3 = 0;
     controller->b4 = 0;
@@ -146,7 +135,7 @@ void poll_controller(controller_t* controller, const u8* state) {
 
 void emu_run(emu_t* emu) {
   core_t* core = &emu->core;
-  controller_t* controller = &core->mem.mmio->si.controller;
+  controller_t* controller = &core->mem.mmio.si.controller;
   bool running = true;
 
   const u8* state = SDL_GetKeyboardState(NULL);
@@ -158,10 +147,10 @@ void emu_run(emu_t* emu) {
     }
 
     SDL_RenderPresent(emu->renderer);
+
+    poll_controller(controller, state);
+
     SDL_Event e;
-
-    poll_controller(&core->mem.mmio->si.controller, state);
-
     while(SDL_PollEvent(&e)) {
       switch (e.type) {
         case SDL_QUIT:

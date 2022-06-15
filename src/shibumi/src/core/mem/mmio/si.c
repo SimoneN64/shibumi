@@ -37,7 +37,7 @@ void si_write(si_t* si, mem_t* mem, registers_t* regs, u32 addr, u32 val) {
         u8 pif_addr = (val & 0x7FC) & PIF_RAM_DSIZE;
         memcpy(&mem->rdram[si->dram_addr & RDRAM_DSIZE],
                &mem->pif_ram[pif_addr], 64);
-        interrupt_raise(&mem->mmio->mi, regs, SI);
+        interrupt_raise(&mem->mmio.mi, regs, SI);
         si->status.intr = 1;
       } break;
     case 0x04800010: {
@@ -47,11 +47,11 @@ void si_write(si_t* si, mem_t* mem, registers_t* regs, u32 addr, u32 val) {
                &mem->rdram[si->dram_addr & RDRAM_DSIZE], 64);
 
         process_pif_commands(mem);
-        interrupt_raise(&mem->mmio->mi, regs, SI);
+        interrupt_raise(&mem->mmio.mi, regs, SI);
         si->status.intr = 1;
       } break;
     case 0x04800018:
-      interrupt_lower(&mem->mmio->mi, regs, SI);
+      interrupt_lower(&mem->mmio.mi, regs, SI);
       si->status.intr = 0;
       break;
     default: logfatal("Unhandled SI[%08X] write (%08X)\n", addr, val);

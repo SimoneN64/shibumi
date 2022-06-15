@@ -12,7 +12,7 @@ typedef struct registers_t registers_t;
 
 typedef struct {
   mi_t mi;
-  pi_t pi;
+  pi_t* pi;
   ri_t ri;
   vi_t vi;
   si_t si;

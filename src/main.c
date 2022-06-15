@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
 
   emu_run(emu);
   destroy_emu(emu);
+  free(emu);
 
   return 0;
 }
