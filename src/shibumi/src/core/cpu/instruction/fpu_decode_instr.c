@@ -20,6 +20,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
     case 0x01: dmfc1(regs, instr); break;
     case 0x02: cfc1(regs, instr); break;
     case 0x04: mtc1(regs, instr); break;
+    case 0x05: dmtc1(regs, instr); break;
     case 0x06: ctc1(regs, instr); break;
     case 0x08:
       switch(mask_branch) {
@@ -67,7 +68,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
         case 0x3D: cconds(regs, instr, NGE); break;
         case 0x3E: cconds(regs, instr, LE); break;
         case 0x3F: cconds(regs, instr, NGT); break;
-        default: logfatal("Unimplemented COP1 CO instruction S[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
+        default: logfatal("Unimplemented COP1 function S[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
       }
       break;
     case 0x11: // d
@@ -107,7 +108,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
         case 0x3D: ccondd(regs, instr, NGE); break;
         case 0x3E: ccondd(regs, instr, LE); break;
         case 0x3F: ccondd(regs, instr, NGT); break;
-        default: logfatal("Unimplemented COP1 CO instruction D[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
+        default: logfatal("Unimplemented COP1 function D[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
       }
       break;
     case 0x14: // w
@@ -118,7 +119,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
         case 0x06: movw(regs, instr); break;
         case 0x20: cvtsw(regs, instr); break;
         case 0x21: cvtdw(regs, instr); break;
-        default: logfatal("Unimplemented COP1 CO instruction W[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
+        default: logfatal("Unimplemented COP1 function W[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
       }
       break;
     case 0x15: // l
@@ -129,7 +130,7 @@ void fpu_decode(cpu_t* cpu, u32 instr) {
         case 0x06: movl(regs, instr); break;
         case 0x20: cvtsl(regs, instr); break;
         case 0x21: cvtdl(regs, instr); break;
-        default: logfatal("Unimplemented COP1 CO instruction L[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
+        default: logfatal("Unimplemented COP1 function L[%d %d] (%08X) (%016lX)", mask_fun >> 3, mask_fun & 7, instr, regs->old_pc);
       }
       break;
     default: logfatal("Unimplemented COP1 instruction %d %d", mask_sub >> 3, mask_sub & 7);

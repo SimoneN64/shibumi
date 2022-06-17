@@ -508,3 +508,7 @@ void dmfc1(registers_t* regs, u32 instr) {
 void mtc1(registers_t* regs, u32 instr) {
   set_cop1_reg_word(&regs->cp1, &regs->cp0, FS(instr), regs->gpr[RT(instr)]);
 }
+
+void dmtc1(registers_t* regs, u32 instr) {
+  set_cop1_reg_dword(&regs->cp1, &regs->cp0, FS(instr), regs->gpr[RT(instr)]);
+}

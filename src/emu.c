@@ -19,8 +19,10 @@ void init_emu(emu_t* emu) {
   emu->sdlFormat = SDL_PIXELFORMAT_RGBA5551;
   emu->currentFormat = f5553;
 
-  SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+  SDL_Init(SDL_INIT_EVERYTHING);
   init_audio();
+  emu->controller = NULL;
+  emu->has_gamepad = false;
 
   emu->window = SDL_CreateWindow(
     "shibumi",
@@ -99,7 +101,59 @@ void emu_present(emu_t* emu) {
   SDL_RenderCopy(emu->renderer, emu->texture, NULL, NULL);
 }
 
-void poll_controller(controller_t* controller, const u8* state) {
+#define GET_BUTTON(gamepad, i) SDL_GameControllerGetButton(gamepad, i)
+#define GET_AXIS(gamepad, axis) SDL_GameControllerGetAxis(gamepad, axis)
+
+INLINE int clamp(int val, int min, int max) {
+  if(val > max) {
+    return max;
+  } else if (val < min) {
+    return min;
+  }
+  return val;
+}
+
+void poll_controller_gamepad(SDL_GameController* gamepad, controller_t* controller) {
+  controller->b1 = 0;
+  controller->b2 = 0;
+  controller->b3 = 0;
+  controller->b4 = 0;
+
+  bool A = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_A);
+  bool B = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_X);
+  bool Z = GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_TRIGGERLEFT) == 32767;
+  bool START = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_START);
+  bool DUP = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_DPAD_UP);
+  bool DDOWN = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+  bool DLEFT = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+  bool DRIGHT = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+  bool L = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+  bool R = GET_BUTTON(gamepad, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+  bool CUP = GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_RIGHTY) == 32767;
+  bool CDOWN = GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_RIGHTY) == -32768;
+  bool CLEFT = GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_RIGHTX) == -32768;
+  bool CRIGHT = GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_RIGHTX) == 32767;
+
+  controller->b1 = (A << 7) | (B << 6) | (Z << 5) | (START << 4) |
+                  (DUP << 3) | (DDOWN << 2) | (DLEFT << 1) | DRIGHT;
+
+  controller->b2 = ((START && L && R) << 7) | (0 << 6) | (L << 5) | (R << 4) |
+                  (CUP << 3) | (CDOWN << 2) | (CLEFT << 1) | CRIGHT;
+
+  s8 xaxis = (s8)clamp((GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_LEFTX) >> 8), -127, 127);
+  s8 yaxis = (s8)clamp(-(GET_AXIS(gamepad, SDL_CONTROLLER_AXIS_LEFTY) >> 8), -127, 127);
+
+  controller->b3 = xaxis;
+  controller->b4 = yaxis;
+
+  if((controller->b2 >> 7) & 1) {
+    controller->b1 &= ~0x10;
+    controller->b3 = 0;
+    controller->b4 = 0;
+  }
+}
+
+void poll_controller_kbm(controller_t* controller, const u8* state) {
   controller->b1 = 0;
   controller->b2 = 0;
   controller->b3 = 0;
@@ -151,11 +205,24 @@ void emu_run(emu_t* emu) {
 
     SDL_RenderPresent(emu->renderer);
 
-    poll_controller(controller, state);
+    if(emu->has_gamepad) {
+      poll_controller_gamepad(emu->controller, controller);
+    } else {
+      poll_controller_kbm(controller, state);
+    }
 
     SDL_Event e;
     while(SDL_PollEvent(&e)) {
       switch (e.type) {
+        case SDL_CONTROLLERDEVICEADDED: {
+          const int index = e.cdevice.which;
+          emu->controller = SDL_GameControllerOpen(index);
+          emu->has_gamepad = true;
+        } break;
+        case SDL_CONTROLLERDEVICEREMOVED:
+          SDL_GameControllerClose(emu->controller);
+          emu->has_gamepad = false;
+          break;
         case SDL_QUIT:
           running = false;
           break;

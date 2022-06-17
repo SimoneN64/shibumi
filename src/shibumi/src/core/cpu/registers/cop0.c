@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <cop0.h>
 #include <cpu.h>
-#include "log.h"
+#include <log.h>
 
 void init_cop0(cop0_t* cop0) {
   cop0->Cause.raw = 0xB000007C;
@@ -13,27 +13,26 @@ void init_cop0(cop0_t* cop0) {
 
 u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
   switch(index) {
-    case 0: return cop0->Index;
-    case 1: return cop0->Random;
-    case 2: return cop0->EntryLo0.raw;
-    case 3: return cop0->EntryLo1.raw;
+    case 0: return cop0->Index & 0x8000001F;
+    case 1: return cop0->Random & 0x1F;
+    case 2: return cop0->EntryLo0.raw & 0x1FFFFFF;
+    case 3: return cop0->EntryLo1.raw & 0x1FFFFFF;
     case 4: return cop0->Context.raw;
     case 5: return cop0->PageMask.raw;
-    case 6: return cop0->Wired;
+    case 6: return cop0->Wired & 0x1F;
     case 7: return cop0->r7;
     case 8: return cop0->BadVaddr;
     case 9: return cop0->Count >> 1;
-    case 10: return cop0->EntryHi.raw;
+    case 10: return cop0->EntryHi.raw & 0xFFFFFFFFFFFFE0FF;
     case 11: return cop0->Compare;
-    case 12: return cop0->Status.raw;
+    case 12: return cop0->Status.raw & STATUS_MASK;
     case 13: return cop0->Cause.raw;
     case 14: return cop0->EPC;
-    case 15: return cop0->PRId;
+    case 15: return cop0->PRId & 0xFFFF;
     case 16: return cop0->Config;
     case 17: return cop0->LLAddr;
     case 18: return cop0->WatchLo;
     case 19: return cop0->WatchHi;
-    case 20: return cop0->XContext.raw;
     case 21: return cop0->r21;
     case 22: return cop0->r22;
     case 23: return cop0->r23;
@@ -41,36 +40,32 @@ u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
     case 25: return cop0->r25;
     case 26: return cop0->ParityError;
     case 27: return cop0->CacheError;
-    case 28: return cop0->TagLo;
+    case 28: return cop0->TagLo & 0xFFFFFFF;
     case 29: return cop0->TagHi;
     case 30: return cop0->ErrorEPC;
     case 31: return cop0->r31;
-    default: return 0;
+    default:
+      logfatal("Unsupported word read from COP0 register %d\n", index);
   }
 }
 
-void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
-  cop0_t* cop0 = &cpu->regs.cp0;
+void set_cop0_reg_word(cop0_t* cop0, u8 index, s32 value) {
   switch(index) {
-    case 0: cop0->Index = value; break;
-    case 1: cop0->Random = value; break;
-    case 2: cop0->EntryLo0.raw = value; break;
-    case 3: cop0->EntryLo1.raw = value; break;
+    case 0: cop0->Index = value & 0x8000001F; break;
+    case 1: cop0->Random = value & 0x1F; break;
+    case 2: cop0->EntryLo0.raw = value & 0x1FFFFFF; break;
+    case 3: cop0->EntryLo1.raw = value & 0x1FFFFFF; break;
     case 4: cop0->Context.raw = value; break;
     case 5: cop0->PageMask.raw = value; break;
-    case 6: cop0->Wired = value; break;
+    case 6: cop0->Wired = value & 0x1F; break;
     case 7: cop0->r7 = value; break;
-    case 8: cop0->BadVaddr = value; break;
-    case 9: cop0->Count = (s64)value << 1; break;
-    case 10: cop0->EntryHi.raw = value; break;
+    case 9: cop0->Count = value << 1; break;
+    case 10: cop0->EntryHi.raw = value & 0xFFFFFFFFFFFFE0FF; break;
     case 11: {
       cop0->Cause.ip.ip7 = 0;
       cop0->Compare = value;
     } break;
-    case 12: {
-      cop0->Status.raw &= ~STATUS_MASK;
-      cop0->Status.raw |= value & STATUS_MASK;
-    } break;
+    case 12: cop0->Status.raw = value & STATUS_MASK; break;
     case 13: {
       cop0_cause_t tmp;
       tmp.raw = value;
@@ -78,12 +73,11 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
       cop0->Cause.ip.ip1 = tmp.ip.ip1;
     } break;
     case 14: cop0->EPC = value; break;
-    case 15: cop0->PRId = value; break;
+    case 15: cop0->PRId = value & 0xFFFF; break;
     case 16: cop0->Config = value; break;
     case 17: cop0->LLAddr = value; break;
     case 18: cop0->WatchLo = value; break;
     case 19: cop0->WatchHi = value; break;
-    case 20: cop0->XContext.raw = value; break;
     case 21: cop0->r21 = value; break;
     case 22: cop0->r22 = value; break;
     case 23: cop0->r23 = value; break;
@@ -91,11 +85,46 @@ void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value) {
     case 25: cop0->r25 = value; break;
     case 26: cop0->ParityError = value; break;
     case 27: cop0->CacheError = value; break;
-    case 28: cop0->TagLo = value; break;
+    case 28: cop0->TagLo = value & 0xFFFFFFF; break;
     case 29: cop0->TagHi = value; break;
     case 30: cop0->ErrorEPC = value; break;
     case 31: cop0->r31 = value; break;
-    default: break;
+    default:
+      logfatal("Unsupported word write to COP0 register %d\n", index);
+  }
+}
+
+u64 get_cop0_reg_dword(cop0_t* cop0, u8 index) {
+  switch(index) {
+    case 2: return cop0->EntryLo0.raw & 0x1FFFFFF;
+    case 3: return cop0->EntryLo1.raw & 0x1FFFFFF;
+    case 4: return cop0->Context.raw;
+    case 8: return cop0->BadVaddr;
+    case 10: return cop0->EntryHi.raw & 0xFFFFFFFFFFFFE0FF;
+    case 12: return cop0->Status.raw & STATUS_MASK;
+    case 14: return cop0->EPC;
+    case 17: return cop0->LLAddr;
+    case 20: return cop0->XContext.raw;
+    case 30: return cop0->ErrorEPC;
+    default:
+      logfatal("Unsupported dword read from COP0 register %d\n", index);
+  }
+}
+
+void set_cop0_reg_dword(cop0_t* cop0, u8 index, u64 value) {
+  switch(index) {
+    case 2: cop0->EntryLo0.raw = value & 0x1FFFFFF; break;
+    case 3: cop0->EntryLo1.raw = value & 0x1FFFFFF; break;
+    case 4: cop0->Context.raw = value; break;
+    case 8: break;
+    case 10: cop0->EntryHi.raw = value & 0xFFFFFFFFFFFFE0FF; break;
+    case 12: cop0->Status.raw = value & STATUS_MASK; break;
+    case 14: cop0->EPC = value; break;
+    case 17: cop0->LLAddr = value; break;
+    case 20: cop0->XContext.raw = value; break;
+    case 30: cop0->ErrorEPC = value; break;
+    default:
+      logfatal("Unsupported dword write to COP0 register %d\n", index);
   }
 }
 

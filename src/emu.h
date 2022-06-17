@@ -15,6 +15,8 @@ typedef struct {
   core_t core;
   nfdchar_t* romFile;
   u8* framebuffer;
+  SDL_GameController* controller;
+  bool has_gamepad;
 } emu_t;
 
 void destroy_emu(emu_t* emu);

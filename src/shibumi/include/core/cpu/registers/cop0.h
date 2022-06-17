@@ -2,7 +2,7 @@
 #include <common.h>
 #include <stdbool.h>
 
-#define STATUS_MASK 0xFF57FFFF
+#define STATUS_MASK 0xFF77FFFF
 typedef struct cpu_t cpu_t;
 typedef struct mem_t mem_t;
 
@@ -185,7 +185,9 @@ typedef struct {
 
 void init_cop0(cop0_t* cop0);
 u32 get_cop0_reg_word(cop0_t* cop0, u8 index);
-void set_cop0_reg_word(cpu_t* cpu, mem_t* mem, u8 index, u32 value);
+void set_cop0_reg_word(cop0_t* cop0, u8 index, s32 value);
+u64 get_cop0_reg_dword(cop0_t* cop0, u8 index);
+void set_cop0_reg_dword(cop0_t* cop0, u8 index, u64 value);
 tlb_entry_t* tlb_try_match(registers_t* regs, u32 vaddr, int* match);
 bool probe_tlb(mem_t* mem, registers_t* regs, tlb_access_type_t access_type, u32 vaddr, u32* paddr, int* match);
 void handle_tlb_exception(registers_t* regs, u64 vaddr);
