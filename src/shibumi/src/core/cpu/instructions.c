@@ -642,3 +642,9 @@ void mtlo(registers_t* regs, u32 instr) {
 void mthi(registers_t* regs, u32 instr) {
   regs->hi = regs->gpr[RS(instr)];
 }
+
+void trap(registers_t* regs, bool cond) {
+  if(cond) {
+    fire_exception(regs, Tr, 0);
+  }
+}

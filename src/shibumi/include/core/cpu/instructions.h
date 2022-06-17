@@ -82,6 +82,7 @@ void sra(registers_t* regs, u32 instr);
 void srav(registers_t* regs, u32 instr);
 void srl(registers_t* regs, u32 instr);
 void srlv(registers_t* regs, u32 instr);
+void trap(registers_t* regs, bool cond);
 void or_(registers_t* regs, u32 instr);
 void ori(registers_t* regs, u32 instr);
 void xor_(registers_t* regs, u32 instr);

@@ -14,6 +14,7 @@ void init_mem(mem_t* mem) {
   memset(mem->imem, 0, IMEM_SIZE);
   memset(mem->pif_ram, 0, PIF_RAM_SIZE);
   memset(mem->pif_bootrom, 0, PIF_BOOTROM_SIZE);
+  memset(mem->isviewer, 0, ISVIEWER_SIZE);
   init_mmio(&mem->mmio);
 }
 
@@ -107,7 +108,18 @@ u8 read8_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
     case 0x00000000 ... 0x007FFFFF: return mem->rdram[paddr];
     case 0x04000000 ... 0x04000FFF: return mem->dmem[paddr & DMEM_DSIZE];
     case 0x04001000 ... 0x04001FFF: return mem->imem[paddr & IMEM_DSIZE];
-    case 0x10000000 ... 0x1FBFFFFF: return mem->cart[paddr & mem->rom_mask];
+    case 0x10000000 ... 0x1FBFFFFF:
+      if(mem->dirty_write_u8.dirty && mem->dirty_write_u8.addr == paddr) {
+        mem->dirty_write_u8.dirty = false;
+        return mem->dirty_write_u8.val;
+      }
+      return mem->cart[paddr & mem->rom_mask];
+    case 0x1FC00000 ... 0x1FC007BF:
+      if(mem->dirty_write_u8.dirty && mem->dirty_write_u8.addr == paddr) {
+        mem->dirty_write_u8.dirty = false;
+        return mem->dirty_write_u8.val;
+      }
+      return mem->pif_bootrom[paddr & PIF_BOOTROM_DSIZE];
     case 0x1FC007C0 ... 0x1FC007FF: return mem->pif_ram[paddr & PIF_RAM_DSIZE];
     default: logfatal("Unimplemented %s[%08X] 8-bit read\n", regions_str(paddr), paddr);
   }
@@ -124,7 +136,18 @@ u16 read16_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
     case 0x00000000 ... 0x007FFFFF: return raccess(16, mem->rdram, paddr);
     case 0x04000000 ... 0x04000FFF: return raccess(16, mem->dmem, paddr & DMEM_DSIZE);
     case 0x04001000 ... 0x04001FFF: return raccess(16, mem->imem, paddr & IMEM_DSIZE);
-    case 0x10000000 ... 0x1FBFFFFF: return raccess(16, mem->cart, paddr & mem->rom_mask);
+    case 0x10000000 ... 0x1FBFFFFF:
+      if(mem->dirty_write_u16.dirty && mem->dirty_write_u16.addr == paddr) {
+        mem->dirty_write_u16.dirty = false;
+        return mem->dirty_write_u16.val;
+      }
+      return raccess(16, mem->cart, paddr & mem->rom_mask);
+    case 0x1FC00000 ... 0x1FC007BF:
+      if(mem->dirty_write_u16.dirty && mem->dirty_write_u16.addr == paddr) {
+        mem->dirty_write_u16.dirty = false;
+        return mem->dirty_write_u16.val;
+      }
+      return raccess(16, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
     case 0x1FC007C0 ... 0x1FC007FF: return raccess(16, mem->pif_ram, paddr & PIF_RAM_DSIZE);
     default: logfatal("Unimplemented %s[%08X] 16-bit read\n", regions_str(paddr), paddr);
   }
@@ -143,8 +166,26 @@ u32 read32_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
     case 0x04001000 ... 0x04001FFF: return raccess(32, mem->imem, paddr & IMEM_DSIZE);
     case 0x04040000 ... 0x040FFFFF: case 0x04300000 ...	0x044FFFFF:
     case 0x04500000 ... 0x048FFFFF: return read_mmio(&mem->mmio, paddr);
-    case 0x10000000 ... 0x1FBFFFFF: return raccess(32, mem->cart, paddr & mem->rom_mask);
-    case 0x1FC00000 ... 0x1FC007BF: return raccess(32, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
+    case 0x10000000 ... 0x13FF0013:
+      if(mem->dirty_write_u32.dirty && mem->dirty_write_u32.addr == paddr) {
+        mem->dirty_write_u32.dirty = false;
+        return mem->dirty_write_u32.val;
+      }
+      return raccess(32, mem->cart, paddr & mem->rom_mask);
+    case 0x13FF0014: break;
+    case 0x13FF0020 ... 0x13FFFFFF: return raccess(32, mem->isviewer, paddr & ISVIEWER_DSIZE);
+    case 0x14000000 ... 0x1FBFFFFF:
+      if(mem->dirty_write_u32.dirty && mem->dirty_write_u32.addr == paddr) {
+        mem->dirty_write_u32.dirty = false;
+        return mem->dirty_write_u32.val;
+      }
+      return raccess(32, mem->cart, paddr & mem->rom_mask);
+    case 0x1FC00000 ... 0x1FC007BF:
+      if(mem->dirty_write_u32.dirty && mem->dirty_write_u32.addr == paddr) {
+        mem->dirty_write_u32.dirty = false;
+        return mem->dirty_write_u32.val;
+      }
+      return raccess(32, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
     case 0x1FC007C0 ... 0x1FC007FF: return raccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE);
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
     case 0x04900000 ... 0x07FFFFFF: case 0x08000000 ... 0x0FFFFFFF:
@@ -163,6 +204,18 @@ u64 read64_(mem_t* mem, registers_t* regs, u32 vaddr, bool tlb) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: return raccess(64, mem->rdram, paddr);
     case 0x04001000 ... 0x04001FFF: return raccess(64, mem->imem, paddr & IMEM_DSIZE);
+    case 0x10000000 ... 0x1FBFFFFF:
+      if(mem->dirty_write_u64.dirty && mem->dirty_write_u64.addr == paddr) {
+        mem->dirty_write_u64.dirty = false;
+        return mem->dirty_write_u64.val;
+      }
+      return raccess(64, mem->cart, paddr & mem->rom_mask);
+    case 0x1FC00000 ... 0x1FC007BF:
+      if(mem->dirty_write_u64.dirty && mem->dirty_write_u64.addr == paddr) {
+        mem->dirty_write_u64.dirty = false;
+        return mem->dirty_write_u64.val;
+      }
+      return raccess(64, mem->pif_bootrom, paddr & PIF_BOOTROM_DSIZE);
     default: logfatal("Unimplemented %s[%08X] 64-bit read\n", regions_str(paddr), paddr);
   }
 }
@@ -178,6 +231,11 @@ void write8_(mem_t* mem, registers_t* regs, u32 vaddr, u8 val, bool tlb) {
     case 0x00000000 ... 0x007FFFFF: mem->rdram[paddr] = val; break;
     case 0x04000000 ... 0x04000FFF: mem->dmem[paddr & DMEM_DSIZE] = val; break;
     case 0x04001000 ... 0x04001FFF: mem->imem[paddr & IMEM_DSIZE] = val; break;
+    case 0x10000000 ... 0x1FBFFFFF:
+      mem->dirty_write_u8.val = val;
+      mem->dirty_write_u8.dirty = true;
+      mem->dirty_write_u8.addr = paddr;
+      break;
     case 0x1FC007C0 ... 0x1FC007FF: mem->pif_ram[paddr & PIF_RAM_DSIZE] = val; break;
     default: logfatal("Unimplemented %s[%08X] 8-bit write (%02X)\n", regions_str(paddr), paddr, val);
   }
@@ -194,6 +252,12 @@ void write16_(mem_t* mem, registers_t* regs, u32 vaddr, u16 val, bool tlb) {
     case 0x00000000 ... 0x007FFFFF: waccess(16, mem->rdram, paddr, val); break;
     case 0x04000000 ... 0x04000FFF: waccess(16, mem->dmem, paddr & DMEM_DSIZE, val); break;
     case 0x04001000 ... 0x04001FFF: waccess(16, mem->imem, paddr & IMEM_DSIZE, val); break;
+    case 0x10000000 ... 0x1FBFFFFF:
+    case 0x1FC00000 ... 0x1FC007BF:
+      mem->dirty_write_u16.val = val;
+      mem->dirty_write_u16.dirty = true;
+      mem->dirty_write_u16.addr = paddr;
+      break;
     case 0x1FC007C0 ... 0x1FC007FF: waccess(16, mem->pif_ram, paddr & PIF_RAM_DSIZE, val); break;
     default: logfatal("Unimplemented %s[%08X] 16-bit write (%04X)\n", regions_str(paddr), paddr, val);
   }
@@ -212,7 +276,22 @@ void write32_(mem_t* mem, registers_t* regs, u32 vaddr, u32 val, bool tlb) {
     case 0x04001000 ... 0x04001FFF: waccess(32, mem->imem, paddr & IMEM_DSIZE, val); break;
     case 0x04040000 ... 0x040FFFFF: case 0x04300000 ...	0x044FFFFF:
     case 0x04500000 ... 0x048FFFFF: write_mmio(mem, regs, &mem->mmio.si, paddr, val); break;
-    case 0x10000000 ... 0x1FBFFFFF: break;
+    case 0x10000000 ... 0x13FF0013: break;
+    case 0x13FF0014: {
+      if(val < ISVIEWER_SIZE) {
+        char* message = calloc(val + 1, 1);
+        memcpy(message, mem->isviewer, val);
+        printf("%s", message);
+        free(message);
+      }
+    } break;
+    case 0x13FF0020 ... 0x13FFFFFF: waccess(32, mem->isviewer, paddr & ISVIEWER_DSIZE, val); break;
+    case 0x14000000 ... 0x1FBFFFFF:
+    case 0x1FC00000 ... 0x1FC007BF:
+      mem->dirty_write_u32.val = val;
+      mem->dirty_write_u32.dirty = true;
+      mem->dirty_write_u32.addr = paddr;
+      break;
     case 0x1FC007C0 ... 0x1FC007FF: waccess(32, mem->pif_ram, paddr & PIF_RAM_DSIZE, val); break;
     case 0x00800000 ... 0x03FFFFFF: case 0x04002000 ... 0x0403FFFF:
     case 0x04900000 ... 0x07FFFFFF: case 0x08000000 ... 0x0FFFFFFF:
@@ -231,6 +310,12 @@ void write64_(mem_t* mem, registers_t* regs, u32 vaddr, u64 val, bool tlb) {
   switch(paddr) {
     case 0x00000000 ... 0x007FFFFF: waccess(64, mem->rdram, paddr, val); break;
     case 0x04000000 ... 0x04000FFF: waccess(64, mem->dmem, paddr & DMEM_DSIZE, val); break;
+    case 0x10000000 ... 0x1FBFFFFF:
+    case 0x1FC00000 ... 0x1FC007BF:
+      mem->dirty_write_u64.val = val;
+      mem->dirty_write_u64.dirty = true;
+      mem->dirty_write_u64.addr = paddr;
+      break;
     case 0x04001000 ... 0x04001FFF: waccess(64, mem->imem, paddr & IMEM_DSIZE, val); break;
     default: logfatal("Unimplemented %s[%08X] 64-bit write (%16lX)\n", regions_str(paddr), paddr, val);
   }

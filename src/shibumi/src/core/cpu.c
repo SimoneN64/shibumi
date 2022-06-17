@@ -51,13 +51,13 @@ void fire_exception(registers_t* regs, exception_code_t code, int cop) {
       case Ov: case Tr:
       case FPE: case WATCH:
         logdebug("Exception fired! EPC = %016lX\n", regs->cp0.EPC);
-        set_pc(regs, (s64)0x80000180);
+        set_pc(regs, (s64)((s32)0x80000180));
         break;
       case TLBL: case TLBS:
         if(old_exl || regs->cp0.TlbError == INVALID) {
-          set_pc(regs, (s64)0x80000180);
+          set_pc(regs, (s64)((s32)0x80000180));
         } else {
-          set_pc(regs, (s64)0x80000000);
+          set_pc(regs, (s64)((s32)0x80000000));
         }
         break;
       default: logfatal("Unhandled exception! %d\n", code);

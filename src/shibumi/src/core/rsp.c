@@ -5,7 +5,7 @@
 #include <string.h>
 
 void init_rsp(rsp_t* rsp) {
-  rsp->sp_status.raw = 0;
+  rsp->sp_status.raw = 1;
   rsp->old_pc = rsp->pc = rsp->next_pc = 0;
 }
 

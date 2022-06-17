@@ -3,12 +3,29 @@
 #include <mmio.h>
 #include <stdlib.h>
 
+#define dirty_write_t(type) \
+  typedef struct { \
+    bool dirty;             \
+    type val;               \
+    u32 addr;               \
+  } dirty_write_##type##_t
+
+dirty_write_t(u8);
+dirty_write_t(u16);
+dirty_write_t(u32);
+dirty_write_t(u64);
+
 typedef struct mem_t {
   u8 *cart, *rdram, *sram;
   u8 dmem[DMEM_SIZE], imem[IMEM_SIZE], pif_ram[PIF_RAM_SIZE];
   u8 pif_bootrom[PIF_BOOTROM_SIZE];
+  u8 isviewer[ISVIEWER_SIZE];
   size_t rom_mask;
   mmio_t mmio;
+  dirty_write_u8_t dirty_write_u8;
+  dirty_write_u16_t dirty_write_u16;
+  dirty_write_u32_t dirty_write_u32;
+  dirty_write_u64_t dirty_write_u64;
 } mem_t;
 
 void init_mem(mem_t* mem);

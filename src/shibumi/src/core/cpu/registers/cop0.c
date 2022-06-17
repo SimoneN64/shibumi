@@ -6,9 +6,13 @@
 void init_cop0(cop0_t* cop0) {
   cop0->Cause.raw = 0xB000007C;
   cop0->Random = 0x0000001F;
-  cop0->Status.raw = 0x34000000;
+  cop0->Status.raw = 0x24000000;
+  cop0->Wired = 64;
+  cop0->Index = 64;
   cop0->PRId = 0x00000B00;
-  cop0->Config = 0x0006E463;
+  cop0->Config = 0x7006E463;
+  cop0->EPC = 0xFFFFFFFFFFFFFFFF;
+  cop0->ErrorEPC = 0xFFFFFFFFFFFFFFFF;
 }
 
 u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
@@ -19,7 +23,7 @@ u32 get_cop0_reg_word(cop0_t* cop0, u8 index) {
     case 3: return cop0->EntryLo1.raw & 0x1FFFFFF;
     case 4: return cop0->Context.raw;
     case 5: return cop0->PageMask.raw;
-    case 6: return cop0->Wired & 0x1F;
+    case 6: return cop0->Wired & 0x3F;
     case 7: return cop0->r7;
     case 8: return cop0->BadVaddr;
     case 9: return cop0->Count >> 1;
@@ -57,7 +61,7 @@ void set_cop0_reg_word(cop0_t* cop0, u8 index, s32 value) {
     case 3: cop0->EntryLo1.raw = value & 0x1FFFFFF; break;
     case 4: cop0->Context.raw = value; break;
     case 5: cop0->PageMask.raw = value; break;
-    case 6: cop0->Wired = value & 0x1F; break;
+    case 6: cop0->Wired = value & 0x3F; break;
     case 7: cop0->r7 = value; break;
     case 9: cop0->Count = value << 1; break;
     case 10: cop0->EntryHi.raw = value & 0xFFFFFFFFFFFFE0FF; break;
@@ -121,7 +125,7 @@ void set_cop0_reg_dword(cop0_t* cop0, u8 index, u64 value) {
     case 12: cop0->Status.raw = value & STATUS_MASK; break;
     case 14: cop0->EPC = value; break;
     case 17: cop0->LLAddr = value; break;
-    case 20: cop0->XContext.raw = value; break;
+    case 20: break;
     case 30: cop0->ErrorEPC = value; break;
     default:
       logfatal("Unsupported dword write to COP0 register %d\n", index);

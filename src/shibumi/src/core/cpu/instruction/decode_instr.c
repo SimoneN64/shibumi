@@ -36,6 +36,7 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
     case 0x19: daddiu(regs, instr); break;
     case 0x1A: ldl(mem, regs, instr); break;
     case 0x1B: ldr(mem, regs, instr); break;
+    case 0x1F: fire_exception(regs, RI, 0); break;
     case 0x20: lb(mem, regs, instr); break;
     case 0x21: lh(mem, regs, instr); break;
     case 0x22: lwl(mem, regs, instr); break;
@@ -84,6 +85,8 @@ void special(cpu_t* cpu, u32 instr) {
     case 0x07: srav(regs, instr); break;
     case 0x08: jr(cpu, instr); break;
     case 0x09: jalr(cpu, instr); break;
+    case 0x0C: fire_exception(regs, Sys, 0); break;
+    case 0x0D: fire_exception(regs, Bp, 0); break;
     case 0x0F: break;
     case 0x10: mfhi(regs, instr); break;
     case 0x11: mthi(regs, instr); break;
@@ -114,6 +117,7 @@ void special(cpu_t* cpu, u32 instr) {
     case 0x2D: daddu(regs, instr); break;
     case 0x2E: dsub(regs, instr); break;
     case 0x2F: dsubu(regs, instr); break;
+    case 0x34: trap(regs, regs->gpr[RS(instr)] == regs->gpr[RT(instr)]); break;
     case 0x38: dsll(regs, instr); break;
     case 0x3A: dsrl(regs, instr); break;
     case 0x3B: dsra(regs, instr); break;
