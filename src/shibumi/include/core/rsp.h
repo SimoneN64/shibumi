@@ -36,8 +36,6 @@ typedef struct {
   u16 old_pc, pc, next_pc;
   sp_dma_sp_addr_t sp_dma_sp_addr;
   sp_dma_dram_addr_t sp_dma_dram_addr;
-  sp_dma_sp_addr_t shadow_sp_dma_sp_addr;
-  sp_dma_dram_addr_t shadow_sp_dma_dram_addr;
   sp_dma_len_t sp_dma_rdlen, sp_dma_wrlen;
   u8 dmem[DMEM_SIZE], imem[IMEM_SIZE];
 } rsp_t;

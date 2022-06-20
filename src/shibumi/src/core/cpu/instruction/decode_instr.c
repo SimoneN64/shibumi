@@ -10,7 +10,7 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   registers_t* regs = &cpu->regs;
   // 00rr_rccc
   switch(mask) { // TODO: named constants for clearer code
-    case 0x00: special(cpu, instr); break;
+    case 0x00: special(cpu, mem, instr); break;
     case 0x01: regimm(cpu, instr); break;
     case 0x02: j(cpu, instr); break;
     case 0x03: jal(cpu, instr); break;
@@ -68,7 +68,7 @@ void exec(cpu_t* cpu, mem_t* mem, u32 instr) {
   }
 }
 
-void special(cpu_t* cpu, u32 instr) {
+void special(cpu_t* cpu, mem_t* mem, u32 instr) {
   registers_t* regs = &cpu->regs;
   u8 mask = (instr & 0x3F);
   // 00rr_rccc
