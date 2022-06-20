@@ -2,7 +2,8 @@
 #include <string.h>
 
 void init_registers(registers_t* regs) {
-  regs->in_delay_slot = false;
+  regs->delay_slot = false;
+  regs->prev_delay_slot = false;
   memset(regs->gpr, 0, 32*8);
   memset((s64*)&regs->cp0, 0, 32*8);
   regs->old_pc = (s64)0xFFFFFFFFA4000040;

@@ -3,10 +3,25 @@
 #include <intr.h>
 #include <mem.h>
 #include <string.h>
+#include <access.h>
+#include <rsp_decode_instr.h>
 
 void init_rsp(rsp_t* rsp) {
   rsp->sp_status.raw = 1;
   rsp->old_pc = rsp->pc = rsp->next_pc = 0;
+  memset(rsp->dmem, 0, DMEM_SIZE);
+  memset(rsp->imem, 0, IMEM_SIZE);
+}
+
+void step_rsp(rsp_t* rsp) {
+  if(!rsp->sp_status.halt) {
+    u16 pc = rsp->pc & 0x3FF;
+    u32 instr = raccess(32, rsp->imem, pc & IMEM_DSIZE);
+    rsp->old_pc = rsp->pc & 0x3ff;
+    rsp->pc = rsp->next_pc & 0x3ff;
+    rsp->next_pc++;
+    rsp_exec(rsp, instr);
+  }
 }
 
 u32 sp_read(rsp_t* rsp, u32 addr) {
@@ -26,8 +41,46 @@ u32 sp_read(rsp_t* rsp, u32 addr) {
 void sp_write(rsp_t* rsp, mem_t* mem, registers_t* regs, u32 addr, u32 value) {
   mi_t* mi = &mem->mmio.mi;
   switch (addr) {
+    case 0x04040000: rsp->sp_dma_sp_addr.raw = value & 0x1FF8; break;
+    case 0x04040004: rsp->sp_dma_dram_addr.raw = value & 0xFFFFF8; break;
+    case 0x04040008: {
+      rsp->sp_dma_rdlen.raw = value;
+      u32 length = rsp->sp_dma_rdlen.len + 1;
+
+      sp_dma_dram_addr_t sp_dma_dram_addr = rsp->shadow_sp_dma_dram_addr;
+      sp_dma_sp_addr_t sp_dma_sp_addr = rsp->shadow_sp_dma_sp_addr;
+
+      length = (length + 0x7) & ~0x7;
+
+      u32 last_addr = sp_dma_sp_addr.address + length;
+      if (last_addr > 0x1000) {
+        u32 overshoot = last_addr - 0x1000;
+        length -= overshoot;
+      }
+
+      u32 dram_address = sp_dma_dram_addr.address & 0xFFFFF8;
+      u32 mem_address = sp_dma_sp_addr.address & 0xFF8;
+
+      for (int i = 0; i < rsp->sp_dma_rdlen.count + 1; i++) {
+        u8* rsp_mem = (sp_dma_sp_addr.bank ? rsp->imem : rsp->dmem) + mem_address;
+        u8* rdram = mem->rdram + dram_address;
+        memcpy(rsp_mem, rdram, length);
+
+        int skip = i == rsp->sp_dma_rdlen.count ? 0 : rsp->sp_dma_rdlen.skip;
+
+        dram_address += (length + skip) & 0xFFFFF8;
+        mem_address += length;
+      }
+
+      rsp->sp_dma_dram_addr.address = dram_address;
+      rsp->sp_dma_sp_addr.address = mem_address;
+      rsp->sp_dma_sp_addr.bank = sp_dma_sp_addr.bank;
+
+      rsp->sp_dma_rdlen.raw = 0xFF8 | (rsp->sp_dma_rdlen.skip << 20);
+    } break;
     case 0x04040010: {
-      sp_status_write_t write = {.raw = value};
+      sp_status_write_t write;
+      write.raw = value;
       CLEAR_SET(rsp->sp_status.halt, write.clear_halt, write.set_halt);
       CLEAR_SET(rsp->sp_status.broke, write.clear_broke, false);
       if(write.clear_intr) interrupt_lower(mi, regs, SP);
@@ -43,7 +96,7 @@ void sp_write(rsp_t* rsp, mem_t* mem, registers_t* regs, u32 addr, u32 value) {
       CLEAR_SET(rsp->sp_status.signal_6_set, write.clear_signal_6, write.set_signal_6);
       CLEAR_SET(rsp->sp_status.signal_7_set, write.clear_signal_7, write.set_signal_7);
     } break;
-    case 0x04080000: rsp->pc = value & 0xFFF; break;
+    case 0x04080000: rsp->pc = value & 0x3FF; break;
     default: logfatal("Unimplemented SP register write %08X, val: %08X\n\n", addr, value);
   }
 }

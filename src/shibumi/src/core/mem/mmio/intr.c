@@ -4,7 +4,7 @@
 
 void update_interrupt(mi_t* mi, registers_t* regs) {
   bool interrupt = mi->mi_intr.raw & mi->mi_intr_mask.raw;
-  regs->cp0.Cause.ip.ip2 = interrupt;
+  regs->cp0.Cause.ip2 = interrupt;
 }
 
 void interrupt_raise(mi_t* mi, registers_t* regs, interrupt_t intr) {

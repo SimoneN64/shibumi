@@ -1,6 +1,4 @@
 #pragma once
-#include <registers.h>
-#include <mem.h>
 #include <cop0_instructions.h>
 
 typedef struct cpu_t cpu_t;

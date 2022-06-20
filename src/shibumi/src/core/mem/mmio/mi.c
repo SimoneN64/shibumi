@@ -11,18 +11,18 @@ void init_mi(mi_t* mi) {
 }
 
 u32 mi_read(mi_t* mi, u32 paddr) {
-  switch(paddr) {
-    case 0x04300000: return mi->mi_mode & 0x3FF;
-    case 0x04300004: return MI_VERSION_REG;
-    case 0x04300008: return mi->mi_intr.raw & 0x3F;
-    case 0x0430000C: return mi->mi_intr_mask.raw & 0x3F;
+  switch(paddr & 0xF) {
+    case 0x0: return mi->mi_mode & 0x3FF;
+    case 0x4: return MI_VERSION_REG;
+    case 0x8: return mi->mi_intr.raw & 0x3F;
+    case 0xC: return mi->mi_intr_mask.raw & 0x3F;
     default: logfatal("Unhandled MI[%08X] read\n", paddr);
   }
 }
 
 void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
-  switch(paddr) {
-    case 0x04300000:
+  switch(paddr & 0xF) {
+    case 0x0:
       mi->mi_mode &= 0xFFFFFF80;
       mi->mi_mode |= val & 0x7F;
       if (val & (1 << 7)) {
@@ -53,8 +53,8 @@ void mi_write(mi_t* mi, registers_t* regs, u32 paddr, u32 val) {
         mi->mi_mode |= 1 << 9;
       }
       break;
-    case 0x04300004: break;
-    case 0x0430000C:
+    case 0x4: break;
+    case 0xC:
       for (int bit = 0; bit < 6; bit++) {
         int clearbit = bit << 1;
         int setbit = (bit << 1) + 1;

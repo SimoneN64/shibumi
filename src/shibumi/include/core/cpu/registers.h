@@ -18,7 +18,7 @@ typedef struct registers_t {
   s64 old_pc, pc, next_pc;
   s64 hi, lo;
   bool LLBit;
-  bool in_delay_slot;
+  bool prev_delay_slot, delay_slot;
 } registers_t;
 
 void init_registers(registers_t* regs);

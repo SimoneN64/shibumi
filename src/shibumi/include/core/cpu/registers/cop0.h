@@ -21,19 +21,14 @@ typedef union {
     unsigned:2;
     unsigned exc_code:5;
     unsigned:1;
-    union {
-      struct {
-        unsigned ip0:1;
-        unsigned ip1:1;
-        unsigned ip2:1;
-        unsigned ip3:1;
-        unsigned ip4:1;
-        unsigned ip5:1;
-        unsigned ip6:1;
-        unsigned ip7:1;
-      } PACKED;
-      u8 raw;
-    } ip;
+    unsigned ip0:1;
+    unsigned ip1:1;
+    unsigned ip2:1;
+    unsigned ip3:1;
+    unsigned ip4:1;
+    unsigned ip5:1;
+    unsigned ip6:1;
+    unsigned ip7:1;
     unsigned:12;
     unsigned cop_error:2;
     unsigned:1;
@@ -189,6 +184,6 @@ void set_cop0_reg_word(cop0_t* cop0, u8 index, s32 value);
 u64 get_cop0_reg_dword(cop0_t* cop0, u8 index);
 void set_cop0_reg_dword(cop0_t* cop0, u8 index, u64 value);
 tlb_entry_t* tlb_try_match(registers_t* regs, u32 vaddr, int* match);
-bool probe_tlb(mem_t* mem, registers_t* regs, tlb_access_type_t access_type, u32 vaddr, u32* paddr, int* match);
+bool probe_tlb(registers_t* regs, tlb_access_type_t access_type, u32 vaddr, u32* paddr, int* match);
 void handle_tlb_exception(registers_t* regs, u64 vaddr);
 exception_code_t get_tlb_exception_code(tlb_error_t error, tlb_access_type_t access_type);

@@ -22,11 +22,17 @@ u32 vi_read(vi_t* vi, u32 paddr) {
     case 0x04400008: return vi->width;
     case 0x0440000C: return vi->intr;
     case 0x04400010: return vi->current << 1;
+    case 0x04400014: return vi->burst.raw;
     case 0x04400018: return vi->vsync;
     case 0x0440001C: return vi->hsync;
+    case 0x04400020: return vi->hsync_leap.raw;
+    case 0x04400024: return vi->hvideo.raw;
+    case 0x04400028: return vi->vvideo.raw;
+    case 0x0440002C: return vi->vburst.raw;
+    case 0x04400030: return vi->xscale.raw;
+    case 0x04400034: return vi->yscale.raw;
     default:
-      logdebug("Unsupported VI[%08X] read\n", paddr);
-      return 0;
+      logfatal("Unimplemented VI[%08X] read\n", paddr);
   }
 }
 
@@ -52,6 +58,7 @@ void vi_write(mi_t* mi, registers_t* regs, vi_t* vi, u32 paddr, u32 val) {
     case 0x04400010:
       interrupt_lower(mi, regs, VI);
       break;
+    case 0x04400014: vi->burst.raw = val; break;
     case 0x04400018: {
       vi->vsync = val & 0x3FF;
       vi->num_halflines = vi->vsync >> 1;
@@ -60,7 +67,13 @@ void vi_write(mi_t* mi, registers_t* regs, vi_t* vi, u32 paddr, u32 val) {
     case 0x0440001C: {
       vi->hsync = val & 0x3FF;
     } break;
+    case 0x04400020: vi->hsync_leap.raw = val; break;
+    case 0x04400024: vi->hvideo.raw = val; break;
+    case 0x04400028: vi->vvideo.raw = val; break;
+    case 0x0440002C: vi->vburst.raw = val; break;
+    case 0x04400030: vi->xscale.raw = val; break;
+    case 0x04400034: vi->yscale.raw = val; break;
     default:
-      logdebug("Unimplemented VI[%08X] write (%08X)\n", paddr, val);
+      logfatal("Unimplemented VI[%08X] write (%08X)\n", paddr, val);
   }
 }
